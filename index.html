@@ -15,7 +15,8 @@
 
 <h1>Explorador de Biodiversidad</h1>
 <div id="map"></div>
-
+<button onclick="obtenerArea()">Obtener coordenadas</button>
+<pre id="coords"></pre>
 <!-- Leaflet JS -->
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
@@ -25,6 +26,21 @@
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '© OpenStreetMap'
   }).addTo(map);
+  function obtenerArea() {
+  var bounds = map.getBounds();
+
+  var north = bounds.getNorth();
+  var south = bounds.getSouth();
+  var east = bounds.getEast();
+  var west = bounds.getWest();
+
+  document.getElementById("coords").textContent =
+    "North: " + north + "\n" +
+    "South: " + south + "\n" +
+    "East: " + east + "\n" +
+    "West: " + west;
+}
+
 </script>
 
 </body>
