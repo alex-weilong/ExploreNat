@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>ExploreNat</title>
+  <title>ExploreNat - Biodiversidad con Fotos</title>
 
   <!-- Leaflet CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
@@ -14,85 +14,237 @@
     body {
       font-family: Arial, sans-serif;
       margin: 20px;
+      background-color: #f9f9f9;
+    }
+
+    h1 {
+      color: #2c5e2e;
     }
 
     #map {
       height: 500px;
       margin-bottom: 15px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    .controls {
+      background: white;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
     }
 
     button, select {
       margin-right: 10px;
       margin-bottom: 10px;
-      padding: 8px 12px;
+      padding: 10px 16px;
       cursor: pointer;
+      border: none;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+
+    button {
+      background-color: #2c5e2e;
+      color: white;
+      transition: background-color 0.3s;
+    }
+
+    button:hover {
+      background-color: #1e4320;
+    }
+
+    select {
+      background-color: white;
+      border: 1px solid #ccc;
     }
 
     pre {
-      background: #f4f4f4;
-      padding: 10px;
+      background: white;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
       white-space: pre-wrap;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+
+    #resultados {
+      background: white;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      max-height: 600px;
+      overflow-y: auto;
     }
 
     .warning {
       color: #856404;
       background-color: #fff3cd;
       border: 1px solid #ffeeba;
-      padding: 10px;
-      border-radius: 4px;
-      margin-bottom: 10px;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 15px;
+    }
+
+    .especie-card {
+      display: flex;
+      align-items: center;
+      margin-bottom: 15px;
+      padding: 12px;
+      background: white;
+      border-radius: 8px;
+      border: 1px solid #eaeaea;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .especie-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    .especie-imagen {
+      width: 70px;
+      height: 70px;
+      object-fit: cover;
+      border-radius: 8px;
+      margin-right: 15px;
+      border: 2px solid #eaeaea;
+    }
+
+    .especie-placeholder {
+      width: 70px;
+      height: 70px;
+      background: linear-gradient(135deg, #f0f0f0, #e0e0e0);
+      margin-right: 15px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #888;
+      font-size: 12px;
+      text-align: center;
+      border: 2px dashed #ccc;
+    }
+
+    .especie-info {
+      flex: 1;
+    }
+
+    .especie-nombre {
+      font-weight: bold;
+      color: #2c5e2e;
+      font-size: 16px;
+      margin-bottom: 4px;
+    }
+
+    .especie-comun {
+      color: #666;
+      font-size: 14px;
+      margin-bottom: 4px;
+    }
+
+    .especie-enlace {
+      color: #0066cc;
+      font-size: 12px;
+      text-decoration: none;
+    }
+
+    .especie-enlace:hover {
+      text-decoration: underline;
+    }
+
+    .loading {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid #f3f3f3;
+      border-top: 3px solid #2c5e2e;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .stats {
+      background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      font-weight: bold;
     }
   </style>
 </head>
 <body>
 
-<h1>Explorador de Biodiversidad</h1>
+<h1>🌿 ExploreNat - Explorador de Biodiversidad con Fotos</h1>
+
+<div class="controls">
+  <button onclick="obtenerArea()">📍 Obtener coordenadas</button>
+  <button onclick="consultarGBIF()">🔍 Consultar animales en esta área</button>
+  
+  <label for="grupo">Selecciona grupo:</label>
+  <select id="grupo">
+    <option value="">🌍 Todos</option>
+    <option value="212">🦅 Aves</option>
+    <option value="359">🐻 Mamíferos</option>
+    <option value="358">🦎 Reptiles</option>
+    <option value="131">🐸 Anfibios</option>
+    <option value="203">🐟 Peces óseos</option>
+    <option value="216">🦋 Insectos</option>
+  </select>
+</div>
 
 <div id="map"></div>
 
-<button onclick="obtenerArea()">Obtener coordenadas</button>
-<button onclick="consultarGBIF()">Consultar animales en esta área</button>
-
-<label for="grupo">Selecciona grupo:</label>
-<select id="grupo">
-  <option value="">Todos</option>
-  <option value="212">Aves (classKey 212)</option>
-  <option value="359">Mamíferos (classKey 359)</option>
-  <option value="358">Reptiles (classKey 358)</option>
-  <option value="131">Anfibios (classKey 131)</option> <!-- Corregido: código correcto para anfibios -->
-  <option value="203">Peces óseos (classKey 203)</option> <!-- Corregido: Actinopterygii -->
-  <option value="216">Insectos (classKey 216)</option>
-</select>
-
 <div id="mensajeAyuda" class="warning" style="display: none;"></div>
 
-<h3>Coordenadas:</h3>
-<pre id="coords"></pre>
+<h3>📐 Coordenadas del área:</h3>
+<pre id="coords">Dibuja un rectángulo en el mapa y haz clic en "Obtener coordenadas"</pre>
 
-<h3>Especies encontradas:</h3>
-<pre id="resultados"></pre>
+<h3>📸 Especies encontradas con fotos:</h3>
+<div id="resultados">
+  <p style="color: #666; text-align: center; padding: 40px;">
+    🌍 Selecciona un área en el mapa y haz clic en "Consultar animales en esta área"
+  </p>
+</div>
 
 <!-- Leaflet JS -->
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-
-<!-- Leaflet Draw JS -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
 
 <script>
-  // Crear mapa
+  // ============================================
+  // CONFIGURACIÓN DEL MAPA
+  // ============================================
   var map = L.map('map').setView([40.4168, -3.7038], 6);
 
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '© OpenStreetMap'
   }).addTo(map);
 
-  // Grupo para dibujar áreas
+  // Configuración de áreas dibujables
   var drawnItems = new L.FeatureGroup();
   map.addLayer(drawnItems);
 
   var drawControl = new L.Control.Draw({
     edit: { featureGroup: drawnItems },
-    draw: { polygon: false, polyline: false, circle: false, marker: false, circlemarker: false, rectangle: true }
+    draw: { 
+      polygon: false, 
+      polyline: false, 
+      circle: false, 
+      marker: false, 
+      circlemarker: false, 
+      rectangle: true 
+    }
   });
   map.addControl(drawControl);
 
@@ -101,157 +253,344 @@
   // Guardar el rectángulo dibujado
   map.on(L.Draw.Event.CREATED, function(e) {
     var layer = e.layer;
-    drawnItems.clearLayers(); // solo un área a la vez
+    drawnItems.clearLayers();
     drawnItems.addLayer(layer);
     areaSeleccionada = layer.getBounds();
-    
-    // Limpiar mensaje de ayuda
     document.getElementById("mensajeAyuda").style.display = "none";
+    // Mostrar coordenadas automáticamente
+    obtenerArea();
   });
 
-  // Mostrar coordenadas del área
+  // ============================================
+  // FUNCIÓN: Mostrar coordenadas
+  // ============================================
   function obtenerArea() {
     var bounds = areaSeleccionada ? areaSeleccionada : map.getBounds();
-    var north = bounds.getNorth();
-    var south = bounds.getSouth();
-    var east = bounds.getEast();
-    var west = bounds.getWest();
-
-    document.getElementById("coords").textContent =
-      "North: " + north.toFixed(4) + "\n" +
-      "South: " + south.toFixed(4) + "\n" +
-      "East: " + east.toFixed(4) + "\n" +
-      "West: " + west.toFixed(4);
+    document.getElementById("coords").innerHTML = 
+      `📍 Norte: ${bounds.getNorth().toFixed(4)}°<br>` +
+      `📍 Sur: ${bounds.getSouth().toFixed(4)}°<br>` +
+      `📍 Este: ${bounds.getEast().toFixed(4)}°<br>` +
+      `📍 Oeste: ${bounds.getWest().toFixed(4)}°<br>` +
+      `📏 Área aproximada: ${calcularAreaKm2(bounds).toFixed(0)} km²`;
   }
 
-  // Función para verificar si hay datos en el área
-  async function verificarDatosEnArea(bounds) {
-    var url = "https://api.gbif.org/v1/occurrence/search?" +
-              "hasCoordinate=true" +
-              "&limit=1" +
-              "&decimalLatitude=" + bounds.getSouth() + "," + bounds.getNorth() +
-              "&decimalLongitude=" + bounds.getWest() + "," + bounds.getEast();
+  // ============================================
+  // FUNCIÓN: Calcular área aproximada
+  // ============================================
+  function calcularAreaKm2(bounds) {
+    var R = 6371; // Radio de la Tierra en km
+    var lat1 = bounds.getSouth() * Math.PI / 180;
+    var lat2 = bounds.getNorth() * Math.PI / 180;
+    var lon1 = bounds.getWest() * Math.PI / 180;
+    var lon2 = bounds.getEast() * Math.PI / 180;
     
+    var ancho = R * Math.abs(lon2 - lon1) * Math.cos((lat1 + lat2) / 2);
+    var alto = R * Math.abs(lat2 - lat1);
+    
+    return ancho * alto;
+  }
+
+  // ============================================
+  // FUNCIÓN: Obtener imagen de una especie
+  // ============================================
+  async function obtenerImagenEspecie(nombreEspecie) {
     try {
-      var response = await fetch(url);
-      var data = await response.json();
-      return data.count > 0;
+      // 1. Buscar ocurrencias de esta especie con imágenes
+      const url = `https://api.gbif.org/v1/occurrence/search?species=${encodeURIComponent(nombreEspecie)}&media_type=StillImage&limit=5&hasCoordinate=true`;
+      
+      const response = await fetch(url);
+      const data = await response.json();
+      
+      if (data.results && data.results.length > 0) {
+        // Buscar la primera ocurrencia con imagen válida
+        for (let ocurrencia of data.results) {
+          if (ocurrencia.media && ocurrencia.media.length > 0) {
+            const imagen = ocurrencia.media.find(m => 
+              m.type === 'StillImage' && 
+              m.identifier && 
+              !m.identifier.includes('map') &&
+              !m.identifier.includes('thumbnail')
+            );
+            
+            if (imagen && imagen.identifier) {
+              // Intentar diferentes formatos de URL
+              let urlImagen = imagen.identifier;
+              
+              // Si es una URL de iNaturalist, usar el tamaño mediano
+              if (urlImagen.includes('inaturalist')) {
+                urlImagen = urlImagen.replace('/square', '/medium');
+                urlImagen = urlImagen.replace('/original', '/medium');
+              }
+              
+              // Si es de GBIF, intentar redimensionar
+              if (urlImagen.includes('gbif.org')) {
+                urlImagen = urlImagen + '?w=200&h=200';
+              }
+              
+              return {
+                url: urlImagen,
+                ocurrenciaId: ocurrencia.key,
+                licencia: ocurrencia.license || 'CC BY-NC'
+              };
+            }
+          }
+        }
+      }
+      return null;
     } catch (error) {
-      return false;
+      console.error(`Error obteniendo imagen para ${nombreEspecie}:`, error);
+      return null;
     }
   }
 
-  // Consultar GBIF con límite aumentado
+  // ============================================
+  // FUNCIÓN PRINCIPAL: Consultar GBIF
+  // ============================================
   async function consultarGBIF() {
-    document.getElementById("resultados").textContent = "Consultando GBIF...";
+    // Mostrar estado de carga
+    document.getElementById("resultados").innerHTML = `
+      <div style="text-align: center; padding: 40px;">
+        <div class="loading"></div>
+        <p style="margin-top: 20px; color: #666;">Consultando GBIF y buscando fotos...</p>
+      </div>
+    `;
     document.getElementById("mensajeAyuda").style.display = "none";
 
-    var bounds = areaSeleccionada ? areaSeleccionada : map.getBounds();
-    var north = bounds.getNorth();
-    var south = bounds.getSouth();
-    var east = bounds.getEast();
-    var west = bounds.getWest();
-
-    // Verificar que el área no sea demasiado grande
-    var areaAproximada = (north - south) * (east - west) * 111 * 111; // Área aproximada en km²
-    if (areaAproximada > 100000) {
+    // Validar área
+    if (!areaSeleccionada) {
       document.getElementById("mensajeAyuda").innerHTML = 
-        "⚠️ El área seleccionada es muy grande (" + Math.round(areaAproximada) + " km²). " +
-        "Prueba a seleccionar un área más pequeña para obtener mejores resultados.";
+        "⚠️ Por favor, dibuja un rectángulo en el mapa antes de consultar.";
+      document.getElementById("mensajeAyuda").style.display = "block";
+      document.getElementById("resultados").innerHTML = 
+        '<p style="color: #856404; text-align: center;">📍 Dibuja un área en el mapa para comenzar</p>';
+      return;
+    }
+
+    var bounds = areaSeleccionada;
+    var claseSeleccionada = document.getElementById("grupo").value;
+
+    // Verificar tamaño del área
+    var areaKm2 = calcularAreaKm2(bounds);
+    if (areaKm2 > 100000) {
+      document.getElementById("mensajeAyuda").innerHTML = 
+        `⚠️ El área seleccionada es muy grande (${areaKm2.toFixed(0)} km²).<br>
+        Los resultados pueden tardar o ser limitados. Prueba con un área más pequeña.`;
       document.getElementById("mensajeAyuda").style.display = "block";
     }
 
-    var claseSeleccionada = document.getElementById("grupo").value;
-
-    // Construir URL con mejores parámetros
-    var url = "https://api.gbif.org/v1/occurrence/search?" +
-              "hasCoordinate=true" +
-              "&hasGeospatialIssue=false" + // Evitar registros con problemas
-              "&limit=1000" +
-              "&kingdomKey=1"; // Animalia
-
-    if (claseSeleccionada) {
-      url += "&classKey=" + claseSeleccionada;
-    }
-
-    url += "&decimalLatitude=" + south + "," + north +
-           "&decimalLongitude=" + west + "," + east;
-
-    console.log("Consultando URL:", url);
-
     try {
+      // ========================================
+      // CONSULTA 1: Obtener especies del área
+      // ========================================
+      var url = "https://api.gbif.org/v1/occurrence/search?" +
+                "hasCoordinate=true" +
+                "&hasGeospatialIssue=false" +
+                "&limit=300" + // Máximo por petición
+                "&kingdomKey=1";
+
+      if (claseSeleccionada) {
+        url += "&classKey=" + claseSeleccionada;
+      }
+
+      url += "&decimalLatitude=" + bounds.getSouth() + "," + bounds.getNorth() +
+             "&decimalLongitude=" + bounds.getWest() + "," + bounds.getEast();
+
+      console.log("Consultando GBIF:", url);
+      
       var response = await fetch(url);
       
       if (!response.ok) {
-        throw new Error("Error HTTP: " + response.status);
+        throw new Error(`Error HTTP: ${response.status}`);
       }
       
       var data = await response.json();
 
-      var especies = new Set();
+      // ========================================
+      // Procesar especies únicas
+      // ========================================
+      var especiesMap = new Map();
 
       if (data.results && data.results.length > 0) {
         data.results.forEach(function(r) {
           if (r.species && r.species.trim() !== '') {
-            especies.add(r.species + " (" + (r.vernacularName || "Nombre común no disponible") + ")");
-          } else if (r.vernacularName) {
-            especies.add(r.vernacularName + " (nombre común)");
+            if (!especiesMap.has(r.species)) {
+              especiesMap.set(r.species, {
+                nombre: r.species,
+                nombreComun: r.vernacularName || "Nombre común no disponible",
+                reino: r.kingdom || "Animalia",
+                filo: r.phylum || "No disponible",
+                clase: r.class || "No disponible",
+                orden: r.order || "No disponible",
+                familia: r.family || "No disponible",
+                imagen: null,
+                licencia: null,
+                ocurrenciaId: null
+              });
+            }
           }
         });
       }
 
-      if (especies.size === 0) {
-        // Intentar consulta sin filtro de clase para ver si hay datos en general
-        var hayDatos = await verificarDatosEnArea(bounds);
-        
-        var mensaje = "No se encontraron especies para ";
-        mensaje += claseSeleccionada ? "este grupo" : "ningún grupo";
-        mensaje += " en el área seleccionada.\n\n";
-        
-        if (!hayDatos) {
-          mensaje += "⚠️ No se encontraron registros de GBIF en esta área.\n";
-          mensaje += "Prueba a:\n";
-          mensaje += "• Seleccionar un área más grande\n";
-          mensaje += "• Dibujar un rectángulo sobre tierra firme\n";
-          mensaje += "• Probar con otra región con más biodiversidad\n";
-        } else {
-          mensaje += "Hay registros en el área, pero no de este grupo taxonómico.\n";
-          mensaje += "Prueba con otro grupo o elimina el filtro.";
-        }
-        
-        document.getElementById("resultados").textContent = mensaje;
+      // ========================================
+      // Verificar si hay resultados
+      // ========================================
+      if (especiesMap.size === 0) {
+        document.getElementById("resultados").innerHTML = `
+          <div style="text-align: center; padding: 40px;">
+            <p style="font-size: 48px; margin-bottom: 20px;">🔍</p>
+            <h3 style="color: #856404;">No se encontraron especies</h3>
+            <p style="color: #666;">
+              No hay registros de ${claseSeleccionada ? 'este grupo' : 'animales'} en esta área.<br><br>
+              Prueba a:
+            </p>
+            <ul style="color: #666; text-align: left; display: inline-block;">
+              <li>Seleccionar un área más grande</li>
+              <li>Elegir otro grupo taxonómico</li>
+              <li>Dibujar sobre tierra firme</li>
+              <li>Probar en una región con más biodiversidad</li>
+            </ul>
+          </div>
+        `;
         return;
       }
 
-      var texto = "";
-      var listaEspecies = Array.from(especies).sort();
-      listaEspecies.forEach(function(e) {
-        texto += "• " + e + "\n";
+      // ========================================
+      // CONSULTA 2: Buscar fotos para las especies
+      // (Limitamos a 15 especies para no saturar)
+      // ========================================
+      var especiesArray = Array.from(especiesMap.values());
+      var totalEspecies = especiesArray.length;
+      var especiesConImagen = 0;
+      
+      // Actualizar UI con progreso
+      document.getElementById("resultados").innerHTML = `
+        <div style="text-align: center; padding: 20px;">
+          <div class="loading"></div>
+          <p style="margin-top: 20px; color: #666;">
+            Buscando fotos para ${totalEspecies} especies...<br>
+            <span style="font-size: 14px;">(Esto puede tomar unos segundos)</span>
+          </p>
+        </div>
+      `;
+
+      // Buscar imágenes para las primeras 20 especies
+      var especiesProcesar = especiesArray.slice(0, 20);
+      
+      for (let i = 0; i < especiesProcesar.length; i++) {
+        let especie = especiesProcesar[i];
+        let imagenInfo = await obtenerImagenEspecie(especie.nombre);
+        
+        if (imagenInfo) {
+          especie.imagen = imagenInfo.url;
+          especie.licencia = imagenInfo.licencia;
+          especie.ocurrenciaId = imagenInfo.ocurrenciaId;
+          especiesConImagen++;
+        }
+        
+        // Actualizar progreso cada 5 especies
+        if ((i + 1) % 5 === 0 || i === especiesProcesar.length - 1) {
+          document.getElementById("resultados").innerHTML = `
+            <div style="text-align: center; padding: 20px;">
+              <div class="loading"></div>
+              <p style="margin-top: 20px; color: #666;">
+                Buscando fotos: ${i + 1}/${especiesProcesar.length} especies<br>
+                <span style="font-size: 14px;">Encontradas: ${especiesConImagen} fotos</span>
+              </p>
+            </div>
+          `;
+        }
+        
+        // Pequeña pausa para no saturar la API
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+
+      // ========================================
+      // MOSTRAR RESULTADOS
+      // ========================================
+      var html = `
+        <div class="stats">
+          📊 Total especies únicas: ${totalEspecies}<br>
+          📸 Especies con foto: ${especiesConImagen}/${Math.min(20, totalEspecies)} mostradas<br>
+          🔬 Grupo: ${document.getElementById("grupo").selectedOptions[0].text || 'Todos'}<br>
+          📏 Área: ${areaKm2.toFixed(0)} km²
+        </div>
+        <div style="max-height: 500px; overflow-y: auto;">
+      `;
+
+      // Mostrar especies procesadas
+      especiesProcesar.forEach(function(especie) {
+        html += `<div class="especie-card">`;
+        
+        if (especie.imagen) {
+          html += `<img class="especie-imagen" src="${especie.imagen}" 
+                    alt="${especie.nombre}" 
+                    onerror="this.onerror=null; this.style.display='none'; this.parentElement.innerHTML += '&lt;div class=\\'especie-placeholder\\'&gt;📷&lt;br&gt;Error&lt;/div&gt;';">`;
+        } else {
+          html += `<div class="especie-placeholder">📷<br>Sin foto</div>`;
+        }
+        
+        html += `<div class="especie-info">`;
+        html += `<div class="especie-nombre">${especie.nombre}</div>`;
+        html += `<div class="especie-comun">${especie.nombreComun}</div>`;
+        html += `<div style="font-size: 12px; color: #999; margin-top: 5px;">`;
+        html += `📌 ${especie.familia} • ${especie.orden}`;
+        
+        if (especie.ocurrenciaId) {
+          html += `<br><a class="especie-enlace" 
+                    href="https://www.gbif.org/occurrence/${especie.ocurrenciaId}" 
+                    target="_blank">🔗 Ver en GBIF</a>`;
+          
+          if (especie.licencia) {
+            html += ` • <span style="color: #666;">${especie.licencia}</span>`;
+          }
+        }
+        
+        html += `</div>`;
+        html += `</div>`; // Cierra especie-info
+        html += `</div>`; // Cierra especie-card
       });
 
-      document.getElementById("resultados").textContent =
-        "✅ Total especies únicas: " + especies.size + "\n" +
-        "📊 Total registros encontrados: " + (data.count || data.results.length) + "\n\n" +
-        texto;
+      // Si hay más especies de las que mostramos
+      if (totalEspecies > 20) {
+        html += `<div style="text-align: center; padding: 15px; background: #f8f9fa; border-radius: 8px; margin-top: 10px;">
+          <p style="color: #666; margin: 0;">
+            ⚠️ Mostrando 20 de ${totalEspecies} especies<br>
+            <small>Acota más el área para ver todas las especies</small>
+          </p>
+        </div>`;
+      }
+
+      html += `</div>`; // Cierra el contenedor scrollable
+      
+      document.getElementById("resultados").innerHTML = html;
 
     } catch (error) {
-      document.getElementById("resultados").textContent = 
-        "❌ Error al consultar GBIF.\n" +
-        "Asegúrate de tener conexión a internet y que el área seleccionada sea válida.\n" +
-        "Detalles: " + error.message;
       console.error("Error completo:", error);
+      document.getElementById("resultados").innerHTML = `
+        <div style="text-align: center; padding: 40px; color: #721c24; background: #f8d7da; border-radius: 8px;">
+          <p style="font-size: 48px; margin-bottom: 20px;">❌</p>
+          <h3>Error al consultar GBIF</h3>
+          <p style="margin-top: 20px;">
+            ${error.message}<br><br>
+            Verifica tu conexión a internet y vuelve a intentarlo.
+          </p>
+        </div>
+      `;
     }
   }
 
-  // Verificar que los códigos de clase son correctos al cargar la página
+  // ============================================
+  // INICIALIZACIÓN
+  // ============================================
   window.onload = function() {
-    console.log("Códigos de clase GBIF:");
-    console.log("Aves (212): https://www.gbif.org/species/212");
-    console.log("Mamíferos (359): https://www.gbif.org/species/359");
-    console.log("Reptiles (358): https://www.gbif.org/species/358");
-    console.log("Anfibios (131): https://www.gbif.org/species/131");
-    console.log("Peces óseos (203): https://www.gbif.org/species/203");
-    console.log("Insectos (216): https://www.gbif.org/species/216");
+    console.log("ExploreNat iniciado con soporte de fotos");
+    console.log("Códigos de clase GBIF verificados:");
+    console.log("- Aves: 212");
+    console.log("- Mamíferos: 359"); 
+    console.log("- Reptiles: 358");
+    console.log("- Anfibios: 131");
+    console.log("- Peces óseos: 203");
+    console.log("- Insectos: 216");
   };
 
 </script>
