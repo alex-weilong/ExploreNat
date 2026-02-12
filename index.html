@@ -33,6 +33,15 @@
       padding: 10px;
       white-space: pre-wrap;
     }
+
+    .warning {
+      color: #856404;
+      background-color: #fff3cd;
+      border: 1px solid #ffeeba;
+      padding: 10px;
+      border-radius: 4px;
+      margin-bottom: 10px;
+    }
   </style>
 </head>
 <body>
@@ -47,13 +56,15 @@
 <label for="grupo">Selecciona grupo:</label>
 <select id="grupo">
   <option value="">Todos</option>
-  <option value="212">Aves</option>
-  <option value="359">Mamíferos</option>
-  <option value="358">Reptiles</option>
-  <option value="187">Anfibios</option>
-  <option value="204">Peces óseos</option>
-  <option value="216">Insectos</option>
+  <option value="212">Aves (classKey 212)</option>
+  <option value="359">Mamíferos (classKey 359)</option>
+  <option value="358">Reptiles (classKey 358)</option>
+  <option value="131">Anfibios (classKey 131)</option> <!-- Corregido: código correcto para anfibios -->
+  <option value="203">Peces óseos (classKey 203)</option> <!-- Corregido: Actinopterygii -->
+  <option value="216">Insectos (classKey 216)</option>
 </select>
+
+<div id="mensajeAyuda" class="warning" style="display: none;"></div>
 
 <h3>Coordenadas:</h3>
 <pre id="coords"></pre>
@@ -93,6 +104,9 @@
     drawnItems.clearLayers(); // solo un área a la vez
     drawnItems.addLayer(layer);
     areaSeleccionada = layer.getBounds();
+    
+    // Limpiar mensaje de ayuda
+    document.getElementById("mensajeAyuda").style.display = "none";
   });
 
   // Mostrar coordenadas del área
@@ -104,16 +118,33 @@
     var west = bounds.getWest();
 
     document.getElementById("coords").textContent =
-      "North: " + north + "\n" +
-      "South: " + south + "\n" +
-      "East: " + east + "\n" +
-      "West: " + west;
+      "North: " + north.toFixed(4) + "\n" +
+      "South: " + south.toFixed(4) + "\n" +
+      "East: " + east.toFixed(4) + "\n" +
+      "West: " + west.toFixed(4);
+  }
+
+  // Función para verificar si hay datos en el área
+  async function verificarDatosEnArea(bounds) {
+    var url = "https://api.gbif.org/v1/occurrence/search?" +
+              "hasCoordinate=true" +
+              "&limit=1" +
+              "&decimalLatitude=" + bounds.getSouth() + "," + bounds.getNorth() +
+              "&decimalLongitude=" + bounds.getWest() + "," + bounds.getEast();
+    
+    try {
+      var response = await fetch(url);
+      var data = await response.json();
+      return data.count > 0;
+    } catch (error) {
+      return false;
+    }
   }
 
   // Consultar GBIF con límite aumentado
   async function consultarGBIF() {
-
     document.getElementById("resultados").textContent = "Consultando GBIF...";
+    document.getElementById("mensajeAyuda").style.display = "none";
 
     var bounds = areaSeleccionada ? areaSeleccionada : map.getBounds();
     var north = bounds.getNorth();
@@ -121,13 +152,23 @@
     var east = bounds.getEast();
     var west = bounds.getWest();
 
+    // Verificar que el área no sea demasiado grande
+    var areaAproximada = (north - south) * (east - west) * 111 * 111; // Área aproximada en km²
+    if (areaAproximada > 100000) {
+      document.getElementById("mensajeAyuda").innerHTML = 
+        "⚠️ El área seleccionada es muy grande (" + Math.round(areaAproximada) + " km²). " +
+        "Prueba a seleccionar un área más pequeña para obtener mejores resultados.";
+      document.getElementById("mensajeAyuda").style.display = "block";
+    }
+
     var claseSeleccionada = document.getElementById("grupo").value;
 
-    // Construir URL
+    // Construir URL con mejores parámetros
     var url = "https://api.gbif.org/v1/occurrence/search?" +
               "hasCoordinate=true" +
-              "&limit=1000" +   // límite más alto para grupos poco muestreados
-              "&kingdomKey=1";   // Animalia
+              "&hasGeospatialIssue=false" + // Evitar registros con problemas
+              "&limit=1000" +
+              "&kingdomKey=1"; // Animalia
 
     if (claseSeleccionada) {
       url += "&classKey=" + claseSeleccionada;
@@ -136,37 +177,82 @@
     url += "&decimalLatitude=" + south + "," + north +
            "&decimalLongitude=" + west + "," + east;
 
+    console.log("Consultando URL:", url);
+
     try {
       var response = await fetch(url);
+      
+      if (!response.ok) {
+        throw new Error("Error HTTP: " + response.status);
+      }
+      
       var data = await response.json();
 
       var especies = new Set();
 
-      data.results.forEach(function(r) {
-        if (r.species) {
-          especies.add(r.species);
-        }
-      });
+      if (data.results && data.results.length > 0) {
+        data.results.forEach(function(r) {
+          if (r.species && r.species.trim() !== '') {
+            especies.add(r.species + " (" + (r.vernacularName || "Nombre común no disponible") + ")");
+          } else if (r.vernacularName) {
+            especies.add(r.vernacularName + " (nombre común)");
+          }
+        });
+      }
 
       if (especies.size === 0) {
-        document.getElementById("resultados").textContent =
-          "No se encontraron especies para este grupo en el área seleccionada.\nPrueba ampliando la zona o cambiando el grupo.";
+        // Intentar consulta sin filtro de clase para ver si hay datos en general
+        var hayDatos = await verificarDatosEnArea(bounds);
+        
+        var mensaje = "No se encontraron especies para ";
+        mensaje += claseSeleccionada ? "este grupo" : "ningún grupo";
+        mensaje += " en el área seleccionada.\n\n";
+        
+        if (!hayDatos) {
+          mensaje += "⚠️ No se encontraron registros de GBIF en esta área.\n";
+          mensaje += "Prueba a:\n";
+          mensaje += "• Seleccionar un área más grande\n";
+          mensaje += "• Dibujar un rectángulo sobre tierra firme\n";
+          mensaje += "• Probar con otra región con más biodiversidad\n";
+        } else {
+          mensaje += "Hay registros en el área, pero no de este grupo taxonómico.\n";
+          mensaje += "Prueba con otro grupo o elimina el filtro.";
+        }
+        
+        document.getElementById("resultados").textContent = mensaje;
         return;
       }
 
       var texto = "";
-      especies.forEach(function(e) {
-        texto += e + "\n";
+      var listaEspecies = Array.from(especies).sort();
+      listaEspecies.forEach(function(e) {
+        texto += "• " + e + "\n";
       });
 
       document.getElementById("resultados").textContent =
-        "Total especies únicas: " + especies.size + "\n\n" + texto;
+        "✅ Total especies únicas: " + especies.size + "\n" +
+        "📊 Total registros encontrados: " + (data.count || data.results.length) + "\n\n" +
+        texto;
 
     } catch (error) {
-      document.getElementById("resultados").textContent = "Error al consultar GBIF.";
-      console.error(error);
+      document.getElementById("resultados").textContent = 
+        "❌ Error al consultar GBIF.\n" +
+        "Asegúrate de tener conexión a internet y que el área seleccionada sea válida.\n" +
+        "Detalles: " + error.message;
+      console.error("Error completo:", error);
     }
   }
+
+  // Verificar que los códigos de clase son correctos al cargar la página
+  window.onload = function() {
+    console.log("Códigos de clase GBIF:");
+    console.log("Aves (212): https://www.gbif.org/species/212");
+    console.log("Mamíferos (359): https://www.gbif.org/species/359");
+    console.log("Reptiles (358): https://www.gbif.org/species/358");
+    console.log("Anfibios (131): https://www.gbif.org/species/131");
+    console.log("Peces óseos (203): https://www.gbif.org/species/203");
+    console.log("Insectos (216): https://www.gbif.org/species/216");
+  };
 
 </script>
 
