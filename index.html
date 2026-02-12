@@ -7,6 +7,9 @@
   <!-- Leaflet CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
 
+  <!-- Leaflet Draw CSS -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css"/>
+
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -61,6 +64,9 @@
 <!-- Leaflet JS -->
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
+<!-- Leaflet Draw JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
+
 <script>
 
   // Crear mapa
@@ -70,9 +76,29 @@
     attribution: '© OpenStreetMap'
   }).addTo(map);
 
+  // Grupo para dibujar áreas
+  var drawnItems = new L.FeatureGroup();
+  map.addLayer(drawnItems);
+
+  var drawControl = new L.Control.Draw({
+    edit: { featureGroup: drawnItems },
+    draw: { polygon: false, polyline: false, circle: false, marker: false, circlemarker: false, rectangle: true }
+  });
+  map.addControl(drawControl);
+
+  var areaSeleccionada = null;
+
+  // Guardar el rectángulo dibujado
+  map.on(L.Draw.Event.CREATED, function(e) {
+    var layer = e.layer;
+    drawnItems.clearLayers(); // solo un área a la vez
+    drawnItems.addLayer(layer);
+    areaSeleccionada = layer.getBounds();
+  });
+
   // Mostrar coordenadas del área visible
   function obtenerArea() {
-    var bounds = map.getBounds();
+    var bounds = areaSeleccionada ? areaSeleccionada : map.getBounds();
 
     var north = bounds.getNorth();
     var south = bounds.getSouth();
@@ -91,7 +117,7 @@
 
     document.getElementById("resultados").textContent = "Consultando GBIF...";
 
-    var bounds = map.getBounds();
+    var bounds = areaSeleccionada ? areaSeleccionada : map.getBounds();
     var north = bounds.getNorth();
     var south = bounds.getSouth();
     var east = bounds.getEast();
