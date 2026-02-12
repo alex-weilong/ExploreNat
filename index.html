@@ -8,41 +8,124 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
 
   <style>
-    #map { height: 500px; }
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+
+    #map {
+      height: 500px;
+      margin-bottom: 15px;
+    }
+
+    button {
+      margin-right: 10px;
+      margin-bottom: 10px;
+      padding: 8px 12px;
+      cursor: pointer;
+    }
+
+    pre {
+      background: #f4f4f4;
+      padding: 10px;
+      white-space: pre-wrap;
+    }
   </style>
 </head>
 <body>
 
 <h1>Explorador de Biodiversidad</h1>
+
 <div id="map"></div>
+
 <button onclick="obtenerArea()">Obtener coordenadas</button>
+<button onclick="consultarGBIF()">Consultar animales en esta área</button>
+
+<h3>Coordenadas:</h3>
 <pre id="coords"></pre>
+
+<h3>Especies encontradas:</h3>
+<pre id="resultados"></pre>
+
 <!-- Leaflet JS -->
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
 <script>
+
+  // Crear mapa
   var map = L.map('map').setView([40.4168, -3.7038], 6);
 
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '© OpenStreetMap'
   }).addTo(map);
+
+  // Mostrar coordenadas del área visible
   function obtenerArea() {
-  var bounds = map.getBounds();
+    var bounds = map.getBounds();
 
-  var north = bounds.getNorth();
-  var south = bounds.getSouth();
-  var east = bounds.getEast();
-  var west = bounds.getWest();
+    var north = bounds.getNorth();
+    var south = bounds.getSouth();
+    var east = bounds.getEast();
+    var west = bounds.getWest();
 
-  document.getElementById("coords").textContent =
-    "North: " + north + "\n" +
-    "South: " + south + "\n" +
-    "East: " + east + "\n" +
-    "West: " + west;
-}
+    document.getElementById("coords").textContent =
+      "North: " + north + "\n" +
+      "South: " + south + "\n" +
+      "East: " + east + "\n" +
+      "West: " + west;
+  }
+
+  // Consultar GBIF
+  async function consultarGBIF() {
+
+    document.getElementById("resultados").textContent = "Consultando GBIF...";
+
+    var bounds = map.getBounds();
+
+    var north = bounds.getNorth();
+    var south = bounds.getSouth();
+    var east = bounds.getEast();
+    var west = bounds.getWest();
+
+    var url = "https://api.gbif.org/v1/occurrence/search?" +
+              "hasCoordinate=true" +
+              "&limit=100" +
+              "&kingdomKey=1" +   // Animalia
+              "&decimalLatitude=" + south + "," + north +
+              "&decimalLongitude=" + west + "," + east;
+
+    try {
+      var response = await fetch(url);
+      var data = await response.json();
+
+      var especies = new Set();
+
+      data.results.forEach(function(r) {
+        if (r.species) {
+          especies.add(r.species);
+        }
+      });
+
+      if (especies.size === 0) {
+        document.getElementById("resultados").textContent = "No se encontraron especies.";
+        return;
+      }
+
+      var texto = "";
+      especies.forEach(function(e) {
+        texto += e + "\n";
+      });
+
+      document.getElementById("resultados").textContent =
+        "Total especies únicas: " + especies.size + "\n\n" + texto;
+
+    } catch (error) {
+      document.getElementById("resultados").textContent = "Error al consultar GBIF.";
+      console.error(error);
+    }
+  }
 
 </script>
 
 </body>
 </html>
-
