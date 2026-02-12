@@ -3,9 +3,30 @@
 <head>
   <meta charset="UTF-8">
   <title>Explorador de Biodiversidad</title>
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+
+  <style>
+    #map { height: 500px; }
+  </style>
 </head>
 <body>
-  <h1>Mi proyecto de biodiversidad</h1>
-  <p>Pronto aquí aparecerá el mapa.</p>
+
+<h1>Explorador de Biodiversidad</h1>
+<div id="map"></div>
+
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+<script>
+  var map = L.map('map').setView([40.4168, -3.7038], 6);
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap'
+  }).addTo(map);
+</script>
+
 </body>
 </html>
+
