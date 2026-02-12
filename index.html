@@ -295,7 +295,7 @@
   // ============================================
   async function obtenerImagenEspecie(nombreEspecie) {
     try {
-      // 1. Buscar ocurrencias de esta especie con imágenes
+      // Buscar ocurrencias de esta especie con imágenes
       const url = `https://api.gbif.org/v1/occurrence/search?species=${encodeURIComponent(nombreEspecie)}&media_type=StillImage&limit=5&hasCoordinate=true`;
       
       const response = await fetch(url);
@@ -329,7 +329,7 @@
               
               return {
                 url: urlImagen,
-                ocurrenciaId: ocurrencia.key,
+                speciesKey: ocurrencia.speciesKey, // CORREGIDO: Ahora usa speciesKey
                 licencia: ocurrencia.license || 'CC BY-NC'
               };
             }
@@ -385,7 +385,7 @@
       var url = "https://api.gbif.org/v1/occurrence/search?" +
                 "hasCoordinate=true" +
                 "&hasGeospatialIssue=false" +
-                "&limit=300" + // Máximo por petición
+                "&limit=300" +
                 "&kingdomKey=1";
 
       if (claseSeleccionada) {
@@ -422,9 +422,9 @@
                 clase: r.class || "No disponible",
                 orden: r.order || "No disponible",
                 familia: r.family || "No disponible",
+                speciesKey: r.speciesKey || null, // CORREGIDO: Guardamos speciesKey desde el principio
                 imagen: null,
-                licencia: null,
-                ocurrenciaId: null
+                licencia: null
               });
             }
           }
@@ -456,7 +456,6 @@
 
       // ========================================
       // CONSULTA 2: Buscar fotos para las especies
-      // (Limitamos a 15 especies para no saturar)
       // ========================================
       var especiesArray = Array.from(especiesMap.values());
       var totalEspecies = especiesArray.length;
@@ -483,7 +482,10 @@
         if (imagenInfo) {
           especie.imagen = imagenInfo.url;
           especie.licencia = imagenInfo.licencia;
-          especie.ocurrenciaId = imagenInfo.ocurrenciaId;
+          // Si no teníamos speciesKey, lo obtenemos de la búsqueda de imagen
+          if (!especie.speciesKey) {
+            especie.speciesKey = imagenInfo.speciesKey;
+          }
           especiesConImagen++;
         }
         
@@ -535,14 +537,20 @@
         html += `<div style="font-size: 12px; color: #999; margin-top: 5px;">`;
         html += `📌 ${especie.familia} • ${especie.orden}`;
         
-        if (especie.ocurrenciaId) {
+        // CORREGIDO: Ahora enlaza a la página de la especie, no a una ocurrencia
+        if (especie.speciesKey) {
           html += `<br><a class="especie-enlace" 
-                    href="https://www.gbif.org/occurrence/${especie.ocurrenciaId}" 
-                    target="_blank">🔗 Ver en GBIF</a>`;
+                    href="https://www.gbif.org/species/${especie.speciesKey}" 
+                    target="_blank">🔗 Ver ficha de la especie en GBIF</a>`;
           
           if (especie.licencia) {
             html += ` • <span style="color: #666;">${especie.licencia}</span>`;
           }
+        } else {
+          // Fallback: búsqueda por nombre si no tenemos speciesKey
+          html += `<br><a class="especie-enlace" 
+                    href="https://www.gbif.org/search?q=${encodeURIComponent(especie.nombre)}" 
+                    target="_blank">🔗 Buscar en GBIF</a>`;
         }
         
         html += `</div>`;
@@ -583,7 +591,7 @@
   // INICIALIZACIÓN
   // ============================================
   window.onload = function() {
-    console.log("ExploreNat iniciado con soporte de fotos");
+    console.log("ExploreNat iniciado con soporte de fotos y enlaces a especies");
     console.log("Códigos de clase GBIF verificados:");
     console.log("- Aves: 212");
     console.log("- Mamíferos: 359"); 
