@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>ExploreNat</title>
+  <title>Explorador de Biodiversidad</title>
 
   <!-- Leaflet CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
@@ -47,12 +47,12 @@
 <label for="grupo">Selecciona grupo:</label>
 <select id="grupo">
   <option value="">Todos</option>
-  <option value="Aves">Aves</option>
-  <option value="Mammalia">Mamíferos</option>
-  <option value="Reptilia">Reptiles</option>
-  <option value="Amphibia">Anfibios</option>
-  <option value="Actinopterygii">Peces óseos</option>
-  <option value="Insecta">Insectos</option>
+  <option value="212">Aves</option>
+  <option value="359">Mamíferos</option>
+  <option value="358">Reptiles</option>
+  <option value="187">Anfibios</option>
+  <option value="204">Peces óseos</option>
+  <option value="216">Insectos</option>
 </select>
 
 <h3>Coordenadas:</h3>
@@ -96,7 +96,7 @@
     areaSeleccionada = layer.getBounds();
   });
 
-  // Mostrar coordenadas del área visible
+  // Mostrar coordenadas del área
   function obtenerArea() {
     var bounds = areaSeleccionada ? areaSeleccionada : map.getBounds();
 
@@ -112,7 +112,7 @@
       "West: " + west;
   }
 
-  // Consultar GBIF con filtro por grupo
+  // Consultar GBIF con filtro por grupo usando classKey
   async function consultarGBIF() {
 
     document.getElementById("resultados").textContent = "Consultando GBIF...";
@@ -131,7 +131,7 @@
               "&kingdomKey=1";   // Animalia
 
     if (claseSeleccionada) {
-      url += "&class=" + claseSeleccionada;
+      url += "&classKey=" + claseSeleccionada;
     }
 
     url += "&decimalLatitude=" + south + "," + north +
