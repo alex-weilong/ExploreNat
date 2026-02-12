@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Explorador de Biodiversidad</title>
+  <title>ExploreNat</title>
 
   <!-- Leaflet CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
@@ -68,7 +68,6 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
 
 <script>
-
   // Crear mapa
   var map = L.map('map').setView([40.4168, -3.7038], 6);
 
@@ -99,7 +98,6 @@
   // Mostrar coordenadas del área
   function obtenerArea() {
     var bounds = areaSeleccionada ? areaSeleccionada : map.getBounds();
-
     var north = bounds.getNorth();
     var south = bounds.getSouth();
     var east = bounds.getEast();
@@ -112,7 +110,7 @@
       "West: " + west;
   }
 
-  // Consultar GBIF con filtro por grupo usando classKey
+  // Consultar GBIF con límite aumentado
   async function consultarGBIF() {
 
     document.getElementById("resultados").textContent = "Consultando GBIF...";
@@ -125,9 +123,10 @@
 
     var claseSeleccionada = document.getElementById("grupo").value;
 
+    // Construir URL
     var url = "https://api.gbif.org/v1/occurrence/search?" +
               "hasCoordinate=true" +
-              "&limit=100" +
+              "&limit=1000" +   // límite más alto para grupos poco muestreados
               "&kingdomKey=1";   // Animalia
 
     if (claseSeleccionada) {
@@ -150,7 +149,8 @@
       });
 
       if (especies.size === 0) {
-        document.getElementById("resultados").textContent = "No se encontraron especies.";
+        document.getElementById("resultados").textContent =
+          "No se encontraron especies para este grupo en el área seleccionada.\nPrueba ampliando la zona o cambiando el grupo.";
         return;
       }
 
