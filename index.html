@@ -1,3 +1,4 @@
+`html
 <!DOCTYPE html>
 <html>
 <head>
@@ -648,7 +649,7 @@
   // PESTAÑA 1 - CONSULTA COMPLETA (TODAS LAS ESPECIES)
   // ============================================
   
-  async function consultarINaturalistCompleto() {
+async function consultarINaturalistCompleto() {
     if (!areaSeleccionada) {
       alert("Primero dibuja un área en el mapa");
       return;
@@ -688,4 +689,237 @@
 
       const totalEspecies = data.total_results;
       
-      // Aho
+      // Ahora obtenemos todas las especies con paginación
+      urlBase = `https://api.inaturalist.org/v1/observations/species_counts?` +
+                `verifiable=${soloResearch}` +
+                `&per_page=200` +
+                `&swlat=${bounds.getSouth()}` +
+                `&swlng=${bounds.getWest()}` +
+                `&nelat=${bounds.getNorth()}` +
+                `&nelng=${bounds.getEast()}`;
+
+      if (grupo) {
+        urlBase += `&taxon_name=${encodeURIComponent(grupo)}`;
+      }
+
+      todasLasEspecies = await obtenerTodasLasEspecies(urlBase, totalEspecies);
+      
+      if (todasLasEspecies.length === 0) {
+        document.getElementById("resultados").innerHTML = "No se pudieron cargar las especies";
+        return;
+      }
+
+      paginaActual = 1;
+      mostrarPagina(1);
+
+    } catch (error) {
+      document.getElementById("resultados").innerHTML = `Error: ${error.message}`;
+      document.getElementById("progreso").style.display = "none";
+    }
+  }
+
+  // ============================================
+  // PESTAÑA 2 - COMPLETADA
+  // ============================================
+  
+  async function buscarEspecieINat() {
+    const nombre = document.getElementById("buscadorEspecie").value.trim();
+    if (!nombre) return alert("Escribe el nombre de una especie");
+    if (!areaSeleccionada) return alert("Dibuja un área en el mapa primero");
+
+    markersLayer.clearLayers();
+    document.getElementById("resultadosBusqueda").innerHTML = '<div style="text-align: center;"><div class="loading"></div><p>Buscando observaciones...</p></div>';
+
+    const soloResearch = document.getElementById("soloResearch").checked;
+    const bounds = areaSeleccionada;
+
+    try {
+      const taxonRes = await fetch(`https://api.inaturalist.org/v1/taxa?q=${encodeURIComponent(nombre)}&per_page=1`);
+      const taxonData = await taxonRes.json();
+      
+      if (!taxonData.results || taxonData.results.length === 0) {
+        document.getElementById("resultadosBusqueda").innerHTML = "Especie no encontrada";
+        return;
+      }
+
+      const taxon = taxonData.results[0];
+
+      const url = `https://api.inaturalist.org/v1/observations?` +
+                  `taxon_id=${taxon.id}` +
+                  `&verifiable=${soloResearch}` +
+                  `&per_page=30` +
+                  `&swlat=${bounds.getSouth()}&swlng=${bounds.getWest()}` +
+                  `&nelat=${bounds.getNorth()}&nelng=${bounds.getEast()}`;
+
+      const obsRes = await fetch(url);
+      const obsData = await obsRes.json();
+
+      if (!obsData.results || obsData.results.length === 0) {
+        document.getElementById("resultadosBusqueda").innerHTML = "No hay observaciones en esta área";
+        return;
+      }
+
+      let html = `<div class="stats">📍 ${obsData.total_results} observaciones de ${taxon.preferred_common_name || taxon.name}</div>`;
+
+      obsData.results.forEach(obs => {
+        if (obs.geojson && obs.geojson.coordinates) {
+          const [lng, lat] = obs.geojson.coordinates;
+          L.circleMarker([lat, lng], { radius: 6, color: '#4CAF50' }).addTo(markersLayer).bindPopup(`
+            <b>${taxon.preferred_common_name || taxon.name}</b><br>
+            📅 ${obs.observed_on || 'Fecha desconocida'}<br>
+            👤 ${obs.user?.login || 'Anónimo'}<br>
+            🏅 ${obs.quality_grade}
+          `);
+        }
+
+        html += `<div class="inat-card">`;
+        
+        if (obs.photos && obs.photos.length > 0) {
+          html += `<img class="inat-imagen" src="${obs.photos[0].url.replace('square', 'medium')}" alt="Foto">`;
+        } else {
+          html += `<div class="inat-placeholder">📷</div>`;
+        }
+        
+        html += `<div class="inat-info">`;
+        html += `<div class="inat-titulo">${obs.observed_on || 'Fecha desconocida'}</div>`;
+        html += `<div>👤 ${obs.user?.login || 'Anónimo'}</div>`;
+        html += `<span class="badge">🏅 ${obs.quality_grade}</span>`;
+        html += `</div></div>`;
+      });
+
+      document.getElementById("resultadosBusqueda").innerHTML = html;
+      
+      if (markersLayer.getLayers().length > 0) {
+        map.fitBounds(markersLayer.getBounds().pad(0.1));
+      }
+
+    } catch (error) {
+      document.getElementById("resultadosBusqueda").innerHTML = `Error: ${error.message}`;
+    }
+  }
+
+  // ============================================
+  // PESTAÑA 3 - MODIFICADA
+  // ============================================
+  
+  document.getElementById("buscadorPais").addEventListener("input", async function(e) {
+    const query = e.target.value.trim();
+    if (query.length < 3) {
+      document.getElementById("sugerencias").innerHTML = '';
+      return;
+    }
+    
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5`,
+        { headers: { 'User-Agent': 'ExploreNat/1.0' } }
+      );
+      const sugerencias = await response.json();
+      
+      if (sugerencias.length === 0) return;
+      
+      let html = '<div class="sugerencias-container">';
+      sugerencias.forEach(s => {
+        html += `<div class="sugerencia-item" onclick="seleccionarSugerencia('${s.display_name.replace(/'/g, "\\'")}', ${s.boundingbox[0]}, ${s.boundingbox[1]}, ${s.boundingbox[2]}, ${s.boundingbox[3]}, ${s.lat}, ${s.lon})">`;
+        html += `<strong>${s.display_name}</strong>`;
+        html += `</div>`;
+      });
+      html += '</div>';
+      
+      document.getElementById("sugerencias").innerHTML = html;
+    } catch (error) {
+      console.error("Error:", error);
+    }
+  });
+
+  window.seleccionarSugerencia = function(nombre, south, north, west, east, lat, lon) {
+    document.getElementById("buscadorPais").value = nombre;
+    document.getElementById("sugerencias").innerHTML = '';
+    
+    const bounds = L.latLngBounds([parseFloat(south), parseFloat(west)], [parseFloat(north), parseFloat(east)]);
+    
+    zoneLayer.clearLayers();
+    L.rectangle(bounds, { color: "#4CAF50", weight: 3, fillOpacity: 0.1 }).addTo(zoneLayer);
+    L.marker([parseFloat(lat), parseFloat(lon)]).addTo(zoneLayer).bindPopup(nombre).openPopup();
+    
+    map.fitBounds(bounds.pad(0.1));
+    areaSeleccionada = bounds;
+    
+    document.getElementById("coords").innerHTML = 
+      `📍 ${nombre}<br>` +
+      `Norte: ${bounds.getNorth().toFixed(4)}°<br>` +
+      `Sur: ${bounds.getSouth().toFixed(4)}°<br>` +
+      `Este: ${bounds.getEast().toFixed(4)}°<br>` +
+      `Oeste: ${bounds.getWest().toFixed(4)}°`;
+    
+    consultarINaturalistCompleto();
+  };
+
+  async function buscarZona() {
+    const query = document.getElementById("buscadorPais").value.trim();
+    if (!query) return alert("Escribe un lugar");
+
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`,
+        { headers: { 'User-Agent': 'ExploreNat/1.0' } }
+      );
+      const data = await response.json();
+      
+      if (!data.length) {
+        document.getElementById("resultadosPais").innerHTML = "Lugar no encontrado";
+        return;
+      }
+
+      const lugar = data[0];
+      const bounds = L.latLngBounds(
+        [parseFloat(lugar.boundingbox[0]), parseFloat(lugar.boundingbox[2])],
+        [parseFloat(lugar.boundingbox[1]), parseFloat(lugar.boundingbox[3])]
+      );
+
+      zoneLayer.clearLayers();
+      L.rectangle(bounds, { color: "#4CAF50", weight: 3, fillOpacity: 0.1 }).addTo(zoneLayer);
+      L.marker([parseFloat(lugar.lat), parseFloat(lugar.lon)]).addTo(zoneLayer).bindPopup(lugar.display_name).openPopup();
+      
+      map.fitBounds(bounds.pad(0.1));
+      areaSeleccionada = bounds;
+      
+      document.getElementById("coords").innerHTML = 
+        `📍 ${lugar.display_name}<br>` +
+        `Norte: ${bounds.getNorth().toFixed(4)}°<br>` +
+        `Sur: ${bounds.getSouth().toFixed(4)}°<br>` +
+        `Este: ${bounds.getEast().toFixed(4)}°<br>` +
+        `Oeste: ${bounds.getWest().toFixed(4)}°`;
+
+      document.getElementById("resultadosPais").innerHTML = '';
+      await consultarINaturalistCompleto();
+
+    } catch (error) {
+      document.getElementById("resultadosPais").innerHTML = `Error: ${error.message}`;
+    }
+  }
+
+  // Enter para búsquedas
+  document.getElementById("buscadorEspecie").addEventListener("keypress", e => {
+    if (e.key === "Enter") buscarEspecieINat();
+  });
+
+  document.getElementById("buscadorPais").addEventListener("keypress", e => {
+    if (e.key === "Enter") buscarZona();
+  });
+
+  // Cerrar sugerencias
+  document.addEventListener("click", function(e) {
+    if (!e.target.closest('#buscadorPais') && !e.target.closest('.sugerencias-container')) {
+      document.getElementById("sugerencias").innerHTML = '';
+    }
+  });
+
+</script>
+
+</body>
+</html>
+```
+  
+      
+      
