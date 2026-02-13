@@ -106,6 +106,15 @@
       margin-bottom: 15px;
     }
 
+    .success {
+      color: #155724;
+      background-color: #d4edda;
+      border: 1px solid #c3e6cb;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 15px;
+    }
+
     .inat-card {
       display: flex;
       align-items: flex-start;
@@ -195,14 +204,18 @@
       font-weight: bold;
     }
 
+    .tab-container {
+      display: flex;
+      gap: 10px;
+      margin: 20px 0;
+    }
+
     .tab-button {
       background: #e9ecef;
       padding: 12px 24px;
       border-radius: 8px;
       cursor: pointer;
       font-weight: bold;
-      margin-right: 10px;
-      display: inline-block;
       border: none;
     }
 
@@ -240,27 +253,6 @@
     .sugerencia-item:hover {
       background-color: #e8f5e9;
     }
-
-    .leyenda-mapa {
-      position: absolute;
-      bottom: 20px;
-      right: 20px;
-      background: white;
-      padding: 10px;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-      z-index: 1000;
-      font-size: 12px;
-    }
-
-    .punto-verde {
-      display: inline-block;
-      width: 12px;
-      height: 12px;
-      background: #4CAF50;
-      border-radius: 50%;
-      margin-right: 5px;
-    }
   </style>
 </head>
 <body>
@@ -294,10 +286,10 @@
 <pre id="coords">Dibuja un rectángulo en el mapa</pre>
 
 <!-- Pestañas -->
-<div style="margin: 20px 0;">
-  <button class="tab-button active" onclick="cambiarTab(1)">🌍 Especies</button>
-  <button class="tab-button" onclick="cambiarTab(2)">🔍 Buscar especie</button>
-  <button class="tab-button" onclick="cambiarTab(3)">🗺️ Buscar zona</button>
+<div class="tab-container">
+  <button class="tab-button active" onclick="cambiarTab('tab1')">🌍 Especies</button>
+  <button class="tab-button" onclick="cambiarTab('tab2')">🔍 Buscar especie</button>
+  <button class="tab-button" onclick="cambiarTab('tab3')">🗺️ Buscar zona</button>
 </div>
 
 <!-- Pestaña 1 -->
@@ -340,7 +332,6 @@
   let markersLayer;
   let zoneLayer;
   let areaSeleccionada = null;
-  let especiesData = []; // Guardar datos de especies para el clic
 
   // ============================================
   // INICIALIZACIÓN
@@ -390,6 +381,7 @@
     console.log("✅ Mapa cargado correctamente");
   }
 
+  // Iniciar cuando la página cargue
   window.onload = initMap;
 
   // ============================================
@@ -405,44 +397,45 @@
     document.getElementById("resultados").innerHTML = "";
     document.getElementById("resultadosBusqueda").innerHTML = "";
     document.getElementById("resultadosPais").innerHTML = "";
-    especiesData = [];
+    document.getElementById("mensajeAyuda").style.display = "none";
   }
 
   function limpiarMarcadores() {
     if (markersLayer) markersLayer.clearLayers();
-    // Quitar clase selected de todas las cards
     document.querySelectorAll('.inat-card').forEach(card => {
       card.classList.remove('selected');
     });
   }
 
   function cambiarTab(tabId) {
-    document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
-    document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+    document.querySelectorAll('.tab-button').forEach(btn => {
+      btn.classList.remove('active');
+    });
+    document.querySelectorAll('.tab-content').forEach(content => {
+      content.classList.remove('active');
+    });
     
-    event.target.classList.add('active');
-    document.getElementById(`tab${tabId}`).classList.add('active');
+    document.querySelector(`[onclick="cambiarTab('${tabId}')"]`).classList.add('active');
+    document.getElementById(tabId).classList.add('active');
   }
 
   // ============================================
-  // FUNCIÓN PARA MOSTRAR CITAS DE UNA ESPECIE
+  // FUNCIÓN PARA MOSTRAR CITAS
   // ============================================
   
-  async function mostrarCitasEspecie(taxonId, taxonNombre, elementoCard) {
+  async function mostrarCitasEspecie(taxonId, taxonNombre, elemento) {
     if (!areaSeleccionada) {
       alert("Primero dibuja un área en el mapa");
       return;
     }
 
-    // Limpiar marcadores anteriores y selecciones
     markersLayer.clearLayers();
     document.querySelectorAll('.inat-card').forEach(card => {
       card.classList.remove('selected');
     });
 
-    // Marcar la card seleccionada
-    if (elementoCard) {
-      elementoCard.classList.add('selected');
+    if (elemento) {
+      elemento.classList.add('selected');
     }
 
     const soloResearch = document.getElementById("soloResearch").checked;
@@ -454,18 +447,18 @@
                   `&verifiable=${soloResearch}` +
                   `&per_page=50` +
                   `&swlat=${bounds.getSouth()}&swlng=${bounds.getWest()}` +
-                  `&nelat=${bounds.getNorth()}&nelng=${bounds.getEast()}` +
-                  `&order=desc&order_by=observed_on`;
+                  `&nelat=${bounds.getNorth()}&nelng=${bounds.getEast()}`;
 
       const response = await fetch(url);
       const data = await response.json();
 
       if (!data.results || data.results.length === 0) {
-        alert("No hay citas de esta especie en el área seleccionada");
+        document.getElementById("mensajeAyuda").innerHTML = `No hay citas de ${taxonNombre} en esta área`;
+        document.getElementById("mensajeAyuda").className = "warning";
+        document.getElementById("mensajeAyuda").style.display = "block";
         return;
       }
 
-      // Añadir marcadores al mapa
       data.results.forEach(obs => {
         if (obs.geojson && obs.geojson.coordinates) {
           const [lng, lat] = obs.geojson.coordinates;
@@ -486,25 +479,23 @@
         }
       });
 
-      // Ajustar mapa para mostrar los marcadores
       if (markersLayer.getLayers().length > 0) {
         map.fitBounds(markersLayer.getBounds().pad(0.1));
       }
 
-      // Mostrar mensaje con el número de citas
       document.getElementById("mensajeAyuda").innerHTML = 
         `📍 Mostrando ${data.results.length} citas de ${taxonNombre}`;
       document.getElementById("mensajeAyuda").className = "success";
       document.getElementById("mensajeAyuda").style.display = "block";
 
     } catch (error) {
-      console.error("Error al cargar citas:", error);
+      console.error("Error:", error);
       alert("Error al cargar las citas");
     }
   }
 
   // ============================================
-  // PESTAÑA 1: TODAS LAS ESPECIES
+  // PESTAÑA 1
   // ============================================
   
   async function consultarINaturalist() {
@@ -540,12 +531,9 @@
         return;
       }
 
-      // Guardar datos para el clic
-      especiesData = data.results;
-
       let html = `<div class="stats">📊 Total especies: ${data.total_results}</div>`;
 
-      data.results.slice(0, 30).forEach((item, index) => {
+      data.results.slice(0, 30).forEach(item => {
         const taxon = item.taxon;
         html += `<div class="inat-card" onclick="mostrarCitasEspecie(${taxon.id}, '${taxon.name.replace(/'/g, "\\'")}', this)">`;
         
@@ -558,8 +546,7 @@
         html += `<div class="inat-info">`;
         html += `<div class="inat-titulo">${taxon.name}</div>`;
         html += `<div>${taxon.preferred_common_name || ''}</div>`;
-        html += `<div><span class="badge">📊 ${item.count} obs</span>`;
-        html += `<span class="badge" style="cursor: pointer;" onclick="event.stopPropagation(); mostrarCitasEspecie(${taxon.id}, '${taxon.name.replace(/'/g, "\\'")}', this.parentElement.parentElement.parentElement)">📍 Ver citas</span></div>`;
+        html += `<span class="badge">📊 ${item.count} obs</span>`;
         html += `</div></div>`;
       });
 
@@ -571,7 +558,7 @@
   }
 
   // ============================================
-  // PESTAÑA 2: BUSCAR ESPECIE
+  // PESTAÑA 2
   // ============================================
   
   async function buscarEspecieINat() {
@@ -616,7 +603,12 @@
       obsData.results.forEach(obs => {
         if (obs.geojson && obs.geojson.coordinates) {
           const [lng, lat] = obs.geojson.coordinates;
-          L.circleMarker([lat, lng], { radius: 6, color: '#4CAF50' }).addTo(markersLayer);
+          L.circleMarker([lat, lng], { radius: 6, color: '#4CAF50' }).addTo(markersLayer).bindPopup(`
+            <b>${taxon.preferred_common_name || taxon.name}</b><br>
+            📅 ${obs.observed_on || 'Fecha desconocida'}<br>
+            👤 ${obs.user?.login || 'Anónimo'}<br>
+            🏅 ${obs.quality_grade}
+          `);
         }
 
         html += `<div class="inat-card">`;
@@ -629,7 +621,8 @@
         
         html += `<div class="inat-info">`;
         html += `<div class="inat-titulo">${obs.observed_on || 'Fecha desconocida'}</div>`;
-        html += `<div>👤 ${obs.user?.login || 'Anónimo'} - 🏅 ${obs.quality_grade}</div>`;
+        html += `<div>👤 ${obs.user?.login || 'Anónimo'}</div>`;
+        html += `<span class="badge">🏅 ${obs.quality_grade}</span>`;
         html += `</div></div>`;
       });
 
@@ -645,7 +638,7 @@
   }
 
   // ============================================
-  // PESTAÑA 3: BUSCAR ZONA
+  // PESTAÑA 3
   // ============================================
   
   document.getElementById("buscadorPais").addEventListener("input", async function(e) {
@@ -664,4 +657,9 @@
       
       if (sugerencias.length === 0) return;
       
-      let 
+      let html = '<div class="sugerencias-container">';
+      sugerencias.forEach(s => {
+        html += `<div class="sugerencia-item" onclick="seleccionarSugerencia('${s.display_name.replace(/'/g, "\\'")}', ${s.boundingbox[0]}, ${s.boundingbox[1]}, ${s.boundingbox[2]}, ${s.boundingbox[3]}, ${s.lat}, ${s.lon})">`;
+        html += `<strong>${s.display_name}</strong>`;
+        html += `</div>`;
+   
