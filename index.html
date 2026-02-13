@@ -364,7 +364,6 @@
       border-radius: 12px;
       margin: 20px 0;
       border: 1px solid #4CAF50;
-      display: none;
     }
 
     .buscador-taxon-titulo {
@@ -396,7 +395,6 @@
 
     .resultados-seccion {
       margin-top: 20px;
-      display: none;
     }
 
     .resultados-seccion-titulo {
@@ -444,37 +442,32 @@
   </div>
 </div>
 
-<!-- PASO 2: RESULTADOS (aparecen después de seleccionar área) -->
-<div id="resultadosPrincipales" style="display: none;">
-  
-  <!-- Buscador de taxones (filtro) -->
-  <div class="buscador-taxon-container" id="buscadorTaxonContainer">
-    <div class="buscador-taxon-titulo">🔍 PASO 2: Filtrar por taxón (opcional)</div>
-    <div style="position: relative;">
-      <div class="buscador-taxon-input-container">
-        <input type="text" id="buscadorTaxon" class="buscador-taxon-input" 
-               placeholder="Ej: Lynx pardinus, Reptilia, Aves, Canis, Fabaceae..." autocomplete="off">
-        <button onclick="buscarTaxon()" class="button-blue">Filtrar</button>
-      </div>
-      <div id="sugerenciasTaxon" style="position: relative;"></div>
+<!-- Buscador de taxones (filtro) -->
+<div class="buscador-taxon-container">
+  <div class="buscador-taxon-titulo">🔍 Filtrar por taxón (opcional)</div>
+  <div style="position: relative;">
+    <div class="buscador-taxon-input-container">
+      <input type="text" id="buscadorTaxon" class="buscador-taxon-input" 
+             placeholder="Ej: Lynx pardinus, Reptilia, Aves, Canis, Fabaceae..." autocomplete="off">
+      <button onclick="buscarTaxon()" class="button-blue">Filtrar</button>
     </div>
+    <div id="sugerenciasTaxon" style="position: relative;"></div>
   </div>
-  
-  <!-- Resultados de todas las especies -->
-  <div class="resultados-seccion" id="todasEspeciesSeccion">
-    <div class="resultados-seccion-titulo">🌍 Todas las especies del área</div>
-    <div id="progreso" style="display: none;" class="progreso-carga"></div>
-    <div id="resultados" class="resultados-container" style="margin-top: 15px;"></div>
-    <div id="paginacion" class="pagination"></div>
-  </div>
-  
-  <!-- Resultados de búsqueda por taxón -->
-  <div class="resultados-seccion" id="resultadosTaxonSeccion" style="display: none;">
-    <div class="resultados-seccion-titulo" id="resultadosTaxonTitulo">🔍 Resultados filtrados</div>
-    <div id="resultadosBusquedaTaxon" class="resultados-container"></div>
-    <div id="paginacionTaxon" class="pagination"></div>
-  </div>
-  
+</div>
+
+<!-- Resultados de todas las especies -->
+<div class="resultados-seccion" id="todasEspeciesSeccion">
+  <div class="resultados-seccion-titulo">🌍 Todas las especies del área</div>
+  <div id="progreso" style="display: none;" class="progreso-carga"></div>
+  <div id="resultados" class="resultados-container" style="margin-top: 15px;"></div>
+  <div id="paginacion" class="pagination"></div>
+</div>
+
+<!-- Resultados de búsqueda por taxón -->
+<div class="resultados-seccion" id="resultadosTaxonSeccion" style="display: none;">
+  <div class="resultados-seccion-titulo" id="resultadosTaxonTitulo">🔍 Resultados filtrados</div>
+  <div id="resultadosBusquedaTaxon" class="resultados-container"></div>
+  <div id="paginacionTaxon" class="pagination"></div>
 </div>
 
 <!-- Scripts -->
@@ -539,7 +532,6 @@
       document.getElementById("mensajeAyuda").style.display = "none";
       
       actualizarInfoArea();
-      mostrarResultados();
       consultarINaturalistCompleto(); // Cargar automáticamente
     });
 
@@ -573,18 +565,6 @@
     `;
   }
 
-  function mostrarResultados() {
-    document.getElementById("resultadosPrincipales").style.display = "block";
-    document.getElementById("buscadorTaxonContainer").style.display = "block";
-  }
-
-  function ocultarResultados() {
-    document.getElementById("resultadosPrincipales").style.display = "none";
-    document.getElementById("buscadorTaxonContainer").style.display = "none";
-    document.getElementById("resultadosTaxonSeccion").style.display = "none";
-    document.getElementById("todasEspeciesSeccion").style.display = "block";
-  }
-
   // ============================================
   // FUNCIONES BÁSICAS
   // ============================================
@@ -607,8 +587,6 @@
     document.getElementById("paginacion").innerHTML = "";
     document.getElementById("paginacionTaxon").innerHTML = "";
     document.getElementById("progreso").style.display = "none";
-    
-    ocultarResultados();
     
     todasLasEspecies = [];
     resultadosTaxon = [];
@@ -675,7 +653,6 @@
     areaSeleccionada = bounds;
     
     actualizarInfoArea();
-    mostrarResultados();
     consultarINaturalistCompleto(); // Cargar automáticamente
   };
 
@@ -878,6 +855,10 @@
       return;
     }
 
+    // Asegurar que la sección de resultados sea visible
+    document.getElementById("todasEspeciesSeccion").style.display = "block";
+    document.getElementById("resultadosTaxonSeccion").style.display = "none";
+    
     document.getElementById("resultados").innerHTML = '';
     document.getElementById("paginacion").innerHTML = '';
     document.getElementById("progreso").style.display = "block";
