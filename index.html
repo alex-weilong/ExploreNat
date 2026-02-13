@@ -500,6 +500,53 @@
       visibility: visible;
       opacity: 1;
     }
+
+    /* Estilos para hábitats */
+    .habitats-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .habitat-badge {
+      background: #e0f2e0;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      color: #1b5e20;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      border: 1px solid #a5d6a5;
+    }
+
+    .habitat-icon {
+      font-size: 14px;
+    }
+
+    .habitat-principal {
+      background: #c8e6c9;
+      font-weight: bold;
+      border: 2px solid #4CAF50;
+    }
+
+    .clima-info {
+      display: flex;
+      gap: 15px;
+      margin-top: 8px;
+      flex-wrap: wrap;
+    }
+
+    .clima-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      background: #f5f5f5;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+    }
   </style>
 </head>
 <body>
@@ -533,7 +580,7 @@
     <div id="sugerenciasPais" style="position: relative;"></div>
   </div>
   
-  <!-- Información del área seleccionada -->
+  <!-- Información del área seleccionada (HÁBITATS) -->
   <div class="info-area" id="infoArea">
     <p><strong>📍 Área seleccionada:</strong> Ninguna. Dibuja un rectángulo o busca un país.</p>
   </div>
@@ -615,50 +662,169 @@
     { nombre: 'Otoño', meses: [8,9,10], icono: '🍂', color: '#8b4513' }
   ];
 
-  // ============================================
-  // INICIALIZACIÓN
-  // ============================================
-  window.onload = function() {
-    console.log("Iniciando ExploreNat...");
+  // Base de datos simple de hábitats por coordenadas aproximadas
+  // (Esto se podría mejorar con una API real de hábitats)
+  function identificarHabitats(lat, lon) {
+    const habitats = [];
     
-    // Crear mapa
-    map = L.map('map').setView([40.4168, -3.7038], 6);
+    // Detección muy simple basada en coordenadas
+    // Esto es solo un ejemplo - en una implementación real usaríamos una API
+    
+    // Europa
+    if (lat > 35 && lat < 70 && lon > -10 && lon < 40) {
+      habitats.push({ tipo: 'Bosque templado', icono: '🌳', principal: true });
+      if (lat < 45) habitats.push({ tipo: 'Mediterráneo', icono: '🌿', principal: false });
+      if (lat > 55) habitats.push({ tipo: 'Taiga', icono: '🌲', principal: false });
+    }
+    
+    // América tropical
+    if (lat > -30 && lat < 30 && lon > -120 && lon < -35) {
+      habitats.push({ tipo: 'Selva tropical', icono: '🌴', principal: true });
+      habitats.push({ tipo: 'Bosque nuboso', icono: '☁️', principal: false });
+    }
+    
+    // Desiertos
+    if ((lat > 15 && lat < 30 && lon > -20 && lon < 50) || // Sahara
+        (lat > 30 && lat < 40 && lon > -120 && lon < -110)) { // Sonora
+      habitats.push({ tipo: 'Desierto', icono: '🏜️', principal: true });
+      habitats.push({ tipo: 'Matorral xerófilo', icono: '🌵', principal: false });
+    }
+    
+    // Si no se detectó nada, poner hábitats genéricos
+    if (habitats.length === 0) {
+      habitats.push({ tipo: 'Zona de estudio', icono: '🔬', principal: true });
+    }
+    
+    return habitats;
+  }
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap'
-    }).addTo(map);
+  function obtenerClimaAproximado(lat) {
+    if (Math.abs(lat) < 23.5) return { nombre: 'Tropical', icono: '☀️', temp: '25-30°C' };
+    if (Math.abs(lat) < 35) return { nombre: 'Subtropical', icono: '🌤️', temp: '15-25°C' };
+    if (Math.abs(lat) < 50) return { nombre: 'Templado', icono: '⛅', temp: '10-20°C' };
+    if (Math.abs(lat) < 60) return { nombre: 'Continental', icono: '🌡️', temp: '5-15°C' };
+    return { nombre: 'Subártico', icono: '❄️', temp: '-5-5°C' };
+  }
 
-    // Capas
-    drawnItems = new L.FeatureGroup();
-    map.addLayer(drawnItems);
+  // ============================================
+  // FUNCIÓN PARA ANALIZAR HÁBITATS DEL ÁREA
+  // ============================================
+  
+  async function analizarHabitats(bounds) {
+    const centro = bounds.getCenter();
+    const lat = centro.lat;
+    const lon = centro.lng;
+    
+    // Identificar hábitats basados en coordenadas
+    const habitats = identificarHabitats(lat, lon);
+    
+    // Obtener clima aproximado
+    const clima = obtenerClimaAproximado(lat);
+    
+    // Obtener algunas especies características del área para inferir hábitats
+    try {
+      const url = `https://api.inaturalist.org/v1/observations/species_counts?` +
+                  `verifiable=true` +
+                  `&per_page=5` +
+                  `&swlat=${bounds.getSouth()}&swlng=${bounds.getWest()}` +
+                  `&nelat=${bounds.getNorth()}&nelng=${bounds.getEast()}`;
 
-    markersLayer = new L.FeatureGroup();
-    map.addLayer(markersLayer);
-
-    zoneLayer = new L.FeatureGroup();
-    map.addLayer(zoneLayer);
-
-    // Control de dibujo
-    var drawControl = new L.Control.Draw({
-      edit: { featureGroup: drawnItems },
-      draw: { polygon: false, polyline: false, circle: false, marker: false, circlemarker: false, rectangle: true }
-    });
-    map.addControl(drawControl);
-
-    // Evento al dibujar
-    map.on(L.Draw.Event.CREATED, function(e) {
-      var layer = e.layer;
-      drawnItems.clearLayers();
-      drawnItems.addLayer(layer);
-      areaSeleccionada = layer.getBounds();
-      document.getElementById("mensajeAyuda").style.display = "none";
+      const response = await fetch(url);
+      const data = await response.json();
       
-      actualizarInfoArea();
-      consultarINaturalistCompleto(); // Cargar automáticamente
-    });
+      const especiesCaracteristicas = data.results ? data.results.map(r => r.taxon.name) : [];
+      
+      return {
+        habitats: habitats,
+        clima: clima,
+        especiesCaracteristicas: especiesCaracteristicas
+      };
+    } catch (error) {
+      console.error("Error analizando hábitats:", error);
+      return {
+        habitats: habitats,
+        clima: clima,
+        especiesCaracteristicas: []
+      };
+    }
+  }
 
-    console.log("✅ Mapa cargado correctamente");
-  };
+  async function actualizarInfoArea() {
+    if (!areaSeleccionada) {
+      document.getElementById("infoArea").innerHTML = `
+        <p><strong>📍 Área seleccionada:</strong> Ninguna. Dibuja un rectángulo o busca un país.</p>
+      `;
+      return;
+    }
+    
+    const infoArea = document.getElementById("infoArea");
+    infoArea.innerHTML = '<p><strong>📍 Analizando hábitats...</strong></p>';
+    
+    const bounds = areaSeleccionada;
+    const centro = bounds.getCenter();
+    const area = (bounds.getNorth() - bounds.getSouth()) * 
+                 (bounds.getEast() - bounds.getWest()) * 111 * 111;
+    
+    // Obtener información de hábitats
+    const infoHabitats = await analizarHabitats(bounds);
+    
+    let html = `
+      <p><strong>📍 Área seleccionada</strong></p>
+      <p style="font-size: 13px; color: #666;">
+        Centro: ${centro.lat.toFixed(4)}°, ${centro.lng.toFixed(4)}°<br>
+        Extensión: ${area.toFixed(0)} km²
+      </p>
+      
+      <p><strong>🌍 Clima predominante</strong></p>
+      <div class="clima-info">
+        <div class="clima-item">
+          <span>${infoHabitats.clima.icono}</span>
+          <span>${infoHabitats.clima.nombre}</span>
+        </div>
+        <div class="clima-item">
+          <span>🌡️</span>
+          <span>${infoHabitats.clima.temp}</span>
+        </div>
+      </div>
+      
+      <p><strong>🏞️ Hábitats presentes</strong></p>
+      <div class="habitats-container">
+    `;
+    
+    infoHabitats.habitats.forEach(h => {
+      html += `<span class="habitat-badge ${h.principal ? 'habitat-principal' : ''}">
+                <span class="habitat-icon">${h.icono}</span>
+                ${h.tipo}
+               </span>`;
+    });
+    
+    html += `</div>`;
+    
+    if (infoHabitats.especiesCaracteristicas.length > 0) {
+      html += `<p><strong>🌿 Especies características</strong></p>`;
+      html += `<div style="font-size: 12px; color: #666;">`;
+      infoHabitats.especiesCaracteristicas.slice(0, 3).forEach(esp => {
+        html += `• ${esp}<br>`;
+      });
+      html += `</div>`;
+    }
+    
+    // Añadir biomas según coordenadas (simplificado)
+    const biomas = [
+      { nombre: 'Bosque mediterráneo', condicion: () => lat > 35 && lat < 45 && lon > -10 && lon < 40 },
+      { nombre: 'Selva amazónica', condicion: () => lat > -15 && lat < 5 && lon > -80 && lon < -50 },
+      { nombre: 'Bosque atlántico', condicion: () => lat > 40 && lat < 60 && lon > -10 && lon < 10 },
+      { nombre: 'Desierto del Sahara', condicion: () => lat > 15 && lat < 30 && lon > -15 && lon < 35 },
+      { nombre: 'Gran Cuenca', condicion: () => lat > 35 && lat < 45 && lon > -120 && lon < -110 }
+    ];
+    
+    const biomaEncontrado = biomas.find(b => b.condicion());
+    if (biomaEncontrado) {
+      html += `<p><strong>🗺️ Bioma:</strong> ${biomaEncontrado.nombre}</p>`;
+    }
+    
+    infoArea.innerHTML = html;
+  }
 
   // ============================================
   // FUNCIÓN PARA OBTENER FENOLOGÍA
@@ -760,33 +926,6 @@
     html += '</div>';
     
     return html;
-  }
-
-  // ============================================
-  // FUNCIONES DE SELECCIÓN DE ÁREA
-  // ============================================
-  
-  function actualizarInfoArea() {
-    if (!areaSeleccionada) {
-      document.getElementById("infoArea").innerHTML = `
-        <p><strong>📍 Área seleccionada:</strong> Ninguna. Dibuja un rectángulo o busca un país.</p>
-      `;
-      return;
-    }
-    
-    const area = (areaSeleccionada.getNorth() - areaSeleccionada.getSouth()) * 
-                 (areaSeleccionada.getEast() - areaSeleccionada.getWest()) * 111 * 111;
-    
-    document.getElementById("infoArea").innerHTML = `
-      <p><strong>📍 Área seleccionada:</strong> Rectángulo dibujado</p>
-      <p>
-        Norte: ${areaSeleccionada.getNorth().toFixed(4)}°<br>
-        Sur: ${areaSeleccionada.getSouth().toFixed(4)}°<br>
-        Este: ${areaSeleccionada.getEast().toFixed(4)}°<br>
-        Oeste: ${areaSeleccionada.getWest().toFixed(4)}°<br>
-        <span style="color: #666;">Área aprox: ${area.toFixed(0)} km²</span>
-      </p>
-    `;
   }
 
   // ============================================
