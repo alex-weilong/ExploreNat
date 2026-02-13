@@ -404,7 +404,6 @@
       font-weight: bold;
     }
 
-    /* Estilos para fenología */
     .fenologia-container {
       margin-top: 8px;
       display: flex;
@@ -468,11 +467,6 @@
       font-size: 14px;
     }
 
-    .estacion-primavera { color: #4caf50; }
-    .estacion-verano { color: #ff9800; }
-    .estacion-otono { color: #8b4513; }
-    .estacion-invierno { color: #2196f3; }
-
     .tooltip {
       position: relative;
       display: inline-block;
@@ -501,7 +495,6 @@
       opacity: 1;
     }
 
-    /* Estilos para hábitats */
     .habitats-container {
       display: flex;
       flex-wrap: wrap;
@@ -577,7 +570,6 @@
 <div class="seleccion-area">
   <div class="seleccion-area-titulo">📍 PASO 1: Selecciona un área</div>
   
-  <!-- Buscador de países / zonas -->
   <div style="position: relative;">
     <div class="buscador-pais-container">
       <input type="text" id="buscadorPais" class="buscador-pais-input" 
@@ -587,13 +579,11 @@
     <div id="sugerenciasPais" style="position: relative;"></div>
   </div>
   
-  <!-- Información del área seleccionada (HÁBITATS) -->
   <div class="info-area" id="infoArea">
     <p><strong>📍 Área seleccionada:</strong> Ninguna. Dibuja un rectángulo o busca un país.</p>
   </div>
 </div>
 
-<!-- Leyenda de fenología -->
 <div class="fenologia-leyenda">
   <div class="fenologia-leyenda-item">
     <div class="fenologia-color" style="background: #f0f0f0;"></div>
@@ -609,7 +599,6 @@
   </div>
 </div>
 
-<!-- Buscador de taxones (filtro) -->
 <div class="buscador-taxon-container">
   <div class="buscador-taxon-titulo">🔍 Filtrar por taxón (opcional)</div>
   <div style="position: relative;">
@@ -622,7 +611,6 @@
   </div>
 </div>
 
-<!-- Resultados de todas las especies -->
 <div class="resultados-seccion" id="todasEspeciesSeccion">
   <div class="resultados-seccion-titulo">🌍 Todas las especies del área</div>
   <div id="infoCarga" style="display: none;" class="progreso-carga"></div>
@@ -632,14 +620,12 @@
   <div id="paginacion" class="pagination"></div>
 </div>
 
-<!-- Resultados de búsqueda por taxón -->
 <div class="resultados-seccion" id="resultadosTaxonSeccion" style="display: none;">
   <div class="resultados-seccion-titulo" id="resultadosTaxonTitulo">🔍 Resultados filtrados</div>
   <div id="resultadosBusquedaTaxon" class="resultados-container"></div>
   <div id="paginacionTaxon" class="pagination"></div>
 </div>
 
-<!-- Scripts -->
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
 
@@ -653,21 +639,17 @@
   let zoneLayer;
   let areaSeleccionada = null;
   
-  // Variables para paginación OPTIMIZADA
   let totalEspeciesGlobal = 0;
   let paginaActual = 1;
   const especiesPorPagina = 20;
   let cargandoPagina = false;
   
-  // Variables para resultados de taxón
   let taxonActual = null;
   let totalEspeciesTaxon = 0;
   let paginaActualTaxon = 1;
 
-  // Cache para fenología (evita recargar)
   const cacheFenologia = {};
 
-  // Nombres de meses y estaciones
   const meses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
   const estaciones = [
     { nombre: 'Invierno', meses: [0,1,11], icono: '❄️', color: '#2196f3' },
@@ -676,7 +658,6 @@
     { nombre: 'Otoño', meses: [8,9,10], icono: '🍂', color: '#8b4513' }
   ];
 
-  // Base de datos simple de hábitats por coordenadas aproximadas
   function identificarHabitats(lat, lon) {
     const habitats = [];
     
@@ -756,7 +737,7 @@
   };
 
   // ============================================
-  // FUNCIÓN PARA ANALIZAR HÁBITATS DEL ÁREA
+  // FUNCIÓN PARA ANALIZAR HÁBITATS
   // ============================================
   
   async function analizarHabitats(bounds) {
@@ -897,7 +878,6 @@
     totalEspeciesTaxon = 0;
     paginaActualTaxon = 1;
     
-    // Limpiar caché al cambiar de área
     for (let key in cacheFenologia) {
       delete cacheFenologia[key];
     }
@@ -911,7 +891,7 @@
   }
 
   // ============================================
-  // FUNCIONES OPTIMIZADAS DE CARGA POR PÁGINAS
+  // FUNCIONES DE CARGA POR PÁGINAS (CORREGIDAS)
   // ============================================
   
   async function cargarPrimeraPagina() {
@@ -924,7 +904,6 @@
     const bounds = areaSeleccionada;
     
     try {
-      // Primero obtener el total de especies
       const urlTotal = `https://api.inaturalist.org/v1/observations/species_counts?` +
                        `verifiable=${soloResearch}` +
                        `&per_page=1` +
@@ -942,8 +921,6 @@
       }
 
       totalEspeciesGlobal = dataTotal.total_results;
-      
-      // Cargar primera página
       await cargarPagina(1);
       
     } catch (error) {
@@ -963,18 +940,18 @@
     const bounds = areaSeleccionada;
     
     try {
-      // Calcular offset para la página
-      const offset = (pagina - 1) * especiesPorPagina;
-      
+      // CORREGIDO: Usamos page en lugar de offset
       const url = `https://api.inaturalist.org/v1/observations/species_counts?` +
                   `verifiable=${soloResearch}` +
                   `&per_page=${especiesPorPagina}` +
-                  `&offset=${offset}` +
+                  `&page=${pagina}` +  // Aquí estaba el error
                   `&swlat=${bounds.getSouth()}` +
                   `&swlng=${bounds.getWest()}` +
                   `&nelat=${bounds.getNorth()}` +
                   `&nelng=${bounds.getEast()}`;
 
+      console.log("Cargando página:", url); // Para depuración
+      
       const response = await fetch(url);
       const data = await response.json();
       
@@ -984,10 +961,7 @@
         return;
       }
 
-      // Mostrar resultados de esta página
       await mostrarPagina(data.results);
-      
-      // Actualizar botones de paginación
       actualizarBotonesPaginacion();
       
     } catch (error) {
@@ -1000,12 +974,10 @@
   async function mostrarPagina(especiesPagina) {
     let html = `<div class="stats">📊 Total especies: ${totalEspeciesGlobal} (página ${paginaActual})</div>`;
 
-    // Obtener fenología para cada especie (usando caché)
     for (let i = 0; i < especiesPagina.length; i++) {
       const item = especiesPagina[i];
       const taxon = item.taxon;
       
-      // Verificar si ya tenemos la fenología en caché
       if (!cacheFenologia[taxon.id]) {
         cacheFenologia[taxon.id] = await obtenerFenologia(taxon.id);
       }
@@ -1070,13 +1042,12 @@
   }
 
   // ============================================
-  // FUNCIÓN PARA OBTENER FENOLOGÍA (CON CACHÉ)
+  // FUNCIÓN PARA OBTENER FENOLOGÍA
   // ============================================
   
   async function obtenerFenologia(taxonId) {
     if (!areaSeleccionada) return null;
     
-    // Si ya está en caché, devolverlo
     if (cacheFenologia[taxonId]) {
       return cacheFenologia[taxonId];
     }
@@ -1119,9 +1090,7 @@
         mejorEstacion: mejorEstacion
       };
       
-      // Guardar en caché
       cacheFenologia[taxonId] = fenologia;
-      
       return fenologia;
       
     } catch (error) {
@@ -1333,7 +1302,7 @@
   }
 
   // ============================================
-  // BUSCADOR DE TAXONES (OPTIMIZADO)
+  // BUSCADOR DE TAXONES
   // ============================================
   
   document.getElementById("buscadorTaxon").addEventListener("input", async function(e) {
@@ -1428,7 +1397,6 @@
     const bounds = areaSeleccionada;
 
     try {
-      // Primero obtener el total
       const urlTotal = `https://api.inaturalist.org/v1/observations/species_counts?` +
                        `verifiable=${soloResearch}` +
                        `&taxon_id=${taxonId}` +
@@ -1450,7 +1418,6 @@
       totalEspeciesTaxon = dataTotal.total_results;
       taxonActual = { id: taxonId, nombre: taxonNombre, rango: rango };
       
-      // Cargar primera página del taxón
       await cargarPaginaTaxon(1);
 
     } catch (error) {
@@ -1467,19 +1434,21 @@
     
     const soloResearch = document.getElementById("soloResearch").checked;
     const bounds = areaSeleccionada;
-    const offset = (pagina - 1) * especiesPorPagina;
     
     try {
+      // CORREGIDO: Usamos page en lugar de offset
       const url = `https://api.inaturalist.org/v1/observations/species_counts?` +
                   `verifiable=${soloResearch}` +
                   `&taxon_id=${taxonActual.id}` +
                   `&per_page=${especiesPorPagina}` +
-                  `&offset=${offset}` +
+                  `&page=${pagina}` +  // Aquí estaba el error
                   `&swlat=${bounds.getSouth()}` +
                   `&swlng=${bounds.getWest()}` +
                   `&nelat=${bounds.getNorth()}` +
                   `&nelng=${bounds.getEast()}`;
 
+      console.log("Cargando página taxón:", url); // Para depuración
+      
       const response = await fetch(url);
       const data = await response.json();
       
@@ -1503,7 +1472,6 @@
       const item = especiesPagina[i];
       const taxon = item.taxon;
       
-      // Usar caché de fenología
       if (!cacheFenologia[taxon.id]) {
         cacheFenologia[taxon.id] = await obtenerFenologia(taxon.id);
       }
