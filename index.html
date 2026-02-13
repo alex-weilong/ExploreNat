@@ -204,18 +204,14 @@
       font-weight: bold;
     }
 
-    .tab-container {
-      display: flex;
-      gap: 10px;
-      margin: 20px 0;
-    }
-
     .tab-button {
       background: #e9ecef;
       padding: 12px 24px;
       border-radius: 8px;
       cursor: pointer;
       font-weight: bold;
+      margin-right: 10px;
+      display: inline-block;
       border: none;
     }
 
@@ -286,10 +282,10 @@
 <pre id="coords">Dibuja un rectángulo en el mapa</pre>
 
 <!-- Pestañas -->
-<div class="tab-container">
-  <button class="tab-button active" onclick="cambiarTab('tab1')">🌍 Especies</button>
-  <button class="tab-button" onclick="cambiarTab('tab2')">🔍 Buscar especie</button>
-  <button class="tab-button" onclick="cambiarTab('tab3')">🗺️ Buscar zona</button>
+<div style="margin: 20px 0;">
+  <button class="tab-button active" onclick="cambiarTab(1)">🌍 Especies</button>
+  <button class="tab-button" onclick="cambiarTab(2)">🔍 Buscar especie</button>
+  <button class="tab-button" onclick="cambiarTab(3)">🗺️ Buscar zona</button>
 </div>
 
 <!-- Pestaña 1 -->
@@ -336,7 +332,7 @@
   // ============================================
   // INICIALIZACIÓN
   // ============================================
-  function initMap() {
+  window.onload = function() {
     console.log("Iniciando ExploreNat...");
     
     // Crear mapa
@@ -379,10 +375,7 @@
     });
 
     console.log("✅ Mapa cargado correctamente");
-  }
-
-  // Iniciar cuando la página cargue
-  window.onload = initMap;
+  };
 
   // ============================================
   // FUNCIONES BÁSICAS
@@ -408,15 +401,11 @@
   }
 
   function cambiarTab(tabId) {
-    document.querySelectorAll('.tab-button').forEach(btn => {
-      btn.classList.remove('active');
-    });
-    document.querySelectorAll('.tab-content').forEach(content => {
-      content.classList.remove('active');
-    });
+    document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
     
-    document.querySelector(`[onclick="cambiarTab('${tabId}')"]`).classList.add('active');
-    document.getElementById(tabId).classList.add('active');
+    event.target.classList.add('active');
+    document.getElementById(`tab${tabId}`).classList.add('active');
   }
 
   // ============================================
@@ -662,4 +651,11 @@
         html += `<div class="sugerencia-item" onclick="seleccionarSugerencia('${s.display_name.replace(/'/g, "\\'")}', ${s.boundingbox[0]}, ${s.boundingbox[1]}, ${s.boundingbox[2]}, ${s.boundingbox[3]}, ${s.lat}, ${s.lon})">`;
         html += `<strong>${s.display_name}</strong>`;
         html += `</div>`;
-   
+      });
+      html += '</div>';
+      
+      document.getElementById("sugerencias").innerHTML = html;
+    } catch (error) {
+      console.error("Error:", error);
+    }
+  });
