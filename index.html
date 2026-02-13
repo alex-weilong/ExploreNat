@@ -8,9 +8,6 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
   <!-- Leaflet Draw CSS -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css"/>
-  <!-- Leaflet Heatmap -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css"/>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.Default.css"/>
 
   <style>
     body {
@@ -71,19 +68,6 @@
       background-color: #ff9800;
     }
 
-    .button-hotspot {
-      background-color: #d32f2f;
-    }
-
-    .button-hotspot:hover {
-      background-color: #b71c1c;
-    }
-
-    .button-hotspot.active {
-      background-color: #b71c1c;
-      box-shadow: 0 0 0 3px rgba(211, 47, 47, 0.3);
-    }
-
     select, input {
       background-color: white;
       border: 2px solid #e0e0e0;
@@ -129,16 +113,6 @@
       padding: 15px;
       border-radius: 8px;
       margin-bottom: 15px;
-    }
-
-    .hotspot-info {
-      color: #721c24;
-      background-color: #f8d7da;
-      border: 1px solid #f5c6cb;
-      padding: 15px;
-      border-radius: 8px;
-      margin-bottom: 15px;
-      border-left: 4px solid #d32f2f;
     }
 
     .inat-card {
@@ -205,11 +179,6 @@
       color: #2e7d32;
       display: inline-block;
       margin-right: 8px;
-    }
-
-    .badge-hotspot {
-      background: #f8d7da;
-      color: #d32f2f;
     }
 
     .loading {
@@ -435,41 +404,101 @@
       font-weight: bold;
     }
 
-    .hotspot-legend {
+    /* Estilos para fenología */
+    .fenologia-container {
+      margin-top: 8px;
       display: flex;
       align-items: center;
-      gap: 20px;
-      margin: 10px 0;
-      padding: 10px;
-      background: white;
-      border-radius: 8px;
+      gap: 10px;
+      flex-wrap: wrap;
     }
 
-    .hotspot-legend-item {
+    .fenologia-barra {
       display: flex;
-      align-items: center;
-      gap: 5px;
-    }
-
-    .hotspot-color {
-      width: 20px;
+      gap: 2px;
       height: 20px;
-      border-radius: 4px;
+      flex: 1;
+      max-width: 200px;
     }
 
-    .hotspot-color.low { background-color: #ffcdd2; }
-    .hotspot-color.medium { background-color: #ef5350; }
-    .hotspot-color.high { background-color: #d32f2f; }
+    .fenologia-mes {
+      flex: 1;
+      height: 100%;
+      border-radius: 2px;
+      transition: all 0.2s;
+      position: relative;
+    }
 
-    .grid-cell {
+    .fenologia-mes:hover {
+      transform: scaleY(1.2);
+      cursor: help;
+    }
+
+    .fenologia-leyenda {
+      display: flex;
+      gap: 10px;
+      font-size: 11px;
+      color: #666;
+      margin-top: 5px;
+    }
+
+    .fenologia-leyenda-item {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+    }
+
+    .fenologia-color {
+      width: 12px;
+      height: 12px;
+      border-radius: 2px;
+    }
+
+    .fenologia-estacion {
+      display: flex;
+      gap: 5px;
+      align-items: center;
+      background: #f5f5f5;
+      padding: 4px 8px;
+      border-radius: 12px;
+      font-size: 11px;
+    }
+
+    .estacion-icono {
+      font-size: 14px;
+    }
+
+    .estacion-primavera { color: #4caf50; }
+    .estacion-verano { color: #ff9800; }
+    .estacion-otono { color: #8b4513; }
+    .estacion-invierno { color: #2196f3; }
+
+    .tooltip {
+      position: relative;
+      display: inline-block;
+    }
+
+    .tooltip .tooltiptext {
+      visibility: hidden;
+      width: 120px;
+      background-color: #555;
+      color: #fff;
+      text-align: center;
+      border-radius: 6px;
+      padding: 5px;
       position: absolute;
-      border: 1px solid rgba(0,0,0,0.1);
-      pointer-events: none;
+      z-index: 1;
+      bottom: 125%;
+      left: 50%;
+      margin-left: -60px;
+      opacity: 0;
+      transition: opacity 0.3s;
+      font-size: 11px;
     }
 
-    .grid-cell:hover {
-      border: 2px solid #d32f2f;
-      z-index: 1000;
+    .tooltip:hover .tooltiptext {
+      visibility: visible;
+      opacity: 1;
     }
   </style>
 </head>
@@ -480,7 +509,6 @@
 <div class="controls">
   <button onclick="limpiarMapa()">🗑️ Limpiar área</button>
   <button onclick="limpiarMarcadores()" class="button-orange">🗑️ Limpiar marcadores</button>
-  <button id="hotspotBtn" onclick="toggleHotspot()" class="button-hotspot">🔥 Activar Hotspots</button>
   
   <label>
     <input type="checkbox" id="soloResearch" checked> Solo grado investigación
@@ -511,19 +539,19 @@
   </div>
 </div>
 
-<!-- Leyenda de Hotspots (visible solo cuando está activado) -->
-<div id="hotspotLegend" class="hotspot-legend" style="display: none;">
-  <div class="hotspot-legend-item">
-    <div class="hotspot-color low"></div>
-    <span>Baja diversidad (0-10 especies)</span>
+<!-- Leyenda de fenología -->
+<div class="fenologia-leyenda">
+  <div class="fenologia-leyenda-item">
+    <div class="fenologia-color" style="background: #f0f0f0;"></div>
+    <span>Sin datos</span>
   </div>
-  <div class="hotspot-legend-item">
-    <div class="hotspot-color medium"></div>
-    <span>Media diversidad (11-30 especies)</span>
+  <div class="fenologia-leyenda-item">
+    <div class="fenologia-color" style="background: #c8e6c9;"></div>
+    <span>Pocas obs</span>
   </div>
-  <div class="hotspot-legend-item">
-    <div class="hotspot-color high"></div>
-    <span>Alta diversidad (31+ especies)</span>
+  <div class="fenologia-leyenda-item">
+    <div class="fenologia-color" style="background: #4caf50;"></div>
+    <span>Muchas obs</span>
   </div>
 </div>
 
@@ -567,7 +595,6 @@
   let drawnItems;
   let markersLayer;
   let zoneLayer;
-  let hotspotLayer;
   let areaSeleccionada = null;
   
   // Variables para paginación
@@ -578,11 +605,15 @@
   // Variables para resultados de taxón
   let resultadosTaxon = [];
   let paginaActualTaxon = 1;
-  
-  // Variables para hotspots
-  let hotspotActivo = false;
-  let gridCells = [];
-  let observacionesHotspot = [];
+
+  // Nombres de meses y estaciones
+  const meses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+  const estaciones = [
+    { nombre: 'Invierno', meses: [0,1,11], icono: '❄️', color: '#2196f3' },
+    { nombre: 'Primavera', meses: [2,3,4], icono: '🌸', color: '#4caf50' },
+    { nombre: 'Verano', meses: [5,6,7], icono: '☀️', color: '#ff9800' },
+    { nombre: 'Otoño', meses: [8,9,10], icono: '🍂', color: '#8b4513' }
+  ];
 
   // ============================================
   // INICIALIZACIÓN
@@ -606,9 +637,6 @@
 
     zoneLayer = new L.FeatureGroup();
     map.addLayer(zoneLayer);
-    
-    hotspotLayer = new L.FeatureGroup();
-    map.addLayer(hotspotLayer);
 
     // Control de dibujo
     var drawControl = new L.Control.Draw({
@@ -627,139 +655,111 @@
       
       actualizarInfoArea();
       consultarINaturalistCompleto(); // Cargar automáticamente
-      
-      // Si hotspot está activo, actualizar
-      if (hotspotActivo) {
-        calcularHotspots();
-      }
     });
 
     console.log("✅ Mapa cargado correctamente");
   };
 
   // ============================================
-  // FUNCIONES DE HOTSPOTS
+  // FUNCIÓN PARA OBTENER FENOLOGÍA
   // ============================================
   
-  function toggleHotspot() {
-    hotspotActivo = !hotspotActivo;
-    const btn = document.getElementById("hotspotBtn");
+  async function obtenerFenologia(taxonId) {
+    if (!areaSeleccionada) return null;
     
-    if (hotspotActivo) {
-      btn.innerHTML = "🔥 Desactivar Hotspots";
-      btn.classList.add("active");
-      document.getElementById("hotspotLegend").style.display = "flex";
-      
-      if (areaSeleccionada) {
-        calcularHotspots();
-      } else {
-        document.getElementById("mensajeAyuda").innerHTML = "Dibuja un área para ver hotspots";
-        document.getElementById("mensajeAyuda").className = "warning";
-        document.getElementById("mensajeAyuda").style.display = "block";
-      }
-    } else {
-      btn.innerHTML = "🔥 Activar Hotspots";
-      btn.classList.remove("active");
-      document.getElementById("hotspotLegend").style.display = "none";
-      hotspotLayer.clearLayers();
-    }
-  }
-
-  async function calcularHotspots() {
-    if (!areaSeleccionada) return;
-    
-    hotspotLayer.clearLayers();
-    document.getElementById("mensajeAyuda").innerHTML = "Calculando hotspots de biodiversidad...";
-    document.getElementById("mensajeAyuda").className = "warning";
-    document.getElementById("mensajeAyuda").style.display = "block";
-
-    const bounds = areaSeleccionada;
     const soloResearch = document.getElementById("soloResearch").checked;
+    const bounds = areaSeleccionada;
     
-    // Dividir el área en una cuadrícula (6x6)
-    const gridSize = 6;
-    const latStep = (bounds.getNorth() - bounds.getSouth()) / gridSize;
-    const lngStep = (bounds.getEast() - bounds.getWest()) / gridSize;
-    
-    let maxSpecies = 0;
-    let gridData = [];
-    
-    // Primero, obtener observaciones del área para no hacer muchas consultas
     try {
+      // Obtener observaciones del taxón en el área
       const url = `https://api.inaturalist.org/v1/observations?` +
-                  `verifiable=${soloResearch}` +
-                  `&per_page=10000` +
+                  `taxon_id=${taxonId}` +
+                  `&verifiable=${soloResearch}` +
+                  `&per_page=100` +
                   `&swlat=${bounds.getSouth()}&swlng=${bounds.getWest()}` +
                   `&nelat=${bounds.getNorth()}&nelng=${bounds.getEast()}`;
 
       const response = await fetch(url);
       const data = await response.json();
-      observacionesHotspot = data.results || [];
       
-      // Crear cuadrícula
-      for (let i = 0; i < gridSize; i++) {
-        for (let j = 0; j < gridSize; j++) {
-          const cellBounds = L.latLngBounds(
-            [bounds.getSouth() + i * latStep, bounds.getWest() + j * lngStep],
-            [bounds.getSouth() + (i + 1) * latStep, bounds.getWest() + (j + 1) * lngStep]
-          );
-          
-          // Contar especies únicas en esta celda
-          const especiesEnCelda = new Set();
-          observacionesHotspot.forEach(obs => {
-            if (obs.geojson && obs.geojson.coordinates) {
-              const [lng, lat] = obs.geojson.coordinates;
-              if (cellBounds.contains([lat, lng]) && obs.taxon && obs.taxon.species) {
-                especiesEnCelda.add(obs.taxon.species);
-              }
-            }
-          });
-          
-          const numEspecies = especiesEnCelda.size;
-          maxSpecies = Math.max(maxSpecies, numEspecies);
-          
-          gridData.push({
-            bounds: cellBounds,
-            species: numEspecies,
-            observations: especiesEnCelda.size
-          });
+      if (!data.results || data.results.length === 0) return null;
+      
+      // Contar observaciones por mes
+      const conteoMeses = new Array(12).fill(0);
+      
+      data.results.forEach(obs => {
+        if (obs.observed_on) {
+          const fecha = new Date(obs.observed_on);
+          const mes = fecha.getMonth(); // 0-11
+          conteoMeses[mes]++;
         }
-      }
-      
-      // Dibujar cuadrícula con colores según densidad
-      gridData.forEach(cell => {
-        let color = getHotspotColor(cell.species, maxSpecies);
-        
-        L.rectangle(cell.bounds, {
-          color: color,
-          weight: 1,
-          fillColor: color,
-          fillOpacity: 0.4,
-          opacity: 0.8
-        }).addTo(hotspotLayer).bindPopup(`
-          <b>🔥 Hotspot</b><br>
-          Especies: ${cell.species}<br>
-          Observaciones: ${cell.observations}<br>
-          ${cell.species > 20 ? '✨ Zona de alta biodiversidad' : ''}
-        `);
       });
       
-      document.getElementById("mensajeAyuda").innerHTML = 
-        `🔥 Hotspot calculado. Máximo: ${maxSpecies} especies en una celda`;
-      document.getElementById("mensajeAyuda").className = "success";
+      // Normalizar para la visualización (0-1)
+      const max = Math.max(...conteoMeses);
+      const normalizado = conteoMeses.map(val => max > 0 ? val / max : 0);
+      
+      // Calcular mejor estación
+      const mejorEstacion = calcularMejorEstacion(conteoMeses);
+      
+      return {
+        conteo: conteoMeses,
+        normalizado: normalizado,
+        total: data.results.length,
+        mejorEstacion: mejorEstacion
+      };
       
     } catch (error) {
-      console.error("Error calculando hotspots:", error);
-      document.getElementById("mensajeAyuda").innerHTML = "Error calculando hotspots";
-      document.getElementById("mensajeAyuda").className = "warning";
+      console.error("Error obteniendo fenología:", error);
+      return null;
     }
   }
 
-  function getHotspotColor(species, maxSpecies) {
-    const ratio = species / maxSpecies;
-    if (ratio < 0.3) return '#ffcdd2'; // Rojo claro (bajo)
-    if (ratio < 0.6) return '#ef5350'; // Rojo medio
-    return '#d32f2f'; // Rojo oscuro (alto)
+  function calcularMejorEstacion(conteoMeses) {
+    const sumaEstaciones = estaciones.map(est => 
+      est.meses.reduce((sum, mes) => sum + conteoMeses[mes], 0)
+    );
+    
+    const maxSum = Math.max(...sumaEstaciones);
+    const mejorIndex = sumaEstaciones.indexOf(maxSum);
+    
+    return {
+      ...estaciones[mejorIndex],
+      total: maxSum
+    };
+  }
+
+  function crearBarraFenologia(fenologia) {
+    if (!fenologia) return '<div class="fenologia-estacion">📊 Sin datos fenológicos</div>';
+    
+    const max = Math.max(...fenologia.conteo);
+    
+    let html = '<div class="fenologia-container">';
+    
+    // Barra de meses
+    html += '<div class="fenologia-barra">';
+    for (let i = 0; i < 12; i++) {
+      const intensidad = fenologia.normalizado[i];
+      const color = intensidad === 0 ? '#f0f0f0' : 
+                   intensidad < 0.3 ? '#c8e6c9' :
+                   intensidad < 0.6 ? '#81c784' : '#4caf50';
+      
+      html += `<div class="fenologia-mes tooltip" style="background: ${color}; flex: 1;">
+                <span class="tooltiptext">${meses[i]}: ${fenologia.conteo[i]} obs</span>
+              </div>`;
+    }
+    html += '</div>';
+    
+    // Mejor estación
+    html += `<div class="fenologia-estacion">
+              <span class="estacion-icono">${fenologia.mejorEstacion.icono}</span>
+              <span>Mejor: ${fenologia.mejorEstacion.nombre}</span>
+              <span style="color: #666; font-size: 10px;">(${fenologia.mejorEstacion.total} obs)</span>
+            </div>`;
+    
+    html += '</div>';
+    
+    return html;
   }
 
   // ============================================
@@ -797,7 +797,6 @@
     if (drawnItems) drawnItems.clearLayers();
     if (markersLayer) markersLayer.clearLayers();
     if (zoneLayer) zoneLayer.clearLayers();
-    if (hotspotLayer) hotspotLayer.clearLayers();
     areaSeleccionada = null;
     
     document.getElementById("infoArea").innerHTML = `
@@ -879,11 +878,6 @@
     
     actualizarInfoArea();
     consultarINaturalistCompleto(); // Cargar automáticamente
-    
-    // Si hotspot está activo, actualizar
-    if (hotspotActivo) {
-      calcularHotspots();
-    }
   };
 
   async function buscarZona() {
@@ -994,15 +988,22 @@
   // FUNCIONES DE PAGINACIÓN
   // ============================================
   
-  function mostrarPagina(pagina, especies, contenedorId, paginacionId, callbackPagina) {
+  async function mostrarPagina(pagina, especies, contenedorId, paginacionId, callbackPagina) {
     const inicio = (pagina - 1) * especiesPorPagina;
     const fin = inicio + especiesPorPagina;
     const especiesPagina = especies.slice(inicio, fin);
     
     let html = `<div class="stats">📊 Total especies: ${especies.length} (mostrando ${inicio+1}-${Math.min(fin, especies.length)})</div>`;
 
-    especiesPagina.forEach(item => {
+    // Obtener fenología para cada especie (en paralelo)
+    const promesasFenologia = especiesPagina.map(item => obtenerFenologia(item.taxon.id));
+    const fenologias = await Promise.all(promesasFenologia);
+
+    for (let i = 0; i < especiesPagina.length; i++) {
+      const item = especiesPagina[i];
       const taxon = item.taxon;
+      const fenologia = fenologias[i];
+      
       html += `<div class="inat-card" onclick="mostrarCitasEspecie(${taxon.id}, '${taxon.name.replace(/'/g, "\\'")}', this)">`;
       
       if (taxon.default_photo && taxon.default_photo.medium_url) {
@@ -1020,8 +1021,12 @@
       if (taxon.iconic_taxon_name) {
         html += `<span class="badge">${taxon.iconic_taxon_name}</span>`;
       }
+      
+      // Añadir fenología
+      html += crearBarraFenologia(fenologia);
+      
       html += `</div></div>`;
-    });
+    }
 
     document.getElementById(contenedorId).innerHTML = html;
     
