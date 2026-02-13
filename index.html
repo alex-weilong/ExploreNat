@@ -21,15 +21,6 @@
       text-align: center;
       margin-bottom: 20px;
       font-size: 2.5em;
-      text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
-    }
-
-    h1::before {
-      content: "🌿 ";
-    }
-
-    h1::after {
-      content: " 🌍";
     }
 
     #map {
@@ -50,7 +41,6 @@
       flex-wrap: wrap;
       align-items: center;
       gap: 15px;
-      border-left: 5px solid #4CAF50;
     }
 
     button, select, input {
@@ -59,38 +49,24 @@
       border: none;
       border-radius: 8px;
       font-size: 14px;
-      font-weight: 500;
-      transition: all 0.3s ease;
     }
 
     button {
       background-color: #4CAF50;
       color: white;
-      box-shadow: 0 2px 5px rgba(76, 175, 80, 0.3);
     }
 
     button:hover {
       background-color: #388E3C;
-      transform: translateY(-2px);
-      box-shadow: 0 4px 10px rgba(76, 175, 80, 0.4);
     }
 
     .button-blue {
       background-color: #2196F3;
-      box-shadow: 0 2px 5px rgba(33, 150, 243, 0.3);
-    }
-    .button-blue:hover {
-      background-color: #1976D2;
     }
 
     select, input {
       background-color: white;
       border: 2px solid #e0e0e0;
-    }
-
-    select:focus, input:focus {
-      border-color: #4CAF50;
-      outline: none;
     }
 
     input {
@@ -124,7 +100,6 @@
       padding: 15px;
       border-radius: 8px;
       margin-bottom: 15px;
-      border-left: 4px solid #ffc107;
     }
 
     .success {
@@ -134,7 +109,6 @@
       padding: 15px;
       border-radius: 8px;
       margin-bottom: 15px;
-      border-left: 4px solid #28a745;
     }
 
     .inat-card {
@@ -145,14 +119,6 @@
       background: white;
       border-radius: 10px;
       border: 1px solid #eaeaea;
-      transition: all 0.3s ease;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-    }
-
-    .inat-card:hover {
-      transform: translateX(5px);
-      border-left: 4px solid #4CAF50;
-      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
     }
 
     .inat-imagen {
@@ -167,7 +133,7 @@
     .inat-placeholder {
       width: 80px;
       height: 80px;
-      background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
+      background: #e8f5e9;
       margin-right: 15px;
       border-radius: 10px;
       display: flex;
@@ -175,7 +141,6 @@
       justify-content: center;
       color: #4CAF50;
       font-size: 30px;
-      border: 2px dashed #4CAF50;
     }
 
     .inat-info {
@@ -186,23 +151,6 @@
       font-weight: bold;
       color: #2e7d32;
       font-size: 16px;
-      margin-bottom: 4px;
-    }
-
-    .inat-comun {
-      color: #666;
-      font-size: 14px;
-      font-style: italic;
-      margin-bottom: 8px;
-    }
-
-    .inat-detalle {
-      color: #666;
-      font-size: 13px;
-      margin-bottom: 4px;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
     }
 
     .badge {
@@ -212,24 +160,6 @@
       font-size: 12px;
       color: #2e7d32;
       display: inline-block;
-      font-weight: 500;
-    }
-
-    .badge-quality-research {
-      background: #c8e6c9;
-      color: #1b5e20;
-      font-weight: bold;
-      padding: 4px 12px;
-      border-radius: 20px;
-      font-size: 12px;
-    }
-
-    .badge-quality-casual {
-      background: #ffccbc;
-      color: #bf360c;
-      padding: 4px 12px;
-      border-radius: 20px;
-      font-size: 12px;
     }
 
     .loading {
@@ -248,38 +178,27 @@
     }
 
     .stats {
-      background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
+      background: #e8f5e9;
       padding: 15px;
       border-radius: 8px;
       margin-bottom: 20px;
       font-weight: bold;
       color: #1b5e20;
-      border-left: 4px solid #2e7d32;
-    }
-
-    .tab-buttons {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 20px;
-      flex-wrap: wrap;
     }
 
     .tab-button {
       background: #e9ecef;
-      color: #495057;
-      border: none;
       padding: 12px 24px;
       border-radius: 8px;
       cursor: pointer;
       font-weight: bold;
-      font-size: 15px;
-      transition: all 0.3s ease;
+      margin-right: 10px;
+      display: inline-block;
     }
 
     .tab-button.active {
       background: #4CAF50;
       color: white;
-      box-shadow: 0 2px 8px rgba(76, 175, 80, 0.4);
     }
 
     .tab-content {
@@ -289,219 +208,110 @@
     .tab-content.active {
       display: block;
     }
-
-    .pais-sugerencia {
-      position: absolute;
-      background: white;
-      border: 2px solid #4CAF50;
-      border-radius: 8px;
-      max-height: 250px;
-      overflow-y: auto;
-      width: 350px;
-      z-index: 1000;
-      box-shadow: 0 6px 12px rgba(0,0,0,0.15);
-    }
-
-    .pais-sugerencia-item {
-      padding: 12px;
-      cursor: pointer;
-      border-bottom: 1px solid #eee;
-    }
-
-    .pais-sugerencia-item:hover {
-      background-color: #e8f5e9;
-    }
-
-    .place-option {
-      padding: 15px;
-      margin: 10px 0;
-      background: #f8f9fa;
-      border-radius: 8px;
-      cursor: pointer;
-      border: 2px solid #dee2e6;
-      transition: all 0.3s ease;
-    }
-
-    .place-option:hover {
-      background: #e8f5e9;
-      border-color: #4CAF50;
-      transform: translateX(5px);
-    }
-
-    .footer {
-      text-align: center;
-      margin-top: 20px;
-      color: #666;
-      font-size: 12px;
-    }
   </style>
 </head>
 <body>
 
-<h1>ExploreNat</h1>
+<h1>🌿 ExploreNat</h1>
 
 <div class="controls">
   <button onclick="obtenerArea()">📍 Obtener coordenadas</button>
   <button onclick="limpiarMapa()">🗑️ Limpiar área</button>
   
-  <label for="grupo">Filtrar por grupo:</label>
   <select id="grupo">
     <option value="">🌍 Todos</option>
     <option value="Aves">🦅 Aves</option>
     <option value="Mammalia">🐻 Mamíferos</option>
     <option value="Reptilia">🦎 Reptiles</option>
     <option value="Amphibia">🐸 Anfibios</option>
-    <option value="Actinopterygii">🐟 Peces</option>
     <option value="Insecta">🦋 Insectos</option>
-    <option value="Arachnida">🕷️ Arácnidos</option>
-    <option value="Mollusca">🐌 Moluscos</option>
     <option value="Plantae">🌱 Plantas</option>
-    <option value="Fungi">🍄 Hongos</option>
   </select>
 
-  <label style="margin-left: 10px; display: flex; align-items: center;">
-    <input type="checkbox" id="soloResearch" checked style="margin-right: 5px; width: auto;"> Solo grado investigación
+  <label>
+    <input type="checkbox" id="soloResearch" checked> Solo grado investigación
   </label>
 </div>
 
 <div id="map"></div>
 
-<div id="mensajeAyuda" class="warning" style="display: none;"></div>
+<div id="mensajeAyuda" style="display: none;" class="warning"></div>
 
 <h3>📐 Coordenadas del área:</h3>
-<pre id="coords">Dibuja un rectángulo en el mapa o busca un país/ciudad</pre>
+<pre id="coords">Dibuja un rectángulo en el mapa</pre>
 
-<!-- Pestañas -->
-<div class="tab-buttons">
-  <button id="tab1Btn" class="tab-button active" onclick="cambiarTab(1)">🌍 Todas las especies</button>
-  <button id="tab2Btn" class="tab-button" onclick="cambiarTab(2)">🔍 Buscar especie</button>
-  <button id="tab3Btn" class="tab-button" onclick="cambiarTab(3)">🗺️ Buscar zona</button>
+<!-- Pestañas visibles -->
+<div style="margin: 20px 0;">
+  <span class="tab-button active" onclick="cambiarTab(1)">🌍 Especies</span>
+  <span class="tab-button" onclick="cambiarTab(2)">🔍 Buscar especie</span>
+  <span class="tab-button" onclick="cambiarTab(3)">🗺️ Buscar zona</span>
 </div>
 
-<!-- Pestaña 1: Todas las especies -->
+<!-- Pestaña 1 -->
 <div id="tab1" class="tab-content active">
-  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-    <h3 style="color: #2e7d32;">📊 Especies en el área:</h3>
-    <button onclick="consultarINaturalist()">🔍 Consultar especies</button>
-  </div>
-  <div id="resultados">
-    <div style="text-align: center; padding: 40px; color: #666;">
-      🌍 Dibuja un área en el mapa o busca un país en la Pestaña 3
-    </div>
-  </div>
+  <button onclick="consultarINaturalist()">🔍 Consultar especies</button>
+  <div id="resultados" style="margin-top: 15px;"></div>
 </div>
 
-<!-- Pestaña 2: Buscador de especie -->
+<!-- Pestaña 2 -->
 <div id="tab2" class="tab-content">
-  <div style="display: flex; flex-direction: column; gap: 15px;">
-    <div style="display: flex; gap: 10px; align-items: center;">
-      <input type="text" id="buscadorEspecie" placeholder="Ej: Lynx pardinus, Aquila adalberti, Vipera latastei" style="flex: 1;">
-      <button onclick="buscarEspecieINat()" class="button-blue">🔍 Buscar citas</button>
-    </div>
-    <div id="resultadosBusqueda">
-      <div style="text-align: center; padding: 30px; color: #666;">
-        🔍 Busca una especie para ver sus observaciones
-      </div>
-    </div>
-  </div>
+  <input type="text" id="buscadorEspecie" placeholder="Ej: Lynx pardinus" style="width: 300px;">
+  <button onclick="buscarEspecieINat()" class="button-blue">Buscar</button>
+  <div id="resultadosBusqueda" style="margin-top: 15px;"></div>
 </div>
 
-<!-- Pestaña 3: Buscador de zona -->
+<!-- Pestaña 3 -->
 <div id="tab3" class="tab-content">
-  <div style="display: flex; flex-direction: column; gap: 15px;">
-    <div style="display: flex; gap: 10px; align-items: center; position: relative;">
-      <input type="text" id="buscadorPais" 
-             placeholder="Ej: España, Doñana, Amazonas, Madrid, Costa Rica" 
-             style="flex: 1;"
-             autocomplete="off">
-      <button onclick="buscarZonaINat()" style="background-color: #8B4513;">🗺️ Buscar zona</button>
-    </div>
-    <div id="sugerenciasPais" style="position: relative;"></div>
-    
-    <div style="display: flex; gap: 10px; margin-top: 10px;">
-      <select id="paisPreseleccionado" style="flex: 1;">
-        <option value="">🌍 Selecciona un lugar...</option>
-        <option value="España">🇪🇸 España</option>
-        <option value="Portugal">🇵🇹 Portugal</option>
-        <option value="Francia">🇫🇷 Francia</option>
-        <option value="Italia">🇮🇹 Italia</option>
-        <option value="Costa Rica">🇨🇷 Costa Rica</option>
-        <option value="Ecuador">🇪🇨 Ecuador</option>
-        <option value="Colombia">🇨🇴 Colombia</option>
-        <option value="Perú">🇵🇪 Perú</option>
-        <option value="Brasil">🇧🇷 Brasil</option>
-        <option value="México">🇲🇽 México</option>
-        <option value="Australia">🇦🇺 Australia</option>
-        <option value="Japón">🇯🇵 Japón</option>
-        <option value="Parque Nacional Doñana">🌾 Doñana</option>
-        <option value="Parque Nacional Yasuní">🌳 Yasuní</option>
-      </select>
-      <button onclick="cargarPaisPreseleccionado()" style="background-color: #6B8E23;">📌 Cargar</button>
-    </div>
-    
-    <div id="resultadosPais" style="margin-top: 20px;">
-      <div style="text-align: center; padding: 30px; color: #666;">
-        🗺️ Busca un país o zona para ver su biodiversidad
-      </div>
-    </div>
-  </div>
+  <input type="text" id="buscadorPais" placeholder="Ej: España" style="width: 300px;">
+  <button onclick="buscarZonaINat()">Buscar zona</button>
+  <div id="resultadosPais" style="margin-top: 15px;"></div>
 </div>
 
-<div class="footer">
-  🌿 ExploreNat - Datos de iNaturalist • Observaciones de ciencia ciudadana
-</div>
-
-<!-- Leaflet JS -->
+<!-- Scripts -->
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
 
 <script>
   // ============================================
-  // CONFIGURACIÓN DEL MAPA
+  // VARIABLES GLOBALES
   // ============================================
-  
-  // Inicializar mapa asegurando que el DOM está cargado
-  document.addEventListener('DOMContentLoaded', function() {
-    iniciarMapa();
-  });
+  let map;
+  let drawnItems;
+  let markersLayer;
+  let zoneLayer;
+  let areaSeleccionada = null;
 
-  function iniciarMapa() {
-    // Crear mapa centrado en España
-    window.map = L.map('map').setView([40.4168, -3.7038], 6);
+  // ============================================
+  // INICIALIZACIÓN DEL MAPA (SEGURA)
+  // ============================================
+  window.onload = function() {
+    console.log("Iniciando ExploreNat...");
+    
+    // Crear mapa
+    map = L.map('map').setView([40.4168, -3.7038], 6);
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap contributors'
+      attribution: '© OpenStreetMap'
     }).addTo(map);
 
-    // Capa para el área dibujada
-    window.drawnItems = new L.FeatureGroup();
+    // Capas
+    drawnItems = new L.FeatureGroup();
     map.addLayer(drawnItems);
 
-    // Capa para los marcadores
-    window.markersLayer = new L.FeatureGroup();
+    markersLayer = new L.FeatureGroup();
     map.addLayer(markersLayer);
 
-    // Capa para la zona buscada
-    window.zoneLayer = new L.FeatureGroup();
+    zoneLayer = new L.FeatureGroup();
     map.addLayer(zoneLayer);
 
     // Control de dibujo
     var drawControl = new L.Control.Draw({
       edit: { featureGroup: drawnItems },
-      draw: { 
-        polygon: false, 
-        polyline: false, 
-        circle: false, 
-        marker: false, 
-        circlemarker: false, 
-        rectangle: true 
-      }
+      draw: { polygon: false, polyline: false, circle: false, marker: false, rectangle: true }
     });
     map.addControl(drawControl);
 
-    window.areaSeleccionada = null;
-
-    // Evento al dibujar rectángulo
+    // Evento al dibujar
     map.on(L.Draw.Event.CREATED, function(e) {
       var layer = e.layer;
       drawnItems.clearLayers();
@@ -511,192 +321,211 @@
       obtenerArea();
     });
 
-    console.log("✅ Mapa de ExploreNat iniciado correctamente");
-  }
+    console.log("✅ Mapa cargado correctamente");
+  };
 
   // ============================================
-  // FUNCIONES AUXILIARES
+  // FUNCIONES BÁSICAS
   // ============================================
   
   function obtenerArea() {
-    if (!window.areaSeleccionada) {
-      document.getElementById("coords").innerHTML = "Primero dibuja un área en el mapa";
+    if (!areaSeleccionada) {
+      document.getElementById("coords").innerHTML = "Dibuja un área primero";
       return;
     }
     var bounds = areaSeleccionada;
     document.getElementById("coords").innerHTML = 
-      `📍 Norte: ${bounds.getNorth().toFixed(4)}°<br>` +
-      `📍 Sur: ${bounds.getSouth().toFixed(4)}°<br>` +
-      `📍 Este: ${bounds.getEast().toFixed(4)}°<br>` +
-      `📍 Oeste: ${bounds.getWest().toFixed(4)}°<br>` +
-      `📏 Área: ${calcularAreaKm2(bounds).toFixed(0)} km²`;
+      `Norte: ${bounds.getNorth().toFixed(4)}°<br>` +
+      `Sur: ${bounds.getSouth().toFixed(4)}°<br>` +
+      `Este: ${bounds.getEast().toFixed(4)}°<br>` +
+      `Oeste: ${bounds.getWest().toFixed(4)}°`;
   }
 
   function limpiarMapa() {
-    if (window.drawnItems) drawnItems.clearLayers();
-    if (window.markersLayer) markersLayer.clearLayers();
-    if (window.zoneLayer) zoneLayer.clearLayers();
-    window.areaSeleccionada = null;
-    document.getElementById("coords").innerHTML = "Dibuja un rectángulo en el mapa o busca un país/ciudad";
-    document.getElementById("mensajeAyuda").style.display = "none";
-  }
-
-  function calcularAreaKm2(bounds) {
-    var R = 6371;
-    var lat1 = bounds.getSouth() * Math.PI / 180;
-    var lat2 = bounds.getNorth() * Math.PI / 180;
-    var lon1 = bounds.getWest() * Math.PI / 180;
-    var lon2 = bounds.getEast() * Math.PI / 180;
-    var ancho = R * Math.abs(lon2 - lon1) * Math.cos((lat1 + lat2) / 2);
-    var alto = R * Math.abs(lat2 - lat1);
-    return ancho * alto;
+    if (drawnItems) drawnItems.clearLayers();
+    if (markersLayer) markersLayer.clearLayers();
+    if (zoneLayer) zoneLayer.clearLayers();
+    areaSeleccionada = null;
+    document.getElementById("coords").innerHTML = "Dibuja un rectángulo en el mapa";
   }
 
   function cambiarTab(tabId) {
-    document.getElementById('tab1Btn').classList.remove('active');
-    document.getElementById('tab2Btn').classList.remove('active');
-    document.getElementById('tab3Btn').classList.remove('active');
-    document.getElementById(`tab${tabId}Btn`).classList.add('active');
+    document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
     
-    document.getElementById('tab1').classList.remove('active');
-    document.getElementById('tab2').classList.remove('active');
-    document.getElementById('tab3').classList.remove('active');
+    event.target.classList.add('active');
     document.getElementById(`tab${tabId}`).classList.add('active');
-  }
-
-  // ============================================
-  // PROXY PARA EVITAR CORS
-  // ============================================
-  
-  const PROXY_URL = 'https://api.allorigins.win/raw?url=';
-
-  async function fetchWithProxy(url) {
-    try {
-      // Intentar sin proxy primero
-      const response = await fetch(url);
-      if (response.ok) return response;
-    } catch (e) {
-      console.log("Usando proxy por CORS...");
-    }
-    
-    // Usar proxy
-    const proxyResponse = await fetch(PROXY_URL + encodeURIComponent(url));
-    return proxyResponse;
   }
 
   // ============================================
   // FUNCIONES DE iNaturalist
   // ============================================
   
-  async function buscarPlaceIdINaturalist(query) {
-    try {
-      const url = `https://api.inaturalist.org/v1/places?q=${encodeURIComponent(query)}&per_page=10`;
-      const response = await fetchWithProxy(url);
-      const data = await response.json();
-      
-      if (data.results && data.results.length > 0) {
-        return data.results.map(place => ({
-          id: place.id,
-          name: place.display_name,
-          type: place.place_type_name,
-          bbox: place.bounding_box_geojson ? 
-                [place.bounding_box_geojson.coordinates[0][1], 
-                 place.bounding_box_geojson.coordinates[0][0],
-                 place.bounding_box_geojson.coordinates[2][1],
-                 place.bounding_box_geojson.coordinates[2][0]] :
-                [place.swlat, place.swlng, place.nelat, place.nelng],
-          location: [place.latitude, place.longitude],
-          admin_level: place.admin_level
-        }));
-      }
-      return [];
-    } catch (error) {
-      console.error("Error buscando places:", error);
-      return [];
-    }
-  }
-
-  async function geocodificarLugar(query) {
-    const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`;
-    try {
-      const response = await fetch(url, { headers: { 'User-Agent': 'ExploreNat/1.0' } });
-      const data = await response.json();
-      if (data && data.length > 0) {
-        const lugar = data[0];
-        let bounds = null;
-        if (lugar.boundingbox) {
-          bounds = L.latLngBounds(
-            [parseFloat(lugar.boundingbox[0]), parseFloat(lugar.boundingbox[2])],
-            [parseFloat(lugar.boundingbox[1]), parseFloat(lugar.boundingbox[3])]
-          );
-        }
-        return {
-          nombre: lugar.display_name,
-          bounds: bounds,
-          lat: parseFloat(lugar.lat),
-          lon: parseFloat(lugar.lon),
-          tipo: lugar.type
-        };
-      }
-      return null;
-    } catch (error) {
-      console.error('Error geocodificando:', error);
-      return null;
-    }
-  }
-
-  // ============================================
-  // FUNCIÓN PRINCIPAL: Buscar zona
-  // ============================================
-  
-  async function buscarZonaINat() {
-    var query = document.getElementById("buscadorPais").value.trim();
-    
-    if (!query) {
-      alert("Escribe el nombre de un país o zona");
+  async function consultarINaturalist() {
+    if (!areaSeleccionada) {
+      alert("Primero dibuja un área en el mapa");
       return;
     }
 
-    document.getElementById("resultadosPais").innerHTML = `
-      <div style="text-align: center; padding: 40px;">
-        <div class="loading"></div>
-        <p style="margin-top: 20px; color: #666;">Buscando "${query}" en iNaturalist...</p>
-      </div>
-    `;
+    document.getElementById("resultados").innerHTML = '<div class="loading"></div> Cargando...';
 
-    if (window.zoneLayer) zoneLayer.clearLayers();
-    if (window.drawnItems) drawnItems.clearLayers();
-    if (window.markersLayer) markersLayer.clearLayers();
+    const soloResearch = document.getElementById("soloResearch").checked;
+    const bounds = areaSeleccionada;
 
     try {
-      const places = await buscarPlaceIdINaturalist(query);
+      const url = `https://api.inaturalist.org/v1/observations/species_counts?` +
+                  `verifiable=${soloResearch}` +
+                  `&per_page=30` +
+                  `&swlat=${bounds.getSouth()}` +
+                  `&swlng=${bounds.getWest()}` +
+                  `&nelat=${bounds.getNorth()}` +
+                  `&nelng=${bounds.getEast()}`;
+
+      const response = await fetch(url);
+      const data = await response.json();
       
-      let lugar;
-      let bounds;
+      if (!data.results || data.results.length === 0) {
+        document.getElementById("resultados").innerHTML = "No se encontraron especies";
+        return;
+      }
+
+      let html = `<div class="stats">Especies: ${data.total_results}</div>`;
+
+      data.results.forEach(item => {
+        const taxon = item.taxon;
+        html += `<div class="inat-card">`;
+        html += `<div class="inat-placeholder">📷</div>`;
+        html += `<div class="inat-info">`;
+        html += `<div class="inat-titulo">${taxon.name}</div>`;
+        html += `<div>${taxon.preferred_common_name || ''}</div>`;
+        html += `<span class="badge">📊 ${item.count} obs</span>`;
+        html += `</div></div>`;
+      });
+
+      document.getElementById("resultados").innerHTML = html;
+
+    } catch (error) {
+      document.getElementById("resultados").innerHTML = `Error: ${error.message}`;
+    }
+  }
+
+  async function buscarEspecieINat() {
+    const nombre = document.getElementById("buscadorEspecie").value.trim();
+    if (!nombre) return alert("Escribe un nombre");
+    if (!areaSeleccionada) return alert("Dibuja un área primero");
+
+    markersLayer.clearLayers();
+    document.getElementById("resultadosBusqueda").innerHTML = '<div class="loading"></div> Buscando...';
+
+    const bounds = areaSeleccionada;
+
+    try {
+      // Buscar taxón
+      const taxonRes = await fetch(`https://api.inaturalist.org/v1/taxa?q=${encodeURIComponent(nombre)}&per_page=1`);
+      const taxonData = await taxonRes.json();
       
-      if (places.length > 0) {
-        if (places.length > 1) {
-          mostrarSelectorPlaces(places);
-          return;
+      if (!taxonData.results?.length) {
+        document.getElementById("resultadosBusqueda").innerHTML = "Especie no encontrada";
+        return;
+      }
+
+      const taxon = taxonData.results[0];
+
+      // Buscar observaciones
+      const url = `https://api.inaturalist.org/v1/observations?` +
+                  `taxon_id=${taxon.id}` +
+                  `&verifiable=true` +
+                  `&per_page=30` +
+                  `&swlat=${bounds.getSouth()}&swlng=${bounds.getWest()}` +
+                  `&nelat=${bounds.getNorth()}&nelng=${bounds.getEast()}`;
+
+      const obsRes = await fetch(url);
+      const obsData = await obsRes.json();
+
+      if (!obsData.results?.length) {
+        document.getElementById("resultadosBusqueda").innerHTML = "No hay observaciones";
+        return;
+      }
+
+      let html = `<div class="stats">${obsData.total_results} observaciones</div>`;
+
+      obsData.results.forEach(obs => {
+        if (obs.geojson?.coordinates) {
+          const [lng, lat] = obs.geojson.coordinates;
+          L.circleMarker([lat, lng], { radius: 6, color: '#4CAF50' }).addTo(markersLayer);
         }
-        
-        const place = places[0];
-        lugar = {
-          nombre: place.name,
-          place_id: place.id,
-          lat: place.location[0],
-          lon: place.location[1],
-          tipo: place.type,
-          admin_level: place.admin_level
-        };
-        
-        bounds = L.latLngBounds(
-          [place.bbox[0], place.bbox[1]],
-          [place.bbox[2], place.bbox[3]]
-        );
-        
-        mostrarMensaje(`✅ Usando límites de iNaturalist: ${place.name}`, "success");
-      } else {
-        mostrarMensaje("⚠️ Usando límites aproximados de OpenStreetMap", "warning");
-        
-        const os
+
+        html += `<div class="inat-card">`;
+        html += `<div class="inat-placeholder">📷</div>`;
+        html += `<div class="inat-info">`;
+        html += `<div>📅 ${obs.observed_on || 'Fecha desconocida'}</div>`;
+        html += `<div>👤 ${obs.user?.login || 'Anónimo'}</div>`;
+        html += `</div></div>`;
+      });
+
+      document.getElementById("resultadosBusqueda").innerHTML = html;
+      
+      if (markersLayer.getLayers().length > 0) {
+        map.fitBounds(markersLayer.getBounds().pad(0.1));
+      }
+
+    } catch (error) {
+      document.getElementById("resultadosBusqueda").innerHTML = `Error: ${error.message}`;
+    }
+  }
+
+  async function buscarZonaINat() {
+    const query = document.getElementById("buscadorPais").value.trim();
+    if (!query) return alert("Escribe un lugar");
+
+    document.getElementById("resultadosPais").innerHTML = '<div class="loading"></div> Buscando...';
+
+    try {
+      // Geocodificar con Nominatim
+      const geoRes = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`);
+      const geoData = await geoRes.json();
+      
+      if (!geoData.length) {
+        document.getElementById("resultadosPais").innerHTML = "Lugar no encontrado";
+        return;
+      }
+
+      const lugar = geoData[0];
+      const bounds = L.latLngBounds(
+        [parseFloat(lugar.boundingbox[0]), parseFloat(lugar.boundingbox[2])],
+        [parseFloat(lugar.boundingbox[1]), parseFloat(lugar.boundingbox[3])]
+      );
+
+      zoneLayer.clearLayers();
+      L.rectangle(bounds, { color: "#4CAF50", weight: 3 }).addTo(zoneLayer);
+      L.marker([parseFloat(lugar.lat), parseFloat(lugar.lon)]).addTo(zoneLayer);
+      
+      map.fitBounds(bounds.pad(0.1));
+      areaSeleccionada = bounds;
+      
+      document.getElementById("coords").innerHTML = 
+        `📍 ${lugar.display_name}<br>` +
+        `Norte: ${bounds.getNorth().toFixed(4)}°<br>` +
+        `Sur: ${bounds.getSouth().toFixed(4)}°`;
+
+      // Consultar especies automáticamente
+      await consultarINaturalist();
+
+    } catch (error) {
+      document.getElementById("resultadosPais").innerHTML = `Error: ${error.message}`;
+    }
+  }
+
+  // Enter para búsquedas
+  document.getElementById("buscadorEspecie")?.addEventListener("keypress", e => {
+    if (e.key === "Enter") buscarEspecieINat();
+  });
+
+  document.getElementById("buscadorPais")?.addEventListener("keypress", e => {
+    if (e.key === "Enter") buscarZonaINat();
+  });
+
+</script>
+
+</body>
+</html>
