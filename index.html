@@ -557,7 +557,7 @@
       
       html += `<div class="inat-info">`;
       html += `<div class="inat-titulo">${taxon.name} 
-               <a href="https://www.inaturalist.org/taxa/${taxon.id}" target="_blank" class="enlace-inat">🔗 iNat</a>
+               <a href="https://www.inaturalist.org/taxa/${taxon.id}" target="_blank" class="enlace-inat" onclick="event.stopPropagation()">🔗 iNat</a>
                </div>`;
       html += `<div>${taxon.preferred_common_name || ''}</div>`;
       html += `<span class="badge">📊 ${item.count} obs</span>`;
@@ -604,7 +604,7 @@
   }
 
   // ============================================
-  // PESTAÑA 1 - CON PAGINACIÓN
+  // PESTAÑA 1
   // ============================================
   
   async function consultarINaturalist() {
@@ -622,7 +622,7 @@
     try {
       let url = `https://api.inaturalist.org/v1/observations/species_counts?` +
                 `verifiable=${soloResearch}` +
-                `&per_page=200` + // Pedimos el máximo posible
+                `&per_page=200` +
                 `&swlat=${bounds.getSouth()}` +
                 `&swlng=${bounds.getWest()}` +
                 `&nelat=${bounds.getNorth()}` +
@@ -641,7 +641,6 @@
         return;
       }
 
-      // Guardar todas las especies y mostrar primera página
       todasLasEspecies = data.results;
       paginaActual = 1;
       mostrarPagina(1);
@@ -682,4 +681,6 @@
                   `&verifiable=${soloResearch}` +
                   `&per_page=30` +
                   `&swlat=${bounds.getSouth()}&swlng=${bounds.getWest()}` +
-                  `&nelat=
+                  `&nelat=${bounds.getNorth()}&nelng=${bounds.getEast()}`;
+
+      const obsRes = aw
