@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>ExploreNat - iNaturalist Explorer con Límites Políticos</title>
+  <title>ExploreNat - Explorador de Biodiversidad</title>
 
   <!-- Leaflet CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
@@ -11,54 +11,73 @@
 
   <style>
     body {
-      font-family: Arial, sans-serif;
+      font-family: 'Segoe UI', Arial, sans-serif;
       margin: 20px;
-      background-color: #f9f9f9;
+      background-color: #f0f7f0;
     }
 
     h1 {
-      color: #4CAF50;
+      color: #2c5e2e;
+      text-align: center;
+      margin-bottom: 20px;
+      font-size: 2.5em;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+    }
+
+    h1::before {
+      content: "🌿 ";
+    }
+
+    h1::after {
+      content: " 🌍";
     }
 
     #map {
       height: 500px;
       margin-bottom: 15px;
-      border-radius: 8px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+      border: 3px solid #4CAF50;
     }
 
     .controls {
       background: white;
-      padding: 15px;
-      border-radius: 8px;
+      padding: 20px;
+      border-radius: 12px;
       margin-bottom: 20px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
       display: flex;
       flex-wrap: wrap;
       align-items: center;
-      gap: 10px;
+      gap: 15px;
+      border-left: 5px solid #4CAF50;
     }
 
     button, select, input {
-      padding: 10px 16px;
+      padding: 12px 20px;
       cursor: pointer;
       border: none;
-      border-radius: 4px;
+      border-radius: 8px;
       font-size: 14px;
+      font-weight: 500;
+      transition: all 0.3s ease;
     }
 
     button {
       background-color: #4CAF50;
       color: white;
-      transition: background-color 0.3s;
+      box-shadow: 0 2px 5px rgba(76, 175, 80, 0.3);
     }
 
     button:hover {
       background-color: #388E3C;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 10px rgba(76, 175, 80, 0.4);
     }
 
     .button-blue {
       background-color: #2196F3;
+      box-shadow: 0 2px 5px rgba(33, 150, 243, 0.3);
     }
     .button-blue:hover {
       background-color: #1976D2;
@@ -66,12 +85,17 @@
 
     select, input {
       background-color: white;
-      border: 1px solid #ccc;
+      border: 2px solid #e0e0e0;
+    }
+
+    select:focus, input:focus {
+      border-color: #4CAF50;
+      outline: none;
     }
 
     input {
       cursor: text;
-      min-width: 250px;
+      min-width: 300px;
     }
 
     pre {
@@ -86,9 +110,9 @@
 
     #resultados, #resultadosBusqueda, #resultadosPais {
       background: white;
-      padding: 15px;
-      border-radius: 8px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
       max-height: 600px;
       overflow-y: auto;
     }
@@ -100,6 +124,7 @@
       padding: 15px;
       border-radius: 8px;
       margin-bottom: 15px;
+      border-left: 4px solid #ffc107;
     }
 
     .success {
@@ -109,6 +134,7 @@
       padding: 15px;
       border-radius: 8px;
       margin-bottom: 15px;
+      border-left: 4px solid #28a745;
     }
 
     .inat-card {
@@ -117,35 +143,39 @@
       margin-bottom: 15px;
       padding: 15px;
       background: white;
-      border-radius: 8px;
+      border-radius: 10px;
       border: 1px solid #eaeaea;
-      transition: transform 0.2s;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
     }
 
     .inat-card:hover {
       transform: translateX(5px);
       border-left: 4px solid #4CAF50;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
     }
 
     .inat-imagen {
-      width: 70px;
-      height: 70px;
+      width: 80px;
+      height: 80px;
       object-fit: cover;
-      border-radius: 8px;
+      border-radius: 10px;
       margin-right: 15px;
+      border: 2px solid #4CAF50;
     }
 
     .inat-placeholder {
-      width: 70px;
-      height: 70px;
+      width: 80px;
+      height: 80px;
       background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
       margin-right: 15px;
-      border-radius: 8px;
+      border-radius: 10px;
       display: flex;
       align-items: center;
       justify-content: center;
       color: #4CAF50;
-      font-size: 24px;
+      font-size: 30px;
+      border: 2px dashed #4CAF50;
     }
 
     .inat-info {
@@ -182,25 +212,32 @@
       font-size: 12px;
       color: #2e7d32;
       display: inline-block;
+      font-weight: 500;
     }
 
     .badge-quality-research {
       background: #c8e6c9;
       color: #1b5e20;
       font-weight: bold;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
     }
 
     .badge-quality-casual {
       background: #ffccbc;
       color: #bf360c;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
     }
 
     .loading {
       display: inline-block;
-      width: 20px;
-      height: 20px;
-      border: 3px solid #f3f3f3;
-      border-top: 3px solid #4CAF50;
+      width: 30px;
+      height: 30px;
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #4CAF50;
       border-radius: 50%;
       animation: spin 1s linear infinite;
     }
@@ -217,6 +254,7 @@
       margin-bottom: 20px;
       font-weight: bold;
       color: #1b5e20;
+      border-left: 4px solid #2e7d32;
     }
 
     .tab-buttons {
@@ -231,14 +269,17 @@
       color: #495057;
       border: none;
       padding: 12px 24px;
-      border-radius: 4px;
+      border-radius: 8px;
       cursor: pointer;
       font-weight: bold;
+      font-size: 15px;
+      transition: all 0.3s ease;
     }
 
     .tab-button.active {
       background: #4CAF50;
       color: white;
+      box-shadow: 0 2px 8px rgba(76, 175, 80, 0.4);
     }
 
     .tab-content {
@@ -252,18 +293,19 @@
     .pais-sugerencia {
       position: absolute;
       background: white;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      max-height: 200px;
+      border: 2px solid #4CAF50;
+      border-radius: 8px;
+      max-height: 250px;
       overflow-y: auto;
-      width: 300px;
+      width: 350px;
       z-index: 1000;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      box-shadow: 0 6px 12px rgba(0,0,0,0.15);
     }
 
     .pais-sugerencia-item {
-      padding: 10px;
+      padding: 12px;
       cursor: pointer;
+      border-bottom: 1px solid #eee;
     }
 
     .pais-sugerencia-item:hover {
@@ -271,13 +313,13 @@
     }
 
     .place-option {
-      padding: 12px;
-      margin: 8px 0;
+      padding: 15px;
+      margin: 10px 0;
       background: #f8f9fa;
       border-radius: 8px;
       cursor: pointer;
-      border: 1px solid #dee2e6;
-      transition: all 0.2s;
+      border: 2px solid #dee2e6;
+      transition: all 0.3s ease;
     }
 
     .place-option:hover {
@@ -285,11 +327,18 @@
       border-color: #4CAF50;
       transform: translateX(5px);
     }
+
+    .footer {
+      text-align: center;
+      margin-top: 20px;
+      color: #666;
+      font-size: 12px;
+    }
   </style>
 </head>
 <body>
 
-<h1>🌿 iNaturalist Explorer - Límites Políticos Reales</h1>
+<h1>ExploreNat</h1>
 
 <div class="controls">
   <button onclick="obtenerArea()">📍 Obtener coordenadas</button>
@@ -310,8 +359,8 @@
     <option value="Fungi">🍄 Hongos</option>
   </select>
 
-  <label style="margin-left: 10px;">
-    <input type="checkbox" id="soloResearch" checked> Solo grado investigación
+  <label style="margin-left: 10px; display: flex; align-items: center;">
+    <input type="checkbox" id="soloResearch" checked style="margin-right: 5px; width: auto;"> Solo grado investigación
   </label>
 </div>
 
@@ -326,19 +375,19 @@
 <div class="tab-buttons">
   <button id="tab1Btn" class="tab-button active" onclick="cambiarTab(1)">🌍 Todas las especies</button>
   <button id="tab2Btn" class="tab-button" onclick="cambiarTab(2)">🔍 Buscar especie</button>
-  <button id="tab3Btn" class="tab-button" onclick="cambiarTab(3)">🗺️ Buscar zona (polígonos reales)</button>
+  <button id="tab3Btn" class="tab-button" onclick="cambiarTab(3)">🗺️ Buscar zona</button>
 </div>
 
 <!-- Pestaña 1: Todas las especies -->
 <div id="tab1" class="tab-content active">
   <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-    <h3>📊 Especies en iNaturalist (área dibujada):</h3>
+    <h3 style="color: #2e7d32;">📊 Especies en el área:</h3>
     <button onclick="consultarINaturalist()">🔍 Consultar especies</button>
   </div>
   <div id="resultados">
-    <p style="color: #666; text-align: center; padding: 40px;">
+    <div style="text-align: center; padding: 40px; color: #666;">
       🌍 Dibuja un área en el mapa o busca un país en la Pestaña 3
-    </p>
+    </div>
   </div>
 </div>
 
@@ -347,17 +396,17 @@
   <div style="display: flex; flex-direction: column; gap: 15px;">
     <div style="display: flex; gap: 10px; align-items: center;">
       <input type="text" id="buscadorEspecie" placeholder="Ej: Lynx pardinus, Aquila adalberti, Vipera latastei" style="flex: 1;">
-      <button onclick="buscarEspecieINat()" class="button-blue">🔍 Buscar citas en el área</button>
+      <button onclick="buscarEspecieINat()" class="button-blue">🔍 Buscar citas</button>
     </div>
     <div id="resultadosBusqueda">
-      <p style="color: #666; text-align: center; padding: 20px;">
-        🔍 Busca una especie para ver todas sus observaciones en el área seleccionada
-      </p>
+      <div style="text-align: center; padding: 30px; color: #666;">
+        🔍 Busca una especie para ver sus observaciones
+      </div>
     </div>
   </div>
 </div>
 
-<!-- Pestaña 3: Buscador de país/zona con polígonos reales -->
+<!-- Pestaña 3: Buscador de zona -->
 <div id="tab3" class="tab-content">
   <div style="display: flex; flex-direction: column; gap: 15px;">
     <div style="display: flex; gap: 10px; align-items: center; position: relative;">
@@ -365,37 +414,41 @@
              placeholder="Ej: España, Doñana, Amazonas, Madrid, Costa Rica" 
              style="flex: 1;"
              autocomplete="off">
-      <button onclick="buscarZonaINat()" style="background-color: #8B4513;">🗺️ Buscar con límites reales</button>
+      <button onclick="buscarZonaINat()" style="background-color: #8B4513;">🗺️ Buscar zona</button>
     </div>
     <div id="sugerenciasPais" style="position: relative;"></div>
     
     <div style="display: flex; gap: 10px; margin-top: 10px;">
       <select id="paisPreseleccionado" style="flex: 1;">
-        <option value="">🌍 Selecciona un país rápido...</option>
-        <option value="España">España</option>
-        <option value="Portugal">Portugal</option>
-        <option value="Francia">Francia</option>
-        <option value="Italia">Italia</option>
-        <option value="Costa Rica">Costa Rica 🇨🇷</option>
-        <option value="Ecuador">Ecuador</option>
-        <option value="Colombia">Colombia</option>
-        <option value="Perú">Perú</option>
-        <option value="Brasil">Brasil</option>
-        <option value="México">México</option>
-        <option value="Australia">Australia</option>
-        <option value="Japón">Japón</option>
-        <option value="Parque Nacional Doñana">Doñana</option>
-        <option value="Parque Nacional Yasuní">Yasuní</option>
+        <option value="">🌍 Selecciona un lugar...</option>
+        <option value="España">🇪🇸 España</option>
+        <option value="Portugal">🇵🇹 Portugal</option>
+        <option value="Francia">🇫🇷 Francia</option>
+        <option value="Italia">🇮🇹 Italia</option>
+        <option value="Costa Rica">🇨🇷 Costa Rica</option>
+        <option value="Ecuador">🇪🇨 Ecuador</option>
+        <option value="Colombia">🇨🇴 Colombia</option>
+        <option value="Perú">🇵🇪 Perú</option>
+        <option value="Brasil">🇧🇷 Brasil</option>
+        <option value="México">🇲🇽 México</option>
+        <option value="Australia">🇦🇺 Australia</option>
+        <option value="Japón">🇯🇵 Japón</option>
+        <option value="Parque Nacional Doñana">🌾 Doñana</option>
+        <option value="Parque Nacional Yasuní">🌳 Yasuní</option>
       </select>
       <button onclick="cargarPaisPreseleccionado()" style="background-color: #6B8E23;">📌 Cargar</button>
     </div>
     
     <div id="resultadosPais" style="margin-top: 20px;">
-      <p style="color: #666; text-align: center; padding: 20px;">
-        🗺️ Busca un país o zona para ver su biodiversidad con límites políticos reales
-      </p>
+      <div style="text-align: center; padding: 30px; color: #666;">
+        🗺️ Busca un país o zona para ver su biodiversidad
+      </div>
     </div>
   </div>
+</div>
+
+<div class="footer">
+  🌿 ExploreNat - Datos de iNaturalist • Observaciones de ciencia ciudadana
 </div>
 
 <!-- Leaflet JS -->
@@ -406,64 +459,99 @@
   // ============================================
   // CONFIGURACIÓN DEL MAPA
   // ============================================
-  var map = L.map('map').setView([40.4168, -3.7038], 6);
+  
+  // Inicializar mapa asegurando que el DOM está cargado
+  document.addEventListener('DOMContentLoaded', function() {
+    iniciarMapa();
+  });
 
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© OpenStreetMap'
-  }).addTo(map);
+  function iniciarMapa() {
+    // Crear mapa centrado en España
+    window.map = L.map('map').setView([40.4168, -3.7038], 6);
 
-  // Capa para el área dibujada
-  var drawnItems = new L.FeatureGroup();
-  map.addLayer(drawnItems);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
 
-  // Capa para los marcadores de observaciones
-  var markersLayer = new L.FeatureGroup();
-  map.addLayer(markersLayer);
+    // Capa para el área dibujada
+    window.drawnItems = new L.FeatureGroup();
+    map.addLayer(drawnItems);
 
-  // Capa para la zona buscada (con polígonos)
-  var zoneLayer = new L.FeatureGroup();
-  map.addLayer(zoneLayer);
+    // Capa para los marcadores
+    window.markersLayer = new L.FeatureGroup();
+    map.addLayer(markersLayer);
 
-  var drawControl = new L.Control.Draw({
-    edit: { featureGroup: drawnItems },
-    draw: { 
-      polygon: false, 
-      polyline: false, 
-      circle: false, 
-      marker: false, 
-      circlemarker: false, 
-      rectangle: true 
+    // Capa para la zona buscada
+    window.zoneLayer = new L.FeatureGroup();
+    map.addLayer(zoneLayer);
+
+    // Control de dibujo
+    var drawControl = new L.Control.Draw({
+      edit: { featureGroup: drawnItems },
+      draw: { 
+        polygon: false, 
+        polyline: false, 
+        circle: false, 
+        marker: false, 
+        circlemarker: false, 
+        rectangle: true 
+      }
+    });
+    map.addControl(drawControl);
+
+    window.areaSeleccionada = null;
+
+    // Evento al dibujar rectángulo
+    map.on(L.Draw.Event.CREATED, function(e) {
+      var layer = e.layer;
+      drawnItems.clearLayers();
+      drawnItems.addLayer(layer);
+      areaSeleccionada = layer.getBounds();
+      document.getElementById("mensajeAyuda").style.display = "none";
+      obtenerArea();
+    });
+
+    console.log("✅ Mapa de ExploreNat iniciado correctamente");
+  }
+
+  // ============================================
+  // FUNCIONES AUXILIARES
+  // ============================================
+  
+  function obtenerArea() {
+    if (!window.areaSeleccionada) {
+      document.getElementById("coords").innerHTML = "Primero dibuja un área en el mapa";
+      return;
     }
-  });
-  map.addControl(drawControl);
+    var bounds = areaSeleccionada;
+    document.getElementById("coords").innerHTML = 
+      `📍 Norte: ${bounds.getNorth().toFixed(4)}°<br>` +
+      `📍 Sur: ${bounds.getSouth().toFixed(4)}°<br>` +
+      `📍 Este: ${bounds.getEast().toFixed(4)}°<br>` +
+      `📍 Oeste: ${bounds.getWest().toFixed(4)}°<br>` +
+      `📏 Área: ${calcularAreaKm2(bounds).toFixed(0)} km²`;
+  }
 
-  var areaSeleccionada = null;
-
-  // Guardar el rectángulo dibujado
-  map.on(L.Draw.Event.CREATED, function(e) {
-    var layer = e.layer;
-    drawnItems.clearLayers();
-    drawnItems.addLayer(layer);
-    areaSeleccionada = layer.getBounds();
-    document.getElementById("mensajeAyuda").style.display = "none";
-    obtenerArea();
-  });
-
-  // ============================================
-  // FUNCIÓN: Limpiar mapa
-  // ============================================
   function limpiarMapa() {
-    drawnItems.clearLayers();
-    markersLayer.clearLayers();
-    zoneLayer.clearLayers();
-    areaSeleccionada = null;
+    if (window.drawnItems) drawnItems.clearLayers();
+    if (window.markersLayer) markersLayer.clearLayers();
+    if (window.zoneLayer) zoneLayer.clearLayers();
+    window.areaSeleccionada = null;
     document.getElementById("coords").innerHTML = "Dibuja un rectángulo en el mapa o busca un país/ciudad";
     document.getElementById("mensajeAyuda").style.display = "none";
   }
 
-  // ============================================
-  // FUNCIÓN: Cambiar pestañas
-  // ============================================
+  function calcularAreaKm2(bounds) {
+    var R = 6371;
+    var lat1 = bounds.getSouth() * Math.PI / 180;
+    var lat2 = bounds.getNorth() * Math.PI / 180;
+    var lon1 = bounds.getWest() * Math.PI / 180;
+    var lon2 = bounds.getEast() * Math.PI / 180;
+    var ancho = R * Math.abs(lon2 - lon1) * Math.cos((lat1 + lat2) / 2);
+    var alto = R * Math.abs(lat2 - lat1);
+    return ancho * alto;
+  }
+
   function cambiarTab(tabId) {
     document.getElementById('tab1Btn').classList.remove('active');
     document.getElementById('tab2Btn').classList.remove('active');
@@ -477,40 +565,33 @@
   }
 
   // ============================================
-  // FUNCIÓN: Mostrar coordenadas
+  // PROXY PARA EVITAR CORS
   // ============================================
-  function obtenerArea() {
-    var bounds = areaSeleccionada ? areaSeleccionada : map.getBounds();
-    document.getElementById("coords").innerHTML = 
-      `📍 Norte: ${bounds.getNorth().toFixed(4)}°<br>` +
-      `📍 Sur: ${bounds.getSouth().toFixed(4)}°<br>` +
-      `📍 Este: ${bounds.getEast().toFixed(4)}°<br>` +
-      `📍 Oeste: ${bounds.getWest().toFixed(4)}°<br>` +
-      `📏 Área: ${calcularAreaKm2(bounds).toFixed(0)} km²`;
+  
+  const PROXY_URL = 'https://api.allorigins.win/raw?url=';
+
+  async function fetchWithProxy(url) {
+    try {
+      // Intentar sin proxy primero
+      const response = await fetch(url);
+      if (response.ok) return response;
+    } catch (e) {
+      console.log("Usando proxy por CORS...");
+    }
+    
+    // Usar proxy
+    const proxyResponse = await fetch(PROXY_URL + encodeURIComponent(url));
+    return proxyResponse;
   }
 
   // ============================================
-  // FUNCIÓN: Calcular área
+  // FUNCIONES DE iNaturalist
   // ============================================
-  function calcularAreaKm2(bounds) {
-    var R = 6371;
-    var lat1 = bounds.getSouth() * Math.PI / 180;
-    var lat2 = bounds.getNorth() * Math.PI / 180;
-    var lon1 = bounds.getWest() * Math.PI / 180;
-    var lon2 = bounds.getEast() * Math.PI / 180;
-    var ancho = R * Math.abs(lon2 - lon1) * Math.cos((lat1 + lat2) / 2);
-    var alto = R * Math.abs(lat2 - lat1);
-    return ancho * alto;
-  }
-
-  // ============================================
-  // FUNCIÓN NUEVA: Buscar place_id en iNaturalist
-  // ============================================
+  
   async function buscarPlaceIdINaturalist(query) {
     try {
-      // Buscar lugares en iNaturalist por nombre
       const url = `https://api.inaturalist.org/v1/places?q=${encodeURIComponent(query)}&per_page=10`;
-      const response = await fetch(url);
+      const response = await fetchWithProxy(url);
       const data = await response.json();
       
       if (data.results && data.results.length > 0) {
@@ -535,13 +616,10 @@
     }
   }
 
-  // ============================================
-  // FUNCIÓN: Geocodificar con Nominatim (fallback)
-  // ============================================
   async function geocodificarLugar(query) {
-    const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1&polygon_geojson=1`;
+    const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`;
     try {
-      const response = await fetch(url, { headers: { 'User-Agent': 'iNatExplorer/1.0' } });
+      const response = await fetch(url, { headers: { 'User-Agent': 'ExploreNat/1.0' } });
       const data = await response.json();
       if (data && data.length > 0) {
         const lugar = data[0];
@@ -568,8 +646,9 @@
   }
 
   // ============================================
-  // FUNCIÓN PRINCIPAL: Buscar zona con place_id
+  // FUNCIÓN PRINCIPAL: Buscar zona
   // ============================================
+  
   async function buscarZonaINat() {
     var query = document.getElementById("buscadorPais").value.trim();
     
@@ -585,25 +664,22 @@
       </div>
     `;
 
-    zoneLayer.clearLayers();
-    drawnItems.clearLayers();
-    markersLayer.clearLayers();
+    if (window.zoneLayer) zoneLayer.clearLayers();
+    if (window.drawnItems) drawnItems.clearLayers();
+    if (window.markersLayer) markersLayer.clearLayers();
 
     try {
-      // 1. BUSCAR PRIMERO EN iNaturalist places
       const places = await buscarPlaceIdINaturalist(query);
       
       let lugar;
       let bounds;
       
       if (places.length > 0) {
-        // Si hay múltiples places, mostrar selector
         if (places.length > 1) {
           mostrarSelectorPlaces(places);
           return;
         }
         
-        // Usar el primer resultado
         const place = places[0];
         lugar = {
           nombre: place.name,
@@ -614,61 +690,13 @@
           admin_level: place.admin_level
         };
         
-        // Crear bounds desde el bbox
         bounds = L.latLngBounds(
           [place.bbox[0], place.bbox[1]],
           [place.bbox[2], place.bbox[3]]
         );
         
-        document.getElementById("mensajeAyuda").innerHTML = `
-          ✅ Usando límites políticos de iNaturalist: ${place.name}<br>
-          <small>Place ID: ${place.id} | Tipo: ${place.type} | Nivel admin: ${place.admin_level || 'N/A'}</small>
-        `;
-        document.getElementById("mensajeAyuda").className = "success";
+        mostrarMensaje(`✅ Usando límites de iNaturalist: ${place.name}`, "success");
       } else {
-        // Fallback a OpenStreetMap
-        document.getElementById("mensajeAyuda").innerHTML = `
-          ⚠️ No se encontró en iNaturalist, usando OpenStreetMap<br>
-          <small>(límites aproximados, no políticos)</small>
-        `;
-        document.getElementById("mensajeAyuda").className = "warning";
+        mostrarMensaje("⚠️ Usando límites aproximados de OpenStreetMap", "warning");
         
-        const osmLugar = await geocodificarLugar(query);
-        if (!osmLugar) throw new Error("No se encontró el lugar");
-        lugar = osmLugar;
-        bounds = lugar.bounds;
-      }
-      
-      document.getElementById("mensajeAyuda").style.display = "block";
-      
-      // Dibujar en el mapa
-      areaSeleccionada = bounds;
-      
-      // Rectángulo con estilo según fuente
-      L.rectangle(bounds, {
-        color: lugar.place_id ? "#4CAF50" : "#8B4513",
-        weight: 3,
-        fillColor: lugar.place_id ? "#4CAF50" : "#8B4513",
-        fillOpacity: 0.05,
-        dashArray: lugar.place_id ? null : "5, 5"
-      }).addTo(zoneLayer);
-      
-      // Marcador en el centro
-      L.marker([lugar.lat, lugar.lon], {
-        icon: L.divIcon({ 
-          html: lugar.place_id ? '📍' : '⚠️', 
-          iconSize: [30, 30],
-          className: 'custom-div-icon'
-        })
-      }).bindPopup(`
-        <b>${lugar.nombre}</b><br>
-        ${lugar.place_id ? `Place ID: ${lugar.place_id}<br>` : ''}
-        Tipo: ${lugar.tipo || 'Desconocido'}<br>
-        ${lugar.admin_level ? `Nivel admin: ${lugar.admin_level}` : ''}
-      `).addTo(zoneLayer);
-      
-      map.fitBounds(bounds.pad(0.1));
-      
-      document.getElementById("coords").innerHTML = 
-        `📍 Zona: ${lugar.nombre}<br>` +
-        
+        const os
