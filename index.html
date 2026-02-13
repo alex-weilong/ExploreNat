@@ -405,28 +405,6 @@
       margin-bottom: 10px;
       font-weight: bold;
     }
-
-    .quick-countries {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-top: 15px;
-    }
-
-    .quick-country-btn {
-      background: #e8f5e9;
-      border: 1px solid #4CAF50;
-      color: #2e7d32;
-      padding: 8px 12px;
-      border-radius: 20px;
-      cursor: pointer;
-      font-size: 13px;
-    }
-
-    .quick-country-btn:hover {
-      background: #4CAF50;
-      color: white;
-    }
   </style>
 </head>
 <body>
@@ -460,17 +438,6 @@
     <div id="sugerenciasPais" style="position: relative;"></div>
   </div>
   
-  <!-- Botones rápidos de países -->
-  <div class="quick-countries">
-    <span class="quick-country-btn" onclick="cargarPais('España')">🇪🇸 España</span>
-    <span class="quick-country-btn" onclick="cargarPais('Portugal')">🇵🇹 Portugal</span>
-    <span class="quick-country-btn" onclick="cargarPais('Francia')">🇫🇷 Francia</span>
-    <span class="quick-country-btn" onclick="cargarPais('Italia')">🇮🇹 Italia</span>
-    <span class="quick-country-btn" onclick="cargarPais('Costa Rica')">🇨🇷 Costa Rica</span>
-    <span class="quick-country-btn" onclick="cargarPais('Ecuador')">🇪🇨 Ecuador</span>
-    <span class="quick-country-btn" onclick="cargarPais('Colombia')">🇨🇴 Colombia</span>
-  </div>
-  
   <!-- Información del área seleccionada -->
   <div class="info-area" id="infoArea">
     <p><strong>📍 Área seleccionada:</strong> Ninguna. Dibuja un rectángulo o busca un país.</p>
@@ -496,7 +463,6 @@
   <!-- Resultados de todas las especies -->
   <div class="resultados-seccion" id="todasEspeciesSeccion">
     <div class="resultados-seccion-titulo">🌍 Todas las especies del área</div>
-    <button onclick="consultarINaturalistCompleto()">🔍 Cargar especies</button>
     <div id="progreso" style="display: none;" class="progreso-carga"></div>
     <div id="resultados" class="resultados-container" style="margin-top: 15px;"></div>
     <div id="paginacion" class="pagination"></div>
@@ -574,6 +540,7 @@
       
       actualizarInfoArea();
       mostrarResultados();
+      consultarINaturalistCompleto(); // Cargar automáticamente
     });
 
     console.log("✅ Mapa cargado correctamente");
@@ -609,8 +576,6 @@
   function mostrarResultados() {
     document.getElementById("resultadosPrincipales").style.display = "block";
     document.getElementById("buscadorTaxonContainer").style.display = "block";
-    // Opcional: cargar automáticamente las especies
-    // consultarINaturalistCompleto();
   }
 
   function ocultarResultados() {
@@ -711,6 +676,7 @@
     
     actualizarInfoArea();
     mostrarResultados();
+    consultarINaturalistCompleto(); // Cargar automáticamente
   };
 
   async function buscarZona() {
@@ -740,11 +706,6 @@
       document.getElementById("mensajeAyuda").className = "warning";
       document.getElementById("mensajeAyuda").style.display = "block";
     }
-  }
-
-  function cargarPais(nombre) {
-    document.getElementById("buscadorPais").value = nombre;
-    buscarZona();
   }
 
   // ============================================
@@ -909,12 +870,11 @@
   }
 
   // ============================================
-  // CONSULTA DE TODAS LAS ESPECIES
+  // CONSULTA DE TODAS LAS ESPECIES (AUTOMÁTICA)
   // ============================================
   
   async function consultarINaturalistCompleto() {
     if (!areaSeleccionada) {
-      alert("Primero dibuja un área en el mapa");
       return;
     }
 
