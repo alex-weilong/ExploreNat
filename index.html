@@ -296,6 +296,7 @@
       text-align: center;
       padding: 20px;
       color: #2e7d32;
+      font-weight: bold;
     }
   </style>
 </head>
@@ -636,7 +637,7 @@
       pagina++;
       
       // Pequeña pausa para no saturar la API
-      await new Promise(resolve => setTimeout(resolve, 200));
+      await new Promise(resolve => setTimeout(resolve, 300));
     }
     
     progresoDiv.style.display = "none";
@@ -644,7 +645,7 @@
   }
 
   // ============================================
-  // PESTAÑA 1 - CONSULTA COMPLETA
+  // PESTAÑA 1 - CONSULTA COMPLETA (TODAS LAS ESPECIES)
   // ============================================
   
   async function consultarINaturalistCompleto() {
@@ -655,7 +656,9 @@
 
     document.getElementById("resultados").innerHTML = '';
     document.getElementById("paginacion").innerHTML = '';
-    
+    document.getElementById("progreso").style.display = "block";
+    document.getElementById("progreso").innerHTML = "Obteniendo número total de especies...";
+
     const soloResearch = document.getElementById("soloResearch").checked;
     const grupo = document.getElementById("grupo").value;
     const bounds = areaSeleccionada;
@@ -679,13 +682,10 @@
       
       if (!data.total_results || data.total_results === 0) {
         document.getElementById("resultados").innerHTML = "No se encontraron especies en esta área";
+        document.getElementById("progreso").style.display = "none";
         return;
       }
 
       const totalEspecies = data.total_results;
       
-      // Ahora obtenemos todas las especies con paginación
-      urlBase = `https://api.inaturalist.org/v1/observations/species_counts?` +
-                `verifiable=${soloResearch}` +
-                `&per_page=200` + // Máximo por página
-                `&swlat=${bounds.getSout
+      // Aho
