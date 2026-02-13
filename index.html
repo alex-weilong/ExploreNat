@@ -29,6 +29,7 @@
       border-radius: 12px;
       box-shadow: 0 4px 15px rgba(0,0,0,0.2);
       border: 3px solid #4CAF50;
+      position: relative;
     }
 
     .controls {
@@ -435,10 +436,13 @@
 
     .fenologia-leyenda {
       display: flex;
-      gap: 10px;
+      gap: 20px;
       font-size: 11px;
       color: #666;
       margin-top: 5px;
+      padding: 10px;
+      background: white;
+      border-radius: 8px;
     }
 
     .fenologia-leyenda-item {
@@ -547,6 +551,52 @@
       color: #666;
       font-style: italic;
     }
+
+    /* Leyenda del mapa */
+    .map-legend {
+      position: absolute;
+      bottom: 30px;
+      right: 10px;
+      background: white;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+      z-index: 1000;
+      border-left: 4px solid #4CAF50;
+      max-width: 250px;
+    }
+
+    .legend-title {
+      font-weight: bold;
+      color: #2e7d32;
+      margin-bottom: 10px;
+      font-size: 14px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+      font-size: 12px;
+    }
+
+    .legend-color {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+    }
+
+    .legend-color.exacta { background: #4CAF50; }
+    .legend-color.oculta { background: #FF9800; }
+    .legend-color.privada { background: #9C27B0; }
+    .legend-color.metodo { background: #2196F3; }
+
+    .legend-description {
+      font-size: 11px;
+      color: #666;
+      margin-left: 24px;
+    }
   </style>
 </head>
 <body>
@@ -562,7 +612,9 @@
   </label>
 </div>
 
-<div id="map"></div>
+<div id="map">
+  <!-- Leyenda del mapa (se insertará aquí mediante JavaScript) -->
+</div>
 
 <div id="mensajeAyuda" style="display: none;" class="warning"></div>
 
@@ -658,6 +710,132 @@
     { nombre: 'Otoño', meses: [8,9,10], icono: '🍂', color: '#8b4513' }
   ];
 
+  // Función para determinar el tipo de ubicación
+  function getLocationType(obs) {
+    // Si no tiene coordenadas, no se muestra
+    if (!obs.geojson || !obs.geojson.coordinates) return null;
+    
+    // Verificar si es privada/oculta
+    if (obs.geoprivacy === 'private' || obs.geoprivacy === 'obscured') {
+      return 'oculta';
+    }
+    
+    // Verificar si tiene coordenadas exactas
+    if (obs.public_positional_accuracy === 0) {
+      return 'exacta';
+    }
+    
+    // Verificar si tiene precisión
+    if (obs.positional_accuracy) {
+      if (obs.positional_accuracy < 100) return 'exacta';
+      if (obs.positional_accuracy < 1000) return 'metodo';
+      return 'oculta';
+    }
+    
+    // Verificar el método de coordenadas
+    if (obs.private_positional_accuracy) {
+      return 'privada';
+    }
+    
+    // Por defecto
+    return 'metodo';
+  }
+
+  // Función para obtener color según tipo
+  function getMarkerColor(locationType) {
+    switch(locationType) {
+      case 'exacta': return '#4CAF50'; // Verde
+      case 'oculta': return '#FF9800'; // Naranja
+      case 'privada': return '#9C27B0'; // Púrpura
+      case 'metodo': return '#2196F3'; // Azul
+      default: return '#4CAF50'; // Verde por defecto
+    }
+  }
+
+  // Función para crear la leyenda
+  function crearLeyendaMapa() {
+    const legend = L.control({ position: 'bottomright' });
+    
+    legend.onAdd = function(map) {
+      const div = L.DomUtil.create('div', 'map-legend');
+      div.innerHTML = `
+        <div class="legend-title">📍 Tipos de ubicación</div>
+        <div class="legend-item">
+          <div class="legend-color exacta"></div>
+          <span>Exacta (sin error)</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-color oculta"></div>
+          <span>Oculta / Privada</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-color metodo"></div>
+          <span>Precisión &lt; 1km</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-color privada"></div>
+          <span>Precisión &gt; 1km</span>
+        </div>
+        <div class="legend-description">
+          <small>Pasa el cursor sobre los puntos<br>para ver más detalles</small>
+        </div>
+      `;
+      return div;
+    };
+    
+    legend.addTo(map);
+  }
+
+  // ============================================
+  // INICIALIZACIÓN
+  // ============================================
+  window.onload = function() {
+    console.log("Iniciando ExploreNat...");
+    
+    map = L.map('map').setView([40.4168, -3.7038], 6);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap'
+    }).addTo(map);
+
+    drawnItems = L.featureGroup().addTo(map);
+    markersLayer = L.featureGroup().addTo(map);
+    zoneLayer = L.featureGroup().addTo(map);
+
+    // Añadir leyenda
+    crearLeyendaMapa();
+
+    var drawControl = new L.Control.Draw({
+      edit: { featureGroup: drawnItems },
+      draw: { 
+        polygon: false, 
+        polyline: false, 
+        circle: false, 
+        marker: false, 
+        circlemarker: false, 
+        rectangle: true 
+      }
+    });
+    map.addControl(drawControl);
+
+    map.on(L.Draw.Event.CREATED, function(e) {
+      var layer = e.layer;
+      drawnItems.clearLayers();
+      drawnItems.addLayer(layer);
+      areaSeleccionada = layer.getBounds();
+      document.getElementById("mensajeAyuda").style.display = "none";
+      
+      actualizarInfoArea();
+      cargarPrimeraPagina();
+    });
+
+    console.log("✅ Mapa cargado correctamente");
+  };
+
+  // ============================================
+  // FUNCIÓN PARA ANALIZAR HÁBITATS
+  // ============================================
+  
   function identificarHabitats(lat, lon) {
     const habitats = [];
     
@@ -693,53 +871,6 @@
     return { nombre: 'Subártico', icono: '❄️', temp: '-5-5°C' };
   }
 
-  // ============================================
-  // INICIALIZACIÓN
-  // ============================================
-  window.onload = function() {
-    console.log("Iniciando ExploreNat...");
-    
-    map = L.map('map').setView([40.4168, -3.7038], 6);
-
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap'
-    }).addTo(map);
-
-    drawnItems = L.featureGroup().addTo(map);
-    markersLayer = L.featureGroup().addTo(map);
-    zoneLayer = L.featureGroup().addTo(map);
-
-    var drawControl = new L.Control.Draw({
-      edit: { featureGroup: drawnItems },
-      draw: { 
-        polygon: false, 
-        polyline: false, 
-        circle: false, 
-        marker: false, 
-        circlemarker: false, 
-        rectangle: true 
-      }
-    });
-    map.addControl(drawControl);
-
-    map.on(L.Draw.Event.CREATED, function(e) {
-      var layer = e.layer;
-      drawnItems.clearLayers();
-      drawnItems.addLayer(layer);
-      areaSeleccionada = layer.getBounds();
-      document.getElementById("mensajeAyuda").style.display = "none";
-      
-      actualizarInfoArea();
-      cargarPrimeraPagina();
-    });
-
-    console.log("✅ Mapa cargado correctamente");
-  };
-
-  // ============================================
-  // FUNCIÓN PARA ANALIZAR HÁBITATS
-  // ============================================
-  
   async function analizarHabitats(bounds) {
     const centro = bounds.getCenter();
     const lat = centro.lat;
@@ -891,7 +1022,7 @@
   }
 
   // ============================================
-  // FUNCIONES DE CARGA POR PÁGINAS (CORREGIDAS)
+  // FUNCIONES DE CARGA POR PÁGINAS
   // ============================================
   
   async function cargarPrimeraPagina() {
@@ -940,17 +1071,16 @@
     const bounds = areaSeleccionada;
     
     try {
-      // CORREGIDO: Usamos page en lugar de offset
       const url = `https://api.inaturalist.org/v1/observations/species_counts?` +
                   `verifiable=${soloResearch}` +
                   `&per_page=${especiesPorPagina}` +
-                  `&page=${pagina}` +  // Aquí estaba el error
+                  `&page=${pagina}` +
                   `&swlat=${bounds.getSouth()}` +
                   `&swlng=${bounds.getWest()}` +
                   `&nelat=${bounds.getNorth()}` +
                   `&nelng=${bounds.getEast()}`;
 
-      console.log("Cargando página:", url); // Para depuración
+      console.log("Cargando página:", url);
       
       const response = await fetch(url);
       const data = await response.json();
@@ -1227,7 +1357,7 @@
   }
 
   // ============================================
-  // FUNCIÓN PARA MOSTRAR CITAS
+  // FUNCIÓN PARA MOSTRAR CITAS (ACTUALIZADA CON COLORES)
   // ============================================
   
   async function mostrarCitasEspecie(taxonId, taxonNombre, elemento) {
@@ -1252,7 +1382,7 @@
       const url = `https://api.inaturalist.org/v1/observations?` +
                   `taxon_id=${taxonId}` +
                   `&verifiable=${soloResearch}` +
-                  `&per_page=50` +
+                  `&per_page=100` +
                   `&swlat=${bounds.getSouth()}&swlng=${bounds.getWest()}` +
                   `&nelat=${bounds.getNorth()}&nelng=${bounds.getEast()}`;
 
@@ -1266,21 +1396,45 @@
         return;
       }
 
+      let exactas = 0, ocultas = 0, privadas = 0, metodo = 0;
+
       data.results.forEach(obs => {
         if (obs.geojson && obs.geojson.coordinates) {
           const [lng, lat] = obs.geojson.coordinates;
+          const locationType = getLocationType(obs);
+          const color = getMarkerColor(locationType);
+          
+          // Contar para estadísticas
+          if (locationType === 'exacta') exactas++;
+          else if (locationType === 'oculta') ocultas++;
+          else if (locationType === 'privada') privadas++;
+          else if (locationType === 'metodo') metodo++;
+          
+          // Crear texto descriptivo de la precisión
+          let precisionText = '';
+          if (obs.positional_accuracy) {
+            precisionText = `Precisión: ${obs.positional_accuracy}m`;
+          } else if (obs.public_positional_accuracy) {
+            precisionText = `Precisión: ${obs.public_positional_accuracy}m`;
+          } else if (obs.geoprivacy) {
+            precisionText = `Privacidad: ${obs.geoprivacy}`;
+          } else {
+            precisionText = 'Ubicación exacta';
+          }
           
           L.circleMarker([lat, lng], {
             radius: 8,
-            color: '#4CAF50',
+            color: color,
             weight: 2,
-            fillColor: '#81C784',
+            fillColor: color,
             fillOpacity: 0.8
           }).addTo(markersLayer).bindPopup(`
             <b>${taxonNombre}</b><br>
             📅 ${obs.observed_on || 'Fecha desconocida'}<br>
             👤 ${obs.user?.login || 'Anónimo'}<br>
             🏅 ${obs.quality_grade}<br>
+            📍 Tipo: ${locationType}<br>
+            ${precisionText}<br>
             <a href="https://www.inaturalist.org/observations/${obs.id}" target="_blank">🔗 Ver en iNaturalist</a>
           `);
         }
@@ -1291,7 +1445,8 @@
       }
 
       document.getElementById("mensajeAyuda").innerHTML = 
-        `📍 Mostrando ${data.results.length} citas de ${taxonNombre}`;
+        `📍 Mostrando ${data.results.length} citas de ${taxonNombre}<br>` +
+        `🟢 Exactas: ${exactas} | 🟠 Ocultas: ${ocultas} | 🟣 Privadas: ${privadas} | 🔵 M. precisión: ${metodo}`;
       document.getElementById("mensajeAyuda").className = "success";
       document.getElementById("mensajeAyuda").style.display = "block";
 
@@ -1436,18 +1591,17 @@
     const bounds = areaSeleccionada;
     
     try {
-      // CORREGIDO: Usamos page en lugar de offset
       const url = `https://api.inaturalist.org/v1/observations/species_counts?` +
                   `verifiable=${soloResearch}` +
                   `&taxon_id=${taxonActual.id}` +
                   `&per_page=${especiesPorPagina}` +
-                  `&page=${pagina}` +  // Aquí estaba el error
+                  `&page=${pagina}` +
                   `&swlat=${bounds.getSouth()}` +
                   `&swlng=${bounds.getWest()}` +
                   `&nelat=${bounds.getNorth()}` +
                   `&nelng=${bounds.getEast()}`;
 
-      console.log("Cargando página taxón:", url); // Para depuración
+      console.log("Cargando página taxón:", url);
       
       const response = await fetch(url);
       const data = await response.json();
