@@ -659,3 +659,91 @@
       console.error("Error:", error);
     }
   });
+
+  window.seleccionarSugerencia = function(nombre, south, north, west, east, lat, lon) {
+    document.getElementById("buscadorPais").value = nombre;
+    document.getElementById("sugerencias").innerHTML = '';
+    
+    const bounds = L.latLngBounds([parseFloat(south), parseFloat(west)], [parseFloat(north), parseFloat(east)]);
+    
+    zoneLayer.clearLayers();
+    L.rectangle(bounds, { color: "#4CAF50", weight: 3, fillOpacity: 0.1 }).addTo(zoneLayer);
+    L.marker([parseFloat(lat), parseFloat(lon)]).addTo(zoneLayer).bindPopup(nombre).openPopup();
+    
+    map.fitBounds(bounds.pad(0.1));
+    areaSeleccionada = bounds;
+    
+    document.getElementById("coords").innerHTML = 
+      `📍 ${nombre}<br>` +
+      `Norte: ${bounds.getNorth().toFixed(4)}°<br>` +
+      `Sur: ${bounds.getSouth().toFixed(4)}°<br>` +
+      `Este: ${bounds.getEast().toFixed(4)}°<br>` +
+      `Oeste: ${bounds.getWest().toFixed(4)}°`;
+    
+    consultarINaturalist();
+  };
+
+  async function buscarZona() {
+    const query = document.getElementById("buscadorPais").value.trim();
+    if (!query) return alert("Escribe un lugar");
+
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`,
+        { headers: { 'User-Agent': 'ExploreNat/1.0' } }
+      );
+      const data = await response.json();
+      
+      if (!data.length) {
+        document.getElementById("resultadosPais").innerHTML = "Lugar no encontrado";
+        return;
+      }
+
+      const lugar = data[0];
+      const bounds = L.latLngBounds(
+        [parseFloat(lugar.boundingbox[0]), parseFloat(lugar.boundingbox[2])],
+        [parseFloat(lugar.boundingbox[1]), parseFloat(lugar.boundingbox[3])]
+      );
+
+      zoneLayer.clearLayers();
+      L.rectangle(bounds, { color: "#4CAF50", weight: 3, fillOpacity: 0.1 }).addTo(zoneLayer);
+      L.marker([parseFloat(lugar.lat), parseFloat(lugar.lon)]).addTo(zoneLayer).bindPopup(lugar.display_name).openPopup();
+      
+      map.fitBounds(bounds.pad(0.1));
+      areaSeleccionada = bounds;
+      
+      document.getElementById("coords").innerHTML = 
+        `📍 ${lugar.display_name}<br>` +
+        `Norte: ${bounds.getNorth().toFixed(4)}°<br>` +
+        `Sur: ${bounds.getSouth().toFixed(4)}°<br>` +
+        `Este: ${bounds.getEast().toFixed(4)}°<br>` +
+        `Oeste: ${bounds.getWest().toFixed(4)}°`;
+
+      document.getElementById("resultadosPais").innerHTML = '';
+      await consultarINaturalist();
+
+    } catch (error) {
+      document.getElementById("resultadosPais").innerHTML = `Error: ${error.message}`;
+    }
+  }
+
+  // Enter para búsquedas
+  document.getElementById("buscadorEspecie").addEventListener("keypress", e => {
+    if (e.key === "Enter") buscarEspecieINat();
+  });
+
+  document.getElementById("buscadorPais").addEventListener("keypress", e => {
+    if (e.key === "Enter") buscarZona();
+  });
+
+  // Cerrar sugerencias
+  document.addEventListener("click", function(e) {
+    if (!e.target.closest('#buscadorPais') && !e.target.closest('.sugerencias-container')) {
+      document.getElementById("sugerencias").innerHTML = '';
+    }
+  });
+
+</script>
+
+</body>
+</html>
