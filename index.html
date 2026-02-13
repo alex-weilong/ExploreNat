@@ -547,6 +547,13 @@
       border-radius: 20px;
       font-size: 12px;
     }
+
+    .cargando-mensaje {
+      text-align: center;
+      padding: 40px;
+      color: #666;
+      font-style: italic;
+    }
   </style>
 </head>
 <body>
@@ -618,8 +625,10 @@
 <!-- Resultados de todas las especies -->
 <div class="resultados-seccion" id="todasEspeciesSeccion">
   <div class="resultados-seccion-titulo">🌍 Todas las especies del área</div>
-  <div id="progreso" style="display: none;" class="progreso-carga"></div>
-  <div id="resultados" class="resultados-container" style="margin-top: 15px;"></div>
+  <div id="infoCarga" style="display: none;" class="progreso-carga"></div>
+  <div id="resultados" class="resultados-container" style="margin-top: 15px;">
+    <div class="cargando-mensaje">Selecciona un área para ver las especies</div>
+  </div>
   <div id="paginacion" class="pagination"></div>
 </div>
 
@@ -644,14 +653,19 @@
   let zoneLayer;
   let areaSeleccionada = null;
   
-  // Variables para paginación
-  let todasLasEspecies = [];
+  // Variables para paginación OPTIMIZADA
+  let totalEspeciesGlobal = 0;
   let paginaActual = 1;
   const especiesPorPagina = 20;
+  let cargandoPagina = false;
   
   // Variables para resultados de taxón
-  let resultadosTaxon = [];
+  let taxonActual = null;
+  let totalEspeciesTaxon = 0;
   let paginaActualTaxon = 1;
+
+  // Cache para fenología (evita recargar)
+  const cacheFenologia = {};
 
   // Nombres de meses y estaciones
   const meses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
@@ -666,27 +680,23 @@
   function identificarHabitats(lat, lon) {
     const habitats = [];
     
-    // Detección muy simple basada en coordenadas
     if (lat > 35 && lat < 70 && lon > -10 && lon < 40) {
       habitats.push({ tipo: 'Bosque templado', icono: '🌳', principal: true });
       if (lat < 45) habitats.push({ tipo: 'Mediterráneo', icono: '🌿', principal: false });
       if (lat > 55) habitats.push({ tipo: 'Taiga', icono: '🌲', principal: false });
     }
     
-    // América tropical
     if (lat > -30 && lat < 30 && lon > -120 && lon < -35) {
       habitats.push({ tipo: 'Selva tropical', icono: '🌴', principal: true });
       habitats.push({ tipo: 'Bosque nuboso', icono: '☁️', principal: false });
     }
     
-    // Desiertos
     if ((lat > 15 && lat < 30 && lon > -20 && lon < 50) ||
         (lat > 30 && lat < 40 && lon > -120 && lon < -110)) {
       habitats.push({ tipo: 'Desierto', icono: '🏜️', principal: true });
       habitats.push({ tipo: 'Matorral xerófilo', icono: '🌵', principal: false });
     }
     
-    // Si no se detectó nada, poner hábitats genéricos
     if (habitats.length === 0) {
       habitats.push({ tipo: 'Zona de estudio', icono: '🔬', principal: true });
     }
@@ -708,19 +718,16 @@
   window.onload = function() {
     console.log("Iniciando ExploreNat...");
     
-    // Crear mapa
     map = L.map('map').setView([40.4168, -3.7038], 6);
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '© OpenStreetMap'
     }).addTo(map);
 
-    // Inicializar capas
     drawnItems = L.featureGroup().addTo(map);
     markersLayer = L.featureGroup().addTo(map);
     zoneLayer = L.featureGroup().addTo(map);
 
-    // Control de dibujo
     var drawControl = new L.Control.Draw({
       edit: { featureGroup: drawnItems },
       draw: { 
@@ -734,7 +741,6 @@
     });
     map.addControl(drawControl);
 
-    // Evento al dibujar
     map.on(L.Draw.Event.CREATED, function(e) {
       var layer = e.layer;
       drawnItems.clearLayers();
@@ -743,7 +749,7 @@
       document.getElementById("mensajeAyuda").style.display = "none";
       
       actualizarInfoArea();
-      consultarINaturalistCompleto();
+      cargarPrimeraPagina();
     });
 
     console.log("✅ Mapa cargado correctamente");
@@ -872,24 +878,29 @@
     if (markersLayer) markersLayer.clearLayers();
     if (zoneLayer) zoneLayer.clearLayers();
     areaSeleccionada = null;
+    taxonActual = null;
     
     document.getElementById("infoArea").innerHTML = `
       <p><strong>📍 Área seleccionada:</strong> Ninguna. Dibuja un rectángulo o busca un país.</p>
     `;
     
-    document.getElementById("resultados").innerHTML = "";
+    document.getElementById("resultados").innerHTML = '<div class="cargando-mensaje">Selecciona un área para ver las especies</div>';
     document.getElementById("resultadosBusquedaTaxon").innerHTML = "";
     document.getElementById("resultadosTaxonSeccion").style.display = "none";
     document.getElementById("todasEspeciesSeccion").style.display = "block";
     document.getElementById("mensajeAyuda").style.display = "none";
     document.getElementById("paginacion").innerHTML = "";
     document.getElementById("paginacionTaxon").innerHTML = "";
-    document.getElementById("progreso").style.display = "none";
     
-    todasLasEspecies = [];
-    resultadosTaxon = [];
+    totalEspeciesGlobal = 0;
     paginaActual = 1;
+    totalEspeciesTaxon = 0;
     paginaActualTaxon = 1;
+    
+    // Limpiar caché al cambiar de área
+    for (let key in cacheFenologia) {
+      delete cacheFenologia[key];
+    }
   }
 
   function limpiarMarcadores() {
@@ -897,6 +908,269 @@
     document.querySelectorAll('.inat-card').forEach(card => {
       card.classList.remove('selected');
     });
+  }
+
+  // ============================================
+  // FUNCIONES OPTIMIZADAS DE CARGA POR PÁGINAS
+  // ============================================
+  
+  async function cargarPrimeraPagina() {
+    if (!areaSeleccionada) return;
+    
+    document.getElementById("resultados").innerHTML = '<div class="cargando-mensaje">Cargando especies...</div>';
+    document.getElementById("paginacion").innerHTML = '';
+    
+    const soloResearch = document.getElementById("soloResearch").checked;
+    const bounds = areaSeleccionada;
+    
+    try {
+      // Primero obtener el total de especies
+      const urlTotal = `https://api.inaturalist.org/v1/observations/species_counts?` +
+                       `verifiable=${soloResearch}` +
+                       `&per_page=1` +
+                       `&swlat=${bounds.getSouth()}` +
+                       `&swlng=${bounds.getWest()}` +
+                       `&nelat=${bounds.getNorth()}` +
+                       `&nelng=${bounds.getEast()}`;
+
+      const responseTotal = await fetch(urlTotal);
+      const dataTotal = await responseTotal.json();
+      
+      if (!dataTotal.total_results || dataTotal.total_results === 0) {
+        document.getElementById("resultados").innerHTML = "No se encontraron especies en esta área";
+        return;
+      }
+
+      totalEspeciesGlobal = dataTotal.total_results;
+      
+      // Cargar primera página
+      await cargarPagina(1);
+      
+    } catch (error) {
+      document.getElementById("resultados").innerHTML = `Error: ${error.message}`;
+    }
+  }
+
+  async function cargarPagina(pagina) {
+    if (!areaSeleccionada || cargandoPagina) return;
+    
+    cargandoPagina = true;
+    paginaActual = pagina;
+    
+    document.getElementById("resultados").innerHTML = '<div class="cargando-mensaje">Cargando página...</div>';
+    
+    const soloResearch = document.getElementById("soloResearch").checked;
+    const bounds = areaSeleccionada;
+    
+    try {
+      // Calcular offset para la página
+      const offset = (pagina - 1) * especiesPorPagina;
+      
+      const url = `https://api.inaturalist.org/v1/observations/species_counts?` +
+                  `verifiable=${soloResearch}` +
+                  `&per_page=${especiesPorPagina}` +
+                  `&offset=${offset}` +
+                  `&swlat=${bounds.getSouth()}` +
+                  `&swlng=${bounds.getWest()}` +
+                  `&nelat=${bounds.getNorth()}` +
+                  `&nelng=${bounds.getEast()}`;
+
+      const response = await fetch(url);
+      const data = await response.json();
+      
+      if (!data.results || data.results.length === 0) {
+        document.getElementById("resultados").innerHTML = "No hay especies en esta página";
+        cargandoPagina = false;
+        return;
+      }
+
+      // Mostrar resultados de esta página
+      await mostrarPagina(data.results);
+      
+      // Actualizar botones de paginación
+      actualizarBotonesPaginacion();
+      
+    } catch (error) {
+      document.getElementById("resultados").innerHTML = `Error: ${error.message}`;
+    } finally {
+      cargandoPagina = false;
+    }
+  }
+
+  async function mostrarPagina(especiesPagina) {
+    let html = `<div class="stats">📊 Total especies: ${totalEspeciesGlobal} (página ${paginaActual})</div>`;
+
+    // Obtener fenología para cada especie (usando caché)
+    for (let i = 0; i < especiesPagina.length; i++) {
+      const item = especiesPagina[i];
+      const taxon = item.taxon;
+      
+      // Verificar si ya tenemos la fenología en caché
+      if (!cacheFenologia[taxon.id]) {
+        cacheFenologia[taxon.id] = await obtenerFenologia(taxon.id);
+      }
+      const fenologia = cacheFenologia[taxon.id];
+      
+      html += `<div class="inat-card" onclick="mostrarCitasEspecie(${taxon.id}, '${taxon.name.replace(/'/g, "\\'")}', this)">`;
+      
+      if (taxon.default_photo && taxon.default_photo.medium_url) {
+        html += `<img class="inat-imagen" src="${taxon.default_photo.medium_url}" alt="${taxon.name}">`;
+      } else {
+        html += `<div class="inat-placeholder">📷</div>`;
+      }
+      
+      html += `<div class="inat-info">`;
+      html += `<div class="inat-titulo">${taxon.name} 
+               <a href="https://www.inaturalist.org/taxa/${taxon.id}" target="_blank" class="enlace-inat" onclick="event.stopPropagation()">🔗 iNat</a>
+               </div>`;
+      html += `<div>${taxon.preferred_common_name || ''}</div>`;
+      html += `<span class="badge">📊 ${item.count} obs</span>`;
+      if (taxon.iconic_taxon_name) {
+        html += `<span class="badge">${taxon.iconic_taxon_name}</span>`;
+      }
+      
+      html += crearBarraFenologia(fenologia);
+      
+      html += `</div></div>`;
+    }
+
+    document.getElementById("resultados").innerHTML = html;
+  }
+
+  function actualizarBotonesPaginacion() {
+    const totalPaginas = Math.ceil(totalEspeciesGlobal / especiesPorPagina);
+    if (totalPaginas <= 1) {
+      document.getElementById("paginacion").innerHTML = '';
+      return;
+    }
+
+    let html = '<div class="pagination">';
+    
+    html += `<button onclick="cambiarPagina(${paginaActual - 1})" ${paginaActual === 1 ? 'disabled' : ''}>◀ Anterior</button>`;
+    
+    for (let i = 1; i <= totalPaginas; i++) {
+      if (i === 1 || i === totalPaginas || (i >= paginaActual - 2 && i <= paginaActual + 2)) {
+        html += `<button onclick="cambiarPagina(${i})" class="${i === paginaActual ? 'active' : ''}">${i}</button>`;
+      } else if (i === paginaActual - 3 || i === paginaActual + 3) {
+        html += `<button disabled>...</button>`;
+      }
+    }
+    
+    html += `<button onclick="cambiarPagina(${paginaActual + 1})" ${paginaActual === totalPaginas ? 'disabled' : ''}>Siguiente ▶</button>`;
+    html += '</div>';
+    
+    document.getElementById("paginacion").innerHTML = html;
+  }
+
+  function cambiarPagina(nuevaPagina) {
+    const totalPaginas = Math.ceil(totalEspeciesGlobal / especiesPorPagina);
+    if (nuevaPagina >= 1 && nuevaPagina <= totalPaginas && !cargandoPagina) {
+      cargarPagina(nuevaPagina);
+    }
+  }
+
+  // ============================================
+  // FUNCIÓN PARA OBTENER FENOLOGÍA (CON CACHÉ)
+  // ============================================
+  
+  async function obtenerFenologia(taxonId) {
+    if (!areaSeleccionada) return null;
+    
+    // Si ya está en caché, devolverlo
+    if (cacheFenologia[taxonId]) {
+      return cacheFenologia[taxonId];
+    }
+    
+    const soloResearch = document.getElementById("soloResearch").checked;
+    const bounds = areaSeleccionada;
+    
+    try {
+      const url = `https://api.inaturalist.org/v1/observations?` +
+                  `taxon_id=${taxonId}` +
+                  `&verifiable=${soloResearch}` +
+                  `&per_page=100` +
+                  `&swlat=${bounds.getSouth()}&swlng=${bounds.getWest()}` +
+                  `&nelat=${bounds.getNorth()}&nelng=${bounds.getEast()}`;
+
+      const response = await fetch(url);
+      const data = await response.json();
+      
+      if (!data.results || data.results.length === 0) return null;
+      
+      const conteoMeses = new Array(12).fill(0);
+      
+      data.results.forEach(obs => {
+        if (obs.observed_on) {
+          const fecha = new Date(obs.observed_on);
+          const mes = fecha.getMonth();
+          conteoMeses[mes]++;
+        }
+      });
+      
+      const max = Math.max(...conteoMeses);
+      const normalizado = conteoMeses.map(val => max > 0 ? val / max : 0);
+      
+      const mejorEstacion = calcularMejorEstacion(conteoMeses);
+      
+      const fenologia = {
+        conteo: conteoMeses,
+        normalizado: normalizado,
+        total: data.results.length,
+        mejorEstacion: mejorEstacion
+      };
+      
+      // Guardar en caché
+      cacheFenologia[taxonId] = fenologia;
+      
+      return fenologia;
+      
+    } catch (error) {
+      console.error("Error obteniendo fenología:", error);
+      return null;
+    }
+  }
+
+  function calcularMejorEstacion(conteoMeses) {
+    const sumaEstaciones = estaciones.map(est => 
+      est.meses.reduce((sum, mes) => sum + conteoMeses[mes], 0)
+    );
+    
+    const maxSum = Math.max(...sumaEstaciones);
+    const mejorIndex = sumaEstaciones.indexOf(maxSum);
+    
+    return {
+      ...estaciones[mejorIndex],
+      total: maxSum
+    };
+  }
+
+  function crearBarraFenologia(fenologia) {
+    if (!fenologia) return '<div class="fenologia-estacion">📊 Sin datos fenológicos</div>';
+    
+    let html = '<div class="fenologia-container">';
+    
+    html += '<div class="fenologia-barra">';
+    for (let i = 0; i < 12; i++) {
+      const intensidad = fenologia.normalizado[i];
+      const color = intensidad === 0 ? '#f0f0f0' : 
+                   intensidad < 0.3 ? '#c8e6c9' :
+                   intensidad < 0.6 ? '#81c784' : '#4caf50';
+      
+      html += `<div class="fenologia-mes tooltip" style="background: ${color}; flex: 1;">
+                <span class="tooltiptext">${meses[i]}: ${fenologia.conteo[i]} obs</span>
+              </div>`;
+    }
+    html += '</div>';
+    
+    html += `<div class="fenologia-estacion">
+              <span class="estacion-icono">${fenologia.mejorEstacion.icono}</span>
+              <span>Mejor: ${fenologia.mejorEstacion.nombre}</span>
+              <span style="color: #666; font-size: 10px;">(${fenologia.mejorEstacion.total} obs)</span>
+            </div>`;
+    
+    html += '</div>';
+    
+    return html;
   }
 
   // ============================================
@@ -951,7 +1225,7 @@
     areaSeleccionada = bounds;
     
     actualizarInfoArea();
-    consultarINaturalistCompleto();
+    cargarPrimeraPagina();
   };
 
   async function buscarZona() {
@@ -980,264 +1254,6 @@
       document.getElementById("mensajeAyuda").innerHTML = `Error: ${error.message}`;
       document.getElementById("mensajeAyuda").className = "warning";
       document.getElementById("mensajeAyuda").style.display = "block";
-    }
-  }
-
-  // ============================================
-  // FUNCIÓN PARA OBTENER FENOLOGÍA
-  // ============================================
-  
-  async function obtenerFenologia(taxonId) {
-    if (!areaSeleccionada) return null;
-    
-    const soloResearch = document.getElementById("soloResearch").checked;
-    const bounds = areaSeleccionada;
-    
-    try {
-      const url = `https://api.inaturalist.org/v1/observations?` +
-                  `taxon_id=${taxonId}` +
-                  `&verifiable=${soloResearch}` +
-                  `&per_page=100` +
-                  `&swlat=${bounds.getSouth()}&swlng=${bounds.getWest()}` +
-                  `&nelat=${bounds.getNorth()}&nelng=${bounds.getEast()}`;
-
-      const response = await fetch(url);
-      const data = await response.json();
-      
-      if (!data.results || data.results.length === 0) return null;
-      
-      const conteoMeses = new Array(12).fill(0);
-      
-      data.results.forEach(obs => {
-        if (obs.observed_on) {
-          const fecha = new Date(obs.observed_on);
-          const mes = fecha.getMonth();
-          conteoMeses[mes]++;
-        }
-      });
-      
-      const max = Math.max(...conteoMeses);
-      const normalizado = conteoMeses.map(val => max > 0 ? val / max : 0);
-      
-      const mejorEstacion = calcularMejorEstacion(conteoMeses);
-      
-      return {
-        conteo: conteoMeses,
-        normalizado: normalizado,
-        total: data.results.length,
-        mejorEstacion: mejorEstacion
-      };
-      
-    } catch (error) {
-      console.error("Error obteniendo fenología:", error);
-      return null;
-    }
-  }
-
-  function calcularMejorEstacion(conteoMeses) {
-    const sumaEstaciones = estaciones.map(est => 
-      est.meses.reduce((sum, mes) => sum + conteoMeses[mes], 0)
-    );
-    
-    const maxSum = Math.max(...sumaEstaciones);
-    const mejorIndex = sumaEstaciones.indexOf(maxSum);
-    
-    return {
-      ...estaciones[mejorIndex],
-      total: maxSum
-    };
-  }
-
-  function crearBarraFenologia(fenologia) {
-    if (!fenologia) return '<div class="fenologia-estacion">📊 Sin datos fenológicos</div>';
-    
-    let html = '<div class="fenologia-container">';
-    
-    html += '<div class="fenologia-barra">';
-    for (let i = 0; i < 12; i++) {
-      const intensidad = fenologia.normalizado[i];
-      const color = intensidad === 0 ? '#f0f0f0' : 
-                   intensidad < 0.3 ? '#c8e6c9' :
-                   intensidad < 0.6 ? '#81c784' : '#4caf50';
-      
-      html += `<div class="fenologia-mes tooltip" style="background: ${color}; flex: 1;">
-                <span class="tooltiptext">${meses[i]}: ${fenologia.conteo[i]} obs</span>
-              </div>`;
-    }
-    html += '</div>';
-    
-    html += `<div class="fenologia-estacion">
-              <span class="estacion-icono">${fenologia.mejorEstacion.icono}</span>
-              <span>Mejor: ${fenologia.mejorEstacion.nombre}</span>
-              <span style="color: #666; font-size: 10px;">(${fenologia.mejorEstacion.total} obs)</span>
-            </div>`;
-    
-    html += '</div>';
-    
-    return html;
-  }
-
-  // ============================================
-  // FUNCIONES DE PAGINACIÓN
-  // ============================================
-  
-  async function mostrarPagina(pagina, especies, contenedorId, paginacionId, callbackPagina) {
-    const inicio = (pagina - 1) * especiesPorPagina;
-    const fin = inicio + especiesPorPagina;
-    const especiesPagina = especies.slice(inicio, fin);
-    
-    let html = `<div class="stats">📊 Total especies: ${especies.length} (mostrando ${inicio+1}-${Math.min(fin, especies.length)})</div>`;
-
-    const promesasFenologia = especiesPagina.map(item => obtenerFenologia(item.taxon.id));
-    const fenologias = await Promise.all(promesasFenologia);
-
-    for (let i = 0; i < especiesPagina.length; i++) {
-      const item = especiesPagina[i];
-      const taxon = item.taxon;
-      const fenologia = fenologias[i];
-      
-      html += `<div class="inat-card" onclick="mostrarCitasEspecie(${taxon.id}, '${taxon.name.replace(/'/g, "\\'")}', this)">`;
-      
-      if (taxon.default_photo && taxon.default_photo.medium_url) {
-        html += `<img class="inat-imagen" src="${taxon.default_photo.medium_url}" alt="${taxon.name}">`;
-      } else {
-        html += `<div class="inat-placeholder">📷</div>`;
-      }
-      
-      html += `<div class="inat-info">`;
-      html += `<div class="inat-titulo">${taxon.name} 
-               <a href="https://www.inaturalist.org/taxa/${taxon.id}" target="_blank" class="enlace-inat" onclick="event.stopPropagation()">🔗 iNat</a>
-               </div>`;
-      html += `<div>${taxon.preferred_common_name || ''}</div>`;
-      html += `<span class="badge">📊 ${item.count} obs</span>`;
-      if (taxon.iconic_taxon_name) {
-        html += `<span class="badge">${taxon.iconic_taxon_name}</span>`;
-      }
-      
-      html += crearBarraFenologia(fenologia);
-      
-      html += `</div></div>`;
-    }
-
-    document.getElementById(contenedorId).innerHTML = html;
-    
-    const totalPaginas = Math.ceil(especies.length / especiesPorPagina);
-    let paginacionHtml = '<div class="pagination">';
-    
-    paginacionHtml += `<button onclick="${callbackPagina}(${pagina-1})" ${pagina === 1 ? 'disabled' : ''}>◀ Anterior</button>`;
-    
-    for (let i = 1; i <= totalPaginas; i++) {
-      if (i === 1 || i === totalPaginas || (i >= pagina - 2 && i <= pagina + 2)) {
-        paginacionHtml += `<button onclick="${callbackPagina}(${i})" class="${i === pagina ? 'active' : ''}">${i}</button>`;
-      } else if (i === pagina - 3 || i === pagina + 3) {
-        paginacionHtml += `<button disabled>...</button>`;
-      }
-    }
-    
-    paginacionHtml += `<button onclick="${callbackPagina}(${pagina+1})" ${pagina === totalPaginas ? 'disabled' : ''}>Siguiente ▶</button>`;
-    paginacionHtml += '</div>';
-    
-    document.getElementById(paginacionId).innerHTML = paginacionHtml;
-  }
-
-  // ============================================
-  // FUNCIÓN PARA OBTENER TODAS LAS ESPECIES
-  // ============================================
-  
-  async function obtenerTodasLasEspecies(urlBase, totalEsperado) {
-    let todas = [];
-    let pagina = 1;
-    let especiesObtenidas = 0;
-    const progresoDiv = document.getElementById("progreso");
-    
-    while (especiesObtenidas < totalEsperado) {
-      progresoDiv.style.display = "block";
-      progresoDiv.innerHTML = `Cargando especies... ${especiesObtenidas} de ${totalEsperado} (Página ${pagina})`;
-      
-      const url = `${urlBase}&page=${pagina}`;
-      const response = await fetch(url);
-      const data = await response.json();
-      
-      if (!data.results || data.results.length === 0) break;
-      
-      todas = [...todas, ...data.results];
-      especiesObtenidas = todas.length;
-      pagina++;
-      
-      await new Promise(resolve => setTimeout(resolve, 300));
-    }
-    
-    progresoDiv.style.display = "none";
-    return todas;
-  }
-
-  // ============================================
-  // CONSULTA DE TODAS LAS ESPECIES
-  // ============================================
-  
-  async function consultarINaturalistCompleto() {
-    if (!areaSeleccionada) {
-      return;
-    }
-
-    document.getElementById("todasEspeciesSeccion").style.display = "block";
-    document.getElementById("resultadosTaxonSeccion").style.display = "none";
-    
-    document.getElementById("resultados").innerHTML = '';
-    document.getElementById("paginacion").innerHTML = '';
-    document.getElementById("progreso").style.display = "block";
-    document.getElementById("progreso").innerHTML = "Obteniendo número total de especies...";
-
-    const soloResearch = document.getElementById("soloResearch").checked;
-    const bounds = areaSeleccionada;
-
-    try {
-      let urlBase = `https://api.inaturalist.org/v1/observations/species_counts?` +
-                    `verifiable=${soloResearch}` +
-                    `&per_page=1` +
-                    `&swlat=${bounds.getSouth()}` +
-                    `&swlng=${bounds.getWest()}` +
-                    `&nelat=${bounds.getNorth()}` +
-                    `&nelng=${bounds.getEast()}`;
-
-      const response = await fetch(urlBase);
-      const data = await response.json();
-      
-      if (!data.total_results || data.total_results === 0) {
-        document.getElementById("resultados").innerHTML = "No se encontraron especies en esta área";
-        document.getElementById("progreso").style.display = "none";
-        return;
-      }
-
-      const totalEspecies = data.total_results;
-      
-      urlBase = `https://api.inaturalist.org/v1/observations/species_counts?` +
-                `verifiable=${soloResearch}` +
-                `&per_page=200` +
-                `&swlat=${bounds.getSouth()}` +
-                `&swlng=${bounds.getWest()}` +
-                `&nelat=${bounds.getNorth()}` +
-                `&nelng=${bounds.getEast()}`;
-
-      todasLasEspecies = await obtenerTodasLasEspecies(urlBase, totalEspecies);
-      
-      if (todasLasEspecies.length === 0) {
-        document.getElementById("resultados").innerHTML = "No se pudieron cargar las especies";
-        return;
-      }
-
-      paginaActual = 1;
-      
-      window.mostrarPaginaPrincipal = function(pagina) {
-        mostrarPagina(pagina, todasLasEspecies, "resultados", "paginacion", "mostrarPaginaPrincipal");
-        paginaActual = pagina;
-      };
-      
-      mostrarPaginaPrincipal(1);
-
-    } catch (error) {
-      document.getElementById("resultados").innerHTML = `Error: ${error.message}`;
-      document.getElementById("progreso").style.display = "none";
     }
   }
 
@@ -1317,7 +1333,7 @@
   }
 
   // ============================================
-  // BUSCADOR DE TAXONES
+  // BUSCADOR DE TAXONES (OPTIMIZADO)
   // ============================================
   
   document.getElementById("buscadorTaxon").addEventListener("input", async function(e) {
@@ -1405,16 +1421,60 @@
     document.getElementById("todasEspeciesSeccion").style.display = "none";
     document.getElementById("resultadosTaxonSeccion").style.display = "block";
     document.getElementById("resultadosTaxonTitulo").innerHTML = `🔍 Resultados para: ${taxonNombre} (${rango})`;
-    document.getElementById("resultadosBusquedaTaxon").innerHTML = '<div style="text-align: center;"><div class="loading"></div><p>Buscando especies...</p></div>';
+    document.getElementById("resultadosBusquedaTaxon").innerHTML = '<div class="cargando-mensaje">Buscando especies...</div>';
+    document.getElementById("paginacionTaxon").innerHTML = '';
 
     const soloResearch = document.getElementById("soloResearch").checked;
     const bounds = areaSeleccionada;
 
     try {
+      // Primero obtener el total
+      const urlTotal = `https://api.inaturalist.org/v1/observations/species_counts?` +
+                       `verifiable=${soloResearch}` +
+                       `&taxon_id=${taxonId}` +
+                       `&per_page=1` +
+                       `&swlat=${bounds.getSouth()}` +
+                       `&swlng=${bounds.getWest()}` +
+                       `&nelat=${bounds.getNorth()}` +
+                       `&nelng=${bounds.getEast()}`;
+
+      const responseTotal = await fetch(urlTotal);
+      const dataTotal = await responseTotal.json();
+
+      if (!dataTotal.total_results || dataTotal.total_results === 0) {
+        document.getElementById("resultadosBusquedaTaxon").innerHTML = 
+          `<div class="warning">No se encontraron especies de ${taxonNombre} en esta área</div>`;
+        return;
+      }
+
+      totalEspeciesTaxon = dataTotal.total_results;
+      taxonActual = { id: taxonId, nombre: taxonNombre, rango: rango };
+      
+      // Cargar primera página del taxón
+      await cargarPaginaTaxon(1);
+
+    } catch (error) {
+      document.getElementById("resultadosBusquedaTaxon").innerHTML = `Error: ${error.message}`;
+    }
+  }
+
+  async function cargarPaginaTaxon(pagina) {
+    if (!areaSeleccionada || !taxonActual) return;
+    
+    paginaActualTaxon = pagina;
+    
+    document.getElementById("resultadosBusquedaTaxon").innerHTML = '<div class="cargando-mensaje">Cargando página...</div>';
+    
+    const soloResearch = document.getElementById("soloResearch").checked;
+    const bounds = areaSeleccionada;
+    const offset = (pagina - 1) * especiesPorPagina;
+    
+    try {
       const url = `https://api.inaturalist.org/v1/observations/species_counts?` +
                   `verifiable=${soloResearch}` +
-                  `&taxon_id=${taxonId}` +
-                  `&per_page=200` +
+                  `&taxon_id=${taxonActual.id}` +
+                  `&per_page=${especiesPorPagina}` +
+                  `&offset=${offset}` +
                   `&swlat=${bounds.getSouth()}` +
                   `&swlng=${bounds.getWest()}` +
                   `&nelat=${bounds.getNorth()}` +
@@ -1422,25 +1482,88 @@
 
       const response = await fetch(url);
       const data = await response.json();
-
+      
       if (!data.results || data.results.length === 0) {
-        document.getElementById("resultadosBusquedaTaxon").innerHTML = 
-          `<div class="warning">No se encontraron especies de ${taxonNombre} en esta área</div>`;
+        document.getElementById("resultadosBusquedaTaxon").innerHTML = "No hay especies en esta página";
         return;
       }
 
-      resultadosTaxon = data.results;
-      paginaActualTaxon = 1;
-      
-      window.mostrarPaginaTaxon = function(pagina) {
-        mostrarPagina(pagina, resultadosTaxon, "resultadosBusquedaTaxon", "paginacionTaxon", "mostrarPaginaTaxon");
-        paginaActualTaxon = pagina;
-      };
-      
-      mostrarPaginaTaxon(1);
+      await mostrarPaginaTaxon(data.results);
+      actualizarBotonesPaginacionTaxon();
 
     } catch (error) {
       document.getElementById("resultadosBusquedaTaxon").innerHTML = `Error: ${error.message}`;
+    }
+  }
+
+  async function mostrarPaginaTaxon(especiesPagina) {
+    let html = `<div class="stats">📊 Total especies: ${totalEspeciesTaxon} (página ${paginaActualTaxon})</div>`;
+
+    for (let i = 0; i < especiesPagina.length; i++) {
+      const item = especiesPagina[i];
+      const taxon = item.taxon;
+      
+      // Usar caché de fenología
+      if (!cacheFenologia[taxon.id]) {
+        cacheFenologia[taxon.id] = await obtenerFenologia(taxon.id);
+      }
+      const fenologia = cacheFenologia[taxon.id];
+      
+      html += `<div class="inat-card" onclick="mostrarCitasEspecie(${taxon.id}, '${taxon.name.replace(/'/g, "\\'")}', this)">`;
+      
+      if (taxon.default_photo && taxon.default_photo.medium_url) {
+        html += `<img class="inat-imagen" src="${taxon.default_photo.medium_url}" alt="${taxon.name}">`;
+      } else {
+        html += `<div class="inat-placeholder">📷</div>`;
+      }
+      
+      html += `<div class="inat-info">`;
+      html += `<div class="inat-titulo">${taxon.name} 
+               <a href="https://www.inaturalist.org/taxa/${taxon.id}" target="_blank" class="enlace-inat" onclick="event.stopPropagation()">🔗 iNat</a>
+               </div>`;
+      html += `<div>${taxon.preferred_common_name || ''}</div>`;
+      html += `<span class="badge">📊 ${item.count} obs</span>`;
+      if (taxon.iconic_taxon_name) {
+        html += `<span class="badge">${taxon.iconic_taxon_name}</span>`;
+      }
+      
+      html += crearBarraFenologia(fenologia);
+      
+      html += `</div></div>`;
+    }
+
+    document.getElementById("resultadosBusquedaTaxon").innerHTML = html;
+  }
+
+  function actualizarBotonesPaginacionTaxon() {
+    const totalPaginas = Math.ceil(totalEspeciesTaxon / especiesPorPagina);
+    if (totalPaginas <= 1) {
+      document.getElementById("paginacionTaxon").innerHTML = '';
+      return;
+    }
+
+    let html = '<div class="pagination">';
+    
+    html += `<button onclick="cambiarPaginaTaxon(${paginaActualTaxon - 1})" ${paginaActualTaxon === 1 ? 'disabled' : ''}>◀ Anterior</button>`;
+    
+    for (let i = 1; i <= totalPaginas; i++) {
+      if (i === 1 || i === totalPaginas || (i >= paginaActualTaxon - 2 && i <= paginaActualTaxon + 2)) {
+        html += `<button onclick="cambiarPaginaTaxon(${i})" class="${i === paginaActualTaxon ? 'active' : ''}">${i}</button>`;
+      } else if (i === paginaActualTaxon - 3 || i === paginaActualTaxon + 3) {
+        html += `<button disabled>...</button>`;
+      }
+    }
+    
+    html += `<button onclick="cambiarPaginaTaxon(${paginaActualTaxon + 1})" ${paginaActualTaxon === totalPaginas ? 'disabled' : ''}>Siguiente ▶</button>`;
+    html += '</div>';
+    
+    document.getElementById("paginacionTaxon").innerHTML = html;
+  }
+
+  function cambiarPaginaTaxon(nuevaPagina) {
+    const totalPaginas = Math.ceil(totalEspeciesTaxon / especiesPorPagina);
+    if (nuevaPagina >= 1 && nuevaPagina <= totalPaginas) {
+      cargarPaginaTaxon(nuevaPagina);
     }
   }
 
