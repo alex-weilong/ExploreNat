@@ -68,6 +68,10 @@
       background-color: #ff9800;
     }
 
+    .button-country {
+      background-color: #8B4513;
+    }
+
     select, input {
       background-color: white;
       border: 2px solid #e0e0e0;
@@ -88,7 +92,7 @@
       overflow-y: auto;
     }
 
-    #resultados, #resultadosBusquedaTaxon {
+    #resultados, #resultadosBusquedaTaxon, #resultadosPais {
       background: white;
       padding: 20px;
       border-radius: 12px;
@@ -113,6 +117,26 @@
       padding: 15px;
       border-radius: 8px;
       margin-bottom: 15px;
+    }
+
+    .country-info {
+      background: #e8f5e9;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      border-left: 4px solid #8B4513;
+    }
+
+    .country-name {
+      font-size: 1.2em;
+      font-weight: bold;
+      color: #8B4513;
+    }
+
+    .country-detail {
+      color: #666;
+      font-size: 0.9em;
+      margin-top: 5px;
     }
 
     .inat-card {
@@ -179,6 +203,11 @@
       color: #2e7d32;
       display: inline-block;
       margin-right: 8px;
+    }
+
+    .badge-country {
+      background: #d2b48c;
+      color: #8B4513;
     }
 
     .loading {
@@ -259,7 +288,7 @@
       display: block;
     }
 
-    .sugerencias-container, .sugerencias-taxon-container {
+    .sugerencias-container, .sugerencias-taxon-container, .sugerencias-country-container {
       position: absolute;
       background: white;
       border: 2px solid #4CAF50;
@@ -358,6 +387,28 @@
       border-color: #2e7d32;
       box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.2);
     }
+
+    .quick-countries {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 15px;
+    }
+
+    .quick-country-btn {
+      background: #e8f5e9;
+      border: 1px solid #8B4513;
+      color: #8B4513;
+      padding: 8px 12px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 13px;
+    }
+
+    .quick-country-btn:hover {
+      background: #8B4513;
+      color: white;
+    }
   </style>
 </head>
 <body>
@@ -378,12 +429,14 @@
 <div id="mensajeAyuda" style="display: none;" class="warning"></div>
 
 <h3>📐 Área seleccionada:</h3>
-<pre id="coords">Dibuja un rectángulo en el mapa</pre>
+<pre id="coords">Dibuja un rectángulo en el mapa o selecciona un país</pre>
 
 <!-- Pestañas -->
 <div style="margin: 20px 0;">
   <button class="tab-button active" onclick="cambiarTab(1)">🌍 Todas las especies</button>
-  <button class="tab-button" onclick="cambiarTab(2)">🗺️ Buscar zona / Taxón</button>
+  <button class="tab-button" onclick="cambiarTab(2)">🔍 Buscar taxón</button>
+  <button class="tab-button" onclick="cambiarTab(3)">🗺️ Buscar zona</button>
+  <button class="tab-button" onclick="cambiarTab(4)">🇺🇳 Países (límites reales)</button>
 </div>
 
 <!-- Pestaña 1: Todas las especies -->
@@ -394,7 +447,7 @@
   <div id="paginacion" class="pagination"></div>
 </div>
 
-<!-- Pestaña 2: Buscador unificado -->
+<!-- Pestaña 2: Buscador de taxón -->
 <div id="tab2" class="tab-content">
   <div class="buscador-container">
     <div class="buscador-titulo">🔍 Buscar cualquier taxón (especie, género, familia, orden...)</div>
@@ -407,22 +460,54 @@
       <div id="sugerenciasTaxon" style="position: relative;"></div>
     </div>
   </div>
-  
-  <!-- Resultados del buscador de taxón (ahora lista de especies) -->
   <div id="resultadosBusquedaTaxon" style="margin-top: 15px;"></div>
-  
-  <!-- Buscador de zona (mantenemos el original) -->
-  <div style="margin-top: 30px;">
-    <h3 style="color: #2e7d32;">🗺️ O buscar por zona</h3>
-    <div style="position: relative;">
-      <div style="display: flex; gap: 10px;">
-        <input type="text" id="buscadorPais" placeholder="Ej: España, Doñana, Madrid" style="flex: 1;" autocomplete="off">
-        <button onclick="buscarZona()">Buscar zona</button>
-      </div>
-      <div id="sugerenciasZona" style="position: relative;"></div>
+</div>
+
+<!-- Pestaña 3: Buscador de zona (rectángulo) -->
+<div id="tab3" class="tab-content">
+  <div style="position: relative;">
+    <div style="display: flex; gap: 10px;">
+      <input type="text" id="buscadorPais" placeholder="Ej: Doñana, Madrid, Amazonas" style="flex: 1;" autocomplete="off">
+      <button onclick="buscarZona()">Buscar zona</button>
     </div>
-    <div id="resultadosPais" style="margin-top: 15px;"></div>
+    <div id="sugerenciasZona" style="position: relative;"></div>
   </div>
+  <div id="resultadosPais" style="margin-top: 15px;"></div>
+</div>
+
+<!-- Pestaña 4: Países con límites reales -->
+<div id="tab4" class="tab-content">
+  <div class="buscador-container">
+    <div class="buscador-titulo">🇺🇳 Buscar país (límites políticos reales)</div>
+    <div style="position: relative;">
+      <div class="buscador-input-container">
+        <input type="text" id="buscadorPaisReal" class="buscador-input" 
+               placeholder="Ej: España, Costa Rica, Ecuador, Australia..." autocomplete="off">
+        <button onclick="buscarPaisReal()" class="button-country">Buscar país</button>
+      </div>
+      <div id="sugerenciasPaisReal" style="position: relative;"></div>
+    </div>
+    
+    <div class="quick-countries">
+      <span class="quick-country-btn" onclick="cargarPaisReal('España')">🇪🇸 España</span>
+      <span class="quick-country-btn" onclick="cargarPaisReal('Portugal')">🇵🇹 Portugal</span>
+      <span class="quick-country-btn" onclick="cargarPaisReal('Francia')">🇫🇷 Francia</span>
+      <span class="quick-country-btn" onclick="cargarPaisReal('Italia')">🇮🇹 Italia</span>
+      <span class="quick-country-btn" onclick="cargarPaisReal('Costa Rica')">🇨🇷 Costa Rica</span>
+      <span class="quick-country-btn" onclick="cargarPaisReal('Ecuador')">🇪🇨 Ecuador</span>
+      <span class="quick-country-btn" onclick="cargarPaisReal('Colombia')">🇨🇴 Colombia</span>
+      <span class="quick-country-btn" onclick="cargarPaisReal('Perú')">🇵🇪 Perú</span>
+      <span class="quick-country-btn" onclick="cargarPaisReal('Brasil')">🇧🇷 Brasil</span>
+      <span class="quick-country-btn" onclick="cargarPaisReal('Australia')">🇦🇺 Australia</span>
+    </div>
+  </div>
+  
+  <!-- Información del país seleccionado -->
+  <div id="infoPaisReal" style="display: none;" class="country-info"></div>
+  
+  <!-- Resultados de especies del país -->
+  <div id="resultadosPaisReal" style="margin-top: 15px;"></div>
+  <div id="paginacionPaisReal" class="pagination"></div>
 </div>
 
 <!-- Scripts -->
@@ -443,6 +528,11 @@
   let todasLasEspecies = [];
   let paginaActual = 1;
   const especiesPorPagina = 20;
+  
+  // Variables para país real
+  let paisActual = null;
+  let especiesPais = [];
+  let paginaActualPais = 1;
 
   // ============================================
   // INICIALIZACIÓN
@@ -501,15 +591,21 @@
     if (markersLayer) markersLayer.clearLayers();
     if (zoneLayer) zoneLayer.clearLayers();
     areaSeleccionada = null;
-    document.getElementById("coords").innerHTML = "Dibuja un rectángulo en el mapa";
+    paisActual = null;
+    document.getElementById("coords").innerHTML = "Dibuja un rectángulo en el mapa o selecciona un país";
     document.getElementById("resultados").innerHTML = "";
     document.getElementById("resultadosBusquedaTaxon").innerHTML = "";
     document.getElementById("resultadosPais").innerHTML = "";
+    document.getElementById("resultadosPaisReal").innerHTML = "";
+    document.getElementById("infoPaisReal").style.display = "none";
     document.getElementById("mensajeAyuda").style.display = "none";
     document.getElementById("paginacion").innerHTML = "";
+    document.getElementById("paginacionPaisReal").innerHTML = "";
     document.getElementById("progreso").style.display = "none";
     todasLasEspecies = [];
+    especiesPais = [];
     paginaActual = 1;
+    paginaActualPais = 1;
   }
 
   function limpiarMarcadores() {
@@ -528,12 +624,12 @@
   }
 
   // ============================================
-  // FUNCIÓN PARA MOSTRAR CITAS (MODIFICADA)
+  // FUNCIÓN PARA MOSTRAR CITAS
   // ============================================
   
   async function mostrarCitasEspecie(taxonId, taxonNombre, elemento) {
-    if (!areaSeleccionada) {
-      alert("Primero dibuja un área en el mapa");
+    if (!areaSeleccionada && !paisActual) {
+      alert("Primero selecciona un área o país en el mapa");
       return;
     }
 
@@ -547,16 +643,27 @@
     }
 
     const soloResearch = document.getElementById("soloResearch").checked;
-    const bounds = areaSeleccionada;
+    let url;
+
+    if (paisActual) {
+      // Usar place_id del país
+      url = `https://api.inaturalist.org/v1/observations?` +
+            `taxon_id=${taxonId}` +
+            `&verifiable=${soloResearch}` +
+            `&per_page=50` +
+            `&place_id=${paisActual.place_id}`;
+    } else {
+      // Usar bounding box
+      const bounds = areaSeleccionada;
+      url = `https://api.inaturalist.org/v1/observations?` +
+            `taxon_id=${taxonId}` +
+            `&verifiable=${soloResearch}` +
+            `&per_page=50` +
+            `&swlat=${bounds.getSouth()}&swlng=${bounds.getWest()}` +
+            `&nelat=${bounds.getNorth()}&nelng=${bounds.getEast()}`;
+    }
 
     try {
-      const url = `https://api.inaturalist.org/v1/observations?` +
-                  `taxon_id=${taxonId}` +
-                  `&verifiable=${soloResearch}` +
-                  `&per_page=50` +
-                  `&swlat=${bounds.getSouth()}&swlng=${bounds.getWest()}` +
-                  `&nelat=${bounds.getNorth()}&nelng=${bounds.getEast()}`;
-
       const response = await fetch(url);
       const data = await response.json();
 
@@ -603,10 +710,10 @@
   }
 
   // ============================================
-  // FUNCIONES DE PAGINACIÓN
+  // FUNCIONES DE PAGINACIÓN GENÉRICAS
   // ============================================
   
-  function mostrarPagina(pagina, especies, contenedorId = "resultados") {
+  function mostrarPagina(pagina, especies, contenedorId, paginacionId, callbackPagina) {
     const inicio = (pagina - 1) * especiesPorPagina;
     const fin = inicio + especiesPorPagina;
     const especiesPagina = especies.slice(inicio, fin);
@@ -636,117 +743,29 @@
     });
 
     document.getElementById(contenedorId).innerHTML = html;
+    
+    // Actualizar paginación
+    const totalPaginas = Math.ceil(especies.length / especiesPorPagina);
+    let paginacionHtml = '<div class="pagination">';
+    
+    paginacionHtml += `<button onclick="${callbackPagina}(${pagina-1})" ${pagina === 1 ? 'disabled' : ''}>◀ Anterior</button>`;
+    
+    for (let i = 1; i <= totalPaginas; i++) {
+      if (i === 1 || i === totalPaginas || (i >= pagina - 2 && i <= pagina + 2)) {
+        paginacionHtml += `<button onclick="${callbackPagina}(${i})" class="${i === pagina ? 'active' : ''}">${i}</button>`;
+      } else if (i === pagina - 3 || i === pagina + 3) {
+        paginacionHtml += `<button disabled>...</button>`;
+      }
+    }
+    
+    paginacionHtml += `<button onclick="${callbackPagina}(${pagina+1})" ${pagina === totalPaginas ? 'disabled' : ''}>Siguiente ▶</button>`;
+    paginacionHtml += '</div>';
+    
+    document.getElementById(paginacionId).innerHTML = paginacionHtml;
   }
 
   // ============================================
-  // FUNCIÓN PARA OBTENER ESPECIES DE UN TAXÓN
-  // ============================================
-  
-  async function obtenerEspeciesPorTaxon(taxonId, taxonNombre, rango) {
-    if (!areaSeleccionada) {
-      alert("Primero dibuja un área en el mapa");
-      return;
-    }
-
-    document.getElementById("resultadosBusquedaTaxon").innerHTML = '<div style="text-align: center;"><div class="loading"></div><p>Buscando especies...</p></div>';
-
-    const soloResearch = document.getElementById("soloResearch").checked;
-    const bounds = areaSeleccionada;
-
-    try {
-      // Consultar species_counts para el taxón específico
-      let url = `https://api.inaturalist.org/v1/observations/species_counts?` +
-                `verifiable=${soloResearch}` +
-                `&taxon_id=${taxonId}` +
-                `&per_page=200` +
-                `&swlat=${bounds.getSouth()}` +
-                `&swlng=${bounds.getWest()}` +
-                `&nelat=${bounds.getNorth()}` +
-                `&nelng=${bounds.getEast()}`;
-
-      const response = await fetch(url);
-      const data = await response.json();
-
-      if (!data.results || data.results.length === 0) {
-        document.getElementById("resultadosBusquedaTaxon").innerHTML = 
-          `<div class="warning">No se encontraron especies de ${taxonNombre} en esta área</div>`;
-        return;
-      }
-
-      // Mostrar resultados con paginación
-      const especies = data.results;
-      let html = `<div class="stats">🎯 Taxón: ${taxonNombre} (${rango}) • ${especies.length} especies encontradas</div>`;
-      document.getElementById("resultadosBusquedaTaxon").innerHTML = html;
-      
-      // Usar la misma función de paginación pero para este contenedor
-      let paginaActualTaxon = 1;
-      
-      function mostrarPaginaTaxon(pagina) {
-        const inicio = (pagina - 1) * especiesPorPagina;
-        const fin = inicio + especiesPorPagina;
-        const especiesPagina = especies.slice(inicio, fin);
-        
-        let htmlDetalle = `<div class="stats">📊 Total especies: ${especies.length} (mostrando ${inicio+1}-${Math.min(fin, especies.length)})</div>`;
-
-        especiesPagina.forEach(item => {
-          const taxon = item.taxon;
-          htmlDetalle += `<div class="inat-card" onclick="mostrarCitasEspecie(${taxon.id}, '${taxon.name.replace(/'/g, "\\'")}', this)">`;
-          
-          if (taxon.default_photo && taxon.default_photo.medium_url) {
-            htmlDetalle += `<img class="inat-imagen" src="${taxon.default_photo.medium_url}" alt="${taxon.name}">`;
-          } else {
-            htmlDetalle += `<div class="inat-placeholder">📷</div>`;
-          }
-          
-          htmlDetalle += `<div class="inat-info">`;
-          htmlDetalle += `<div class="inat-titulo">${taxon.name} 
-                   <a href="https://www.inaturalist.org/taxa/${taxon.id}" target="_blank" class="enlace-inat" onclick="event.stopPropagation()">🔗 iNat</a>
-                   </div>`;
-          htmlDetalle += `<div>${taxon.preferred_common_name || ''}</div>`;
-          htmlDetalle += `<span class="badge">📊 ${item.count} obs</span>`;
-          if (taxon.iconic_taxon_name) {
-            htmlDetalle += `<span class="badge">${taxon.iconic_taxon_name}</span>`;
-          }
-          htmlDetalle += `</div></div>`;
-        });
-
-        // Añadir paginación
-        const totalPaginas = Math.ceil(especies.length / especiesPorPagina);
-        let paginacionHtml = '<div class="pagination">';
-        
-        if (pagina > 1) {
-          paginacionHtml += `<button onclick="paginaActualTaxon = ${pagina-1}; mostrarPaginaTaxon(${pagina-1})">◀ Anterior</button>`;
-        }
-        
-        for (let i = 1; i <= totalPaginas; i++) {
-          if (i === 1 || i === totalPaginas || (i >= pagina - 2 && i <= pagina + 2)) {
-            paginacionHtml += `<button onclick="paginaActualTaxon = ${i}; mostrarPaginaTaxon(${i})" class="${i === pagina ? 'active' : ''}">${i}</button>`;
-          } else if (i === pagina - 3 || i === pagina + 3) {
-            paginacionHtml += `<button disabled>...</button>`;
-          }
-        }
-        
-        if (pagina < totalPaginas) {
-          paginacionHtml += `<button onclick="paginaActualTaxon = ${pagina+1}; mostrarPaginaTaxon(${pagina+1})">Siguiente ▶</button>`;
-        }
-        
-        paginacionHtml += '</div>';
-        
-        document.getElementById("resultadosBusquedaTaxon").innerHTML = htmlDetalle + paginacionHtml;
-      }
-
-      // Guardar la función en window para que sea accesible desde los botones
-      window.mostrarPaginaTaxon = mostrarPaginaTaxon;
-      window.paginaActualTaxon = 1;
-      mostrarPaginaTaxon(1);
-
-    } catch (error) {
-      document.getElementById("resultadosBusquedaTaxon").innerHTML = `Error: ${error.message}`;
-    }
-  }
-
-  // ============================================
-  // FUNCIÓN PARA OBTENER TODAS LAS ESPECIES
+  // FUNCIÓN PARA OBTENER TODAS LAS ESPECIES (BOUNDING BOX)
   // ============================================
   
   async function obtenerTodasLasEspecies(urlBase, totalEsperado) {
@@ -777,7 +796,7 @@
   }
 
   // ============================================
-  // PESTAÑA 1 - TODAS LAS ESPECIES
+  // PESTAÑA 1 - TODAS LAS ESPECIES (BOUNDING BOX)
   // ============================================
   
   async function consultarINaturalistCompleto() {
@@ -830,26 +849,11 @@
       }
 
       paginaActual = 1;
-      mostrarPagina(paginaActual, todasLasEspecies, "resultados");
-      
-      // Añadir paginación para resultados principales
-      const totalPaginas = Math.ceil(todasLasEspecies.length / especiesPorPagina);
-      let paginacionHtml = '<div class="pagination">';
-      
-      paginacionHtml += `<button onclick="paginaActual = ${paginaActual-1}; mostrarPagina(paginaActual, todasLasEspecies, 'resultados'); actualizarPaginacionPrincipal()" ${paginaActual === 1 ? 'disabled' : ''}>◀ Anterior</button>`;
-      
-      for (let i = 1; i <= totalPaginas; i++) {
-        if (i === 1 || i === totalPaginas || (i >= paginaActual - 2 && i <= paginaActual + 2)) {
-          paginacionHtml += `<button onclick="paginaActual = ${i}; mostrarPagina(paginaActual, todasLasEspecies, 'resultados'); actualizarPaginacionPrincipal()" class="${i === paginaActual ? 'active' : ''}">${i}</button>`;
-        } else if (i === paginaActual - 3 || i === paginaActual + 3) {
-          paginacionHtml += `<button disabled>...</button>`;
-        }
-      }
-      
-      paginacionHtml += `<button onclick="paginaActual = ${paginaActual+1}; mostrarPagina(paginaActual, todasLasEspecies, 'resultados'); actualizarPaginacionPrincipal()" ${paginaActual === totalPaginas ? 'disabled' : ''}>Siguiente ▶</button>`;
-      paginacionHtml += '</div>';
-      
-      document.getElementById("paginacion").innerHTML = paginacionHtml;
+      window.mostrarPaginaPrincipal = function(pagina) {
+        mostrarPagina(pagina, todasLasEspecies, "resultados", "paginacion", "mostrarPaginaPrincipal");
+        paginaActual = pagina;
+      };
+      mostrarPaginaPrincipal(1);
 
     } catch (error) {
       document.getElementById("resultados").innerHTML = `Error: ${error.message}`;
@@ -857,28 +861,8 @@
     }
   }
 
-  function actualizarPaginacionPrincipal() {
-    const totalPaginas = Math.ceil(todasLasEspecies.length / especiesPorPagina);
-    let paginacionHtml = '<div class="pagination">';
-    
-    paginacionHtml += `<button onclick="paginaActual = ${paginaActual-1}; mostrarPagina(paginaActual, todasLasEspecies, 'resultados'); actualizarPaginacionPrincipal()" ${paginaActual === 1 ? 'disabled' : ''}>◀ Anterior</button>`;
-    
-    for (let i = 1; i <= totalPaginas; i++) {
-      if (i === 1 || i === totalPaginas || (i >= paginaActual - 2 && i <= paginaActual + 2)) {
-        paginacionHtml += `<button onclick="paginaActual = ${i}; mostrarPagina(paginaActual, todasLasEspecies, 'resultados'); actualizarPaginacionPrincipal()" class="${i === paginaActual ? 'active' : ''}">${i}</button>`;
-      } else if (i === paginaActual - 3 || i === paginaActual + 3) {
-        paginacionHtml += `<button disabled>...</button>`;
-      }
-    }
-    
-    paginacionHtml += `<button onclick="paginaActual = ${paginaActual+1}; mostrarPagina(paginaActual, todasLasEspecies, 'resultados'); actualizarPaginacionPrincipal()" ${paginaActual === totalPaginas ? 'disabled' : ''}>Siguiente ▶</button>`;
-    paginacionHtml += '</div>';
-    
-    document.getElementById("paginacion").innerHTML = paginacionHtml;
-  }
-
   // ============================================
-  // BUSCADOR DE TAXÓN CON AUTOCOMPLETADO
+  // PESTAÑA 2 - BUSCADOR DE TAXÓN
   // ============================================
   
   document.getElementById("buscadorTaxon").addEventListener("input", async function(e) {
@@ -936,6 +920,10 @@
   async function buscarTaxon() {
     const nombre = document.getElementById("buscadorTaxon").value.trim();
     if (!nombre) return alert("Escribe el nombre de un taxón");
+    if (!areaSeleccionada && !paisActual) {
+      alert("Primero selecciona un área en el mapa o un país");
+      return;
+    }
 
     try {
       const taxonRes = await fetch(`https://api.inaturalist.org/v1/taxa?q=${encodeURIComponent(nombre)}&per_page=1`);
@@ -954,8 +942,108 @@
     }
   }
 
+  async function obtenerEspeciesPorTaxon(taxonId, taxonNombre, rango) {
+    if (!areaSeleccionada && !paisActual) {
+      alert("Primero selecciona un área en el mapa o un país");
+      return;
+    }
+
+    document.getElementById("resultadosBusquedaTaxon").innerHTML = '<div style="text-align: center;"><div class="loading"></div><p>Buscando especies...</p></div>';
+
+    const soloResearch = document.getElementById("soloResearch").checked;
+    let url;
+
+    if (paisActual) {
+      url = `https://api.inaturalist.org/v1/observations/species_counts?` +
+            `verifiable=${soloResearch}` +
+            `&taxon_id=${taxonId}` +
+            `&per_page=200` +
+            `&place_id=${paisActual.place_id}`;
+    } else {
+      const bounds = areaSeleccionada;
+      url = `https://api.inaturalist.org/v1/observations/species_counts?` +
+            `verifiable=${soloResearch}` +
+            `&taxon_id=${taxonId}` +
+            `&per_page=200` +
+            `&swlat=${bounds.getSouth()}` +
+            `&swlng=${bounds.getWest()}` +
+            `&nelat=${bounds.getNorth()}` +
+            `&nelng=${bounds.getEast()}`;
+    }
+
+    try {
+      const response = await fetch(url);
+      const data = await response.json();
+
+      if (!data.results || data.results.length === 0) {
+        document.getElementById("resultadosBusquedaTaxon").innerHTML = 
+          `<div class="warning">No se encontraron especies de ${taxonNombre} en esta área</div>`;
+        return;
+      }
+
+      const especies = data.results;
+      let html = `<div class="stats">🎯 Taxón: ${taxonNombre} (${rango}) • ${especies.length} especies encontradas</div>`;
+      document.getElementById("resultadosBusquedaTaxon").innerHTML = html;
+      
+      let paginaActualTaxon = 1;
+      
+      window.mostrarPaginaTaxon = function(pagina) {
+        const inicio = (pagina - 1) * especiesPorPagina;
+        const fin = inicio + especiesPorPagina;
+        const especiesPagina = especies.slice(inicio, fin);
+        
+        let htmlDetalle = `<div class="stats">📊 Total especies: ${especies.length} (mostrando ${inicio+1}-${Math.min(fin, especies.length)})</div>`;
+
+        especiesPagina.forEach(item => {
+          const taxon = item.taxon;
+          htmlDetalle += `<div class="inat-card" onclick="mostrarCitasEspecie(${taxon.id}, '${taxon.name.replace(/'/g, "\\'")}', this)">`;
+          
+          if (taxon.default_photo && taxon.default_photo.medium_url) {
+            htmlDetalle += `<img class="inat-imagen" src="${taxon.default_photo.medium_url}" alt="${taxon.name}">`;
+          } else {
+            htmlDetalle += `<div class="inat-placeholder">📷</div>`;
+          }
+          
+          htmlDetalle += `<div class="inat-info">`;
+          htmlDetalle += `<div class="inat-titulo">${taxon.name} 
+                   <a href="https://www.inaturalist.org/taxa/${taxon.id}" target="_blank" class="enlace-inat" onclick="event.stopPropagation()">🔗 iNat</a>
+                   </div>`;
+          htmlDetalle += `<div>${taxon.preferred_common_name || ''}</div>`;
+          htmlDetalle += `<span class="badge">📊 ${item.count} obs</span>`;
+          if (taxon.iconic_taxon_name) {
+            htmlDetalle += `<span class="badge">${taxon.iconic_taxon_name}</span>`;
+          }
+          htmlDetalle += `</div></div>`;
+        });
+
+        const totalPaginas = Math.ceil(especies.length / especiesPorPagina);
+        let paginacionHtml = '<div class="pagination">';
+        
+        paginacionHtml += `<button onclick="mostrarPaginaTaxon(${pagina-1})" ${pagina === 1 ? 'disabled' : ''}>◀ Anterior</button>`;
+        
+        for (let i = 1; i <= totalPaginas; i++) {
+          if (i === 1 || i === totalPaginas || (i >= pagina - 2 && i <= pagina + 2)) {
+            paginacionHtml += `<button onclick="mostrarPaginaTaxon(${i})" class="${i === pagina ? 'active' : ''}">${i}</button>`;
+          } else if (i === pagina - 3 || i === pagina + 3) {
+            paginacionHtml += `<button disabled>...</button>`;
+          }
+        }
+        
+        paginacionHtml += `<button onclick="mostrarPaginaTaxon(${pagina+1})" ${pagina === totalPaginas ? 'disabled' : ''}>Siguiente ▶</button>`;
+        paginacionHtml += '</div>';
+        
+        document.getElementById("resultadosBusquedaTaxon").innerHTML = htmlDetalle + paginacionHtml;
+      };
+
+      mostrarPaginaTaxon(1);
+
+    } catch (error) {
+      document.getElementById("resultadosBusquedaTaxon").innerHTML = `Error: ${error.message}`;
+    }
+  }
+
   // ============================================
-  // BUSCADOR DE ZONA
+  // PESTAÑA 3 - BUSCADOR DE ZONA (RECTÁNGULO)
   // ============================================
   
   document.getElementById("buscadorPais").addEventListener("input", async function(e) {
@@ -991,6 +1079,7 @@
   window.seleccionarZona = function(nombre, south, north, west, east, lat, lon) {
     document.getElementById("buscadorPais").value = nombre;
     document.getElementById("sugerenciasZona").innerHTML = '';
+    paisActual = null;
     
     const bounds = L.latLngBounds([parseFloat(south), parseFloat(west)], [parseFloat(north), parseFloat(east)]);
     
@@ -1030,41 +1119,224 @@
       }
 
       const lugar = data[0];
-      const bounds = L.latLngBounds(
-        [parseFloat(lugar.boundingbox[0]), parseFloat(lugar.boundingbox[2])],
-        [parseFloat(lugar.boundingbox[1]), parseFloat(lugar.boundingbox[3])]
-      );
-
-      zoneLayer.clearLayers();
-      L.rectangle(bounds, { color: "#4CAF50", weight: 3, fillOpacity: 0.1 }).addTo(zoneLayer);
-      L.marker([parseFloat(lugar.lat), parseFloat(lugar.lon)]).addTo(zoneLayer).bindPopup(lugar.display_name).openPopup();
-      
-      map.fitBounds(bounds.pad(0.1));
-      areaSeleccionada = bounds;
-      
-      document.getElementById("coords").innerHTML = 
-        `📍 ${lugar.display_name}<br>` +
-        `Norte: ${bounds.getNorth().toFixed(4)}°<br>` +
-        `Sur: ${bounds.getSouth().toFixed(4)}°<br>` +
-        `Este: ${bounds.getEast().toFixed(4)}°<br>` +
-        `Oeste: ${bounds.getWest().toFixed(4)}°`;
-
-      document.getElementById("resultadosPais").innerHTML = '';
-      cambiarTab(1);
-      await consultarINaturalistCompleto();
+      seleccionarZona(lugar.display_name, lugar.boundingbox[0], lugar.boundingbox[1], 
+                     lugar.boundingbox[2], lugar.boundingbox[3], lugar.lat, lugar.lon);
 
     } catch (error) {
       document.getElementById("resultadosPais").innerHTML = `Error: ${error.message}`;
     }
   }
 
-  // Enter para búsquedas
+  // ============================================
+  // PESTAÑA 4 - PAÍSES CON LÍMITES REALES
+  // ============================================
+  
+  async function buscarPlaceIdINaturalist(query) {
+    try {
+      const url = `https://api.inaturalist.org/v1/places?q=${encodeURIComponent(query)}&per_page=10`;
+      const response = await fetch(url);
+      const data = await response.json();
+      
+      if (data.results && data.results.length > 0) {
+        // Filtrar solo países (place_type_name = 'Country')
+        const paises = data.results.filter(p => p.place_type_name === 'Country');
+        return paises.map(place => ({
+          id: place.id,
+          name: place.display_name,
+          type: place.place_type_name,
+          bbox: place.bounding_box_geojson ? 
+                [place.bounding_box_geojson.coordinates[0][1], 
+                 place.bounding_box_geojson.coordinates[0][0],
+                 place.bounding_box_geojson.coordinates[2][1],
+                 place.bounding_box_geojson.coordinates[2][0]] :
+                [place.swlat, place.swlng, place.nelat, place.nelng],
+          location: [place.latitude, place.longitude]
+        }));
+      }
+      return [];
+    } catch (error) {
+      console.error("Error buscando países:", error);
+      return [];
+    }
+  }
+
+  document.getElementById("buscadorPaisReal").addEventListener("input", async function(e) {
+    const query = e.target.value.trim();
+    if (query.length < 3) {
+      document.getElementById("sugerenciasPaisReal").innerHTML = '';
+      return;
+    }
+    
+    try {
+      const paises = await buscarPlaceIdINaturalist(query);
+      
+      if (paises.length === 0) return;
+      
+      let html = '<div class="sugerencias-country-container">';
+      paises.forEach(p => {
+        html += `<div class="sugerencia-item" onclick="seleccionarPaisReal(${p.id}, '${p.name.replace(/'/g, "\\'")}', ${p.bbox[0]}, ${p.bbox[1]}, ${p.bbox[2]}, ${p.bbox[3]}, ${p.location[0]}, ${p.location[1]})">`;
+        html += `<div style="font-size: 20px; min-width: 30px;">🇺🇳</div>`;
+        html += `<div class="taxon-info">`;
+        html += `<div class="taxon-name">${p.name}</div>`;
+        html += `<div class="taxon-rank">País</div>`;
+        html += `</div>`;
+        html += `</div>`;
+      });
+      html += '</div>';
+      
+      document.getElementById("sugerenciasPaisReal").innerHTML = html;
+    } catch (error) {
+      console.error("Error:", error);
+    }
+  });
+
+  window.seleccionarPaisReal = function(placeId, nombre, south, north, west, east, lat, lon) {
+    document.getElementById("buscadorPaisReal").value = nombre;
+    document.getElementById("sugerenciasPaisReal").innerHTML = '';
+    
+    const bounds = L.latLngBounds([parseFloat(south), parseFloat(west)], [parseFloat(north), parseFloat(east)]);
+    
+    zoneLayer.clearLayers();
+    L.rectangle(bounds, { 
+      color: "#8B4513", 
+      weight: 4, 
+      fillColor: "#8B4513",
+      fillOpacity: 0.1,
+      dashArray: null
+    }).addTo(zoneLayer);
+    
+    L.marker([parseFloat(lat), parseFloat(lon)], {
+      icon: L.divIcon({ 
+        html: '📍', 
+        iconSize: [30, 30],
+        className: 'country-marker'
+      })
+    }).addTo(zoneLayer).bindPopup(`
+      <b>${nombre}</b><br>
+      Place ID: ${placeId}<br>
+      Límites políticos reales
+    `).openPopup();
+    
+    map.fitBounds(bounds.pad(0.1));
+    
+    // Guardar información del país
+    paisActual = {
+      place_id: placeId,
+      nombre: nombre,
+      bounds: bounds,
+      lat: lat,
+      lon: lon
+    };
+    
+    areaSeleccionada = null; // Limpiar área de rectángulo
+    
+    document.getElementById("coords").innerHTML = 
+      `📍 País: ${nombre} (límites reales)<br>` +
+      `Norte: ${bounds.getNorth().toFixed(4)}°<br>` +
+      `Sur: ${bounds.getSouth().toFixed(4)}°<br>` +
+      `Este: ${bounds.getEast().toFixed(4)}°<br>` +
+      `Oeste: ${bounds.getWest().toFixed(4)}°`;
+    
+    // Mostrar información del país
+    document.getElementById("infoPaisReal").style.display = "block";
+    document.getElementById("infoPaisReal").innerHTML = `
+      <span class="country-name">🇺🇳 ${nombre}</span><br>
+      <span class="country-detail">Place ID: ${placeId} • Límites políticos reales de iNaturalist</span>
+    `;
+    
+    consultarPaisReal(placeId, nombre);
+  };
+
+  async function consultarPaisReal(placeId, nombre) {
+    document.getElementById("resultadosPaisReal").innerHTML = '<div style="text-align: center;"><div class="loading"></div><p>Cargando biodiversidad del país...</p></div>';
+    document.getElementById("paginacionPaisReal").innerHTML = '';
+
+    const soloResearch = document.getElementById("soloResearch").checked;
+
+    try {
+      // Primera consulta para obtener el total
+      let url = `https://api.inaturalist.org/v1/observations/species_counts?` +
+                `verifiable=${soloResearch}` +
+                `&place_id=${placeId}` +
+                `&per_page=1`;
+
+      const response = await fetch(url);
+      const data = await response.json();
+      
+      if (!data.total_results || data.total_results === 0) {
+        document.getElementById("resultadosPaisReal").innerHTML = "No se encontraron especies en este país";
+        return;
+      }
+
+      const totalEspecies = data.total_results;
+      
+      // Obtener todas las especies
+      url = `https://api.inaturalist.org/v1/observations/species_counts?` +
+            `verifiable=${soloResearch}` +
+            `&place_id=${placeId}` +
+            `&per_page=200`;
+
+      especiesPais = await obtenerTodasLasEspecies(url, totalEspecies);
+      
+      if (especiesPais.length === 0) {
+        document.getElementById("resultadosPaisReal").innerHTML = "No se pudieron cargar las especies";
+        return;
+      }
+
+      paginaActualPais = 1;
+      
+      window.mostrarPaginaPais = function(pagina) {
+        mostrarPagina(pagina, especiesPais, "resultadosPaisReal", "paginacionPaisReal", "mostrarPaginaPais");
+        paginaActualPais = pagina;
+      };
+      
+      mostrarPaginaPais(1);
+
+    } catch (error) {
+      document.getElementById("resultadosPaisReal").innerHTML = `Error: ${error.message}`;
+    }
+  }
+
+  function cargarPaisReal(nombre) {
+    document.getElementById("buscadorPaisReal").value = nombre;
+    buscarPaisReal();
+  }
+
+  async function buscarPaisReal() {
+    const query = document.getElementById("buscadorPaisReal").value.trim();
+    if (!query) return alert("Escribe el nombre de un país");
+
+    try {
+      const paises = await buscarPlaceIdINaturalist(query);
+      
+      if (paises.length === 0) {
+        document.getElementById("resultadosPaisReal").innerHTML = "País no encontrado en iNaturalist";
+        return;
+      }
+
+      // Seleccionar el primer país
+      const p = paises[0];
+      seleccionarPaisReal(p.id, p.name, p.bbox[0], p.bbox[1], p.bbox[2], p.bbox[3], p.location[0], p.location[1]);
+
+    } catch (error) {
+      document.getElementById("resultadosPaisReal").innerHTML = `Error: ${error.message}`;
+    }
+  }
+
+  // ============================================
+  // EVENTOS COMUNES
+  // ============================================
+  
   document.getElementById("buscadorTaxon").addEventListener("keypress", e => {
     if (e.key === "Enter") buscarTaxon();
   });
 
   document.getElementById("buscadorPais").addEventListener("keypress", e => {
     if (e.key === "Enter") buscarZona();
+  });
+
+  document.getElementById("buscadorPaisReal").addEventListener("keypress", e => {
+    if (e.key === "Enter") buscarPaisReal();
   });
 
   // Cerrar sugerencias
@@ -1074,6 +1346,9 @@
     }
     if (!e.target.closest('#buscadorPais') && !e.target.closest('.sugerencias-container')) {
       document.getElementById("sugerenciasZona").innerHTML = '';
+    }
+    if (!e.target.closest('#buscadorPaisReal') && !e.target.closest('.sugerencias-country-container')) {
+      document.getElementById("sugerenciasPaisReal").innerHTML = '';
     }
   });
 
