@@ -1506,12 +1506,8 @@
     }
   }
 
-  // ============================================
-  // FUNCIÓN PARA DESCARGAR INFORME WORD (CON IMÁGENES EN BASE64)
-  // ============================================
-  
- // ============================================
-// FUNCIÓN PARA DESCARGAR INFORME WORD CON IMÁGENES Y JERARQUÍA
+// ============================================
+// FUNCIÓN PARA DESCARGAR INFORME WORD OPTIMIZADO
 // ============================================
 
 async function descargarInformeWord() {
@@ -1530,34 +1526,35 @@ async function descargarInformeWord() {
   const fecha = new Date().toLocaleDateString('es-ES');
   const nombreArchivo = `ExploreNat_${fecha.replace(/\//g, '-')}.doc`;
   
-  // Organizar especies por jerarquía taxonómica
+  // Organizar especies por clase y luego por orden
   const especiesPorClase = {};
-  const especiesPorOrden = {};
-  const especiesPorFamilia = {};
 
   todasLasEspeciesParaInforme.forEach(item => {
     const taxon = item.taxon;
     const clase = taxon.class || taxon.iconic_taxon_name || 'No clasificado';
+    
+    if (!especiesPorClase[clase]) {
+      especiesPorClase[clase] = {};
+    }
+    
     const orden = taxon.order || 'No clasificado';
-    const familia = taxon.family || 'No clasificado';
+    if (!especiesPorClase[clase][orden]) {
+      especiesPorClase[clase][orden] = [];
+    }
     
-    if (!especiesPorClase[clase]) especiesPorClase[clase] = [];
-    if (!especiesPorOrden[orden]) especiesPorOrden[orden] = [];
-    if (!especiesPorFamilia[familia]) especiesPorFamilia[familia] = [];
-    
-    especiesPorClase[clase].push(item);
-    especiesPorOrden[orden].push(item);
-    especiesPorFamilia[familia].push(item);
+    especiesPorClase[clase][orden].push(item);
   });
 
   // Ordenar clases alfabéticamente
   const clasesOrdenadas = Object.keys(especiesPorClase).sort();
 
-  // Función para obtener imagen en base64
+  // Función para obtener imagen en base64 (tamaño reducido)
   async function obtenerImagenBase64(url) {
     if (!url) return null;
     try {
-      const response = await fetch(url, { mode: 'cors' });
+      // Intentar obtener imagen en tamaño pequeño
+      const urlPequena = url.replace('medium', 'small').replace('original', 'small');
+      const response = await fetch(urlPequena, { mode: 'cors' });
       const blob = await response.blob();
       return new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -1571,7 +1568,7 @@ async function descargarInformeWord() {
     }
   }
 
-  // Crear contenido HTML con jerarquía
+  // Crear contenido HTML simplificado
   let contenidoHTML = `
     <html xmlns:v="urn:schemas-microsoft-com:vml" 
           xmlns:o="urn:schemas-microsoft-com:office:office" 
@@ -1585,105 +1582,86 @@ async function descargarInformeWord() {
         body { 
           font-family: 'Segoe UI', Arial, sans-serif; 
           margin: 1.5cm; 
-          font-size: 9pt;
+          font-size: 8pt;
         }
         h1 { 
           color: #2c5e2e; 
           border-bottom: 2px solid #4CAF50; 
           padding-bottom: 5px; 
-          font-size: 16pt;
+          font-size: 14pt;
         }
         h2 {
           color: #2e7d32;
-          margin-top: 20px;
-          margin-bottom: 10px;
-          font-size: 14pt;
+          margin-top: 15px;
+          margin-bottom: 8px;
+          font-size: 12pt;
           background-color: #e8f5e9;
-          padding: 5px;
+          padding: 4px;
           border-left: 4px solid #4CAF50;
         }
         h3 {
           color: #388E3C;
-          margin-top: 15px;
-          margin-bottom: 8px;
-          font-size: 12pt;
-          font-style: italic;
-        }
-        h4 {
-          color: #4CAF50;
           margin-top: 10px;
           margin-bottom: 5px;
-          font-size: 11pt;
+          font-size: 10pt;
+          font-style: italic;
+          margin-left: 10px;
         }
         .info-area { 
           background-color: #e8f5e9; 
-          padding: 8px; 
+          padding: 6px; 
           border-radius: 4px; 
-          margin: 10px 0; 
+          margin: 8px 0; 
           border-left: 4px solid #4CAF50;
+          font-size: 8pt;
         }
         table { 
           border-collapse: collapse; 
           width: 100%; 
-          margin-top: 10px; 
-          margin-bottom: 15px;
-          font-size: 8pt;
-        }
-        th { 
-          background-color: #4CAF50; 
-          color: white; 
-          padding: 4px; 
-          text-align: left; 
+          margin-top: 5px; 
+          margin-bottom: 10px;
+          margin-left: 20px;
+          font-size: 7pt;
         }
         td { 
-          border: 1px solid #ddd; 
-          padding: 3px; 
+          border: none; 
+          padding: 2px; 
           vertical-align: middle;
         }
-        tr:nth-child(even) { 
-          background-color: #f9f9f9; 
-        }
         .especie-imagen {
-          width: 35px;
-          height: 35px;
+          width: 20px;
+          height: 20px;
           object-fit: cover;
-          border-radius: 3px;
+          border-radius: 2px;
           border: 1px solid #4CAF50;
         }
         .sin-imagen {
-          width: 35px;
-          height: 35px;
+          width: 20px;
+          height: 20px;
           background-color: #e8f5e9;
-          border-radius: 3px;
+          border-radius: 2px;
           display: flex;
           align-items: center;
           justify-content: center;
           color: #4CAF50;
-          font-size: 16px;
+          font-size: 10px;
           border: 1px solid #4CAF50;
         }
-        .taxonomia-detalle {
-          font-size: 7pt;
+        .nombre-cientifico {
+          font-weight: bold;
+          color: #1b5e20;
+        }
+        .nombre-comun {
           color: #666;
+          font-style: italic;
         }
         .footer { 
           margin-top: 15px; 
-          font-size: 7pt; 
+          font-size: 6pt; 
           color: #666; 
           text-align: center; 
           border-top: 1px solid #ddd;
-          padding-top: 8px;
-        }
-        .indice {
-          margin: 15px 0;
-          padding: 10px;
-          background-color: #f5f5f5;
-          border-radius: 4px;
-        }
-        .indice a {
-          color: #2e7d32;
-          text-decoration: none;
-          margin-right: 15px;
+          padding-top: 5px;
         }
       </style>
     </head>
@@ -1691,100 +1669,65 @@ async function descargarInformeWord() {
       <h1>🌿 ExploreNat - Informe de Biodiversidad</h1>
       
       <div class="info-area">
-        <p><strong>Fecha:</strong> ${fecha}</p>
-        <p><strong>Área:</strong> Centro: ${centro.lat.toFixed(4)}°, ${centro.lng.toFixed(4)}° | 
-           Extensión: ${((bounds.getNorth() - bounds.getSouth()) * (bounds.getEast() - bounds.getWest()) * 111 * 111).toFixed(0)} km²</p>
-        <p><strong>Total de especies:</strong> ${todasLasEspeciesParaInforme.length}</p>
+        <strong>Fecha:</strong> ${fecha}<br>
+        <strong>Área:</strong> Centro: ${centro.lat.toFixed(4)}°, ${centro.lng.toFixed(4)}° | 
+           Extensión: ${((bounds.getNorth() - bounds.getSouth()) * (bounds.getEast() - bounds.getWest()) * 111 * 111).toFixed(0)} km²<br>
+        <strong>Total de especies:</strong> ${todasLasEspeciesParaInforme.length}
       </div>
-      
-      <div class="indice">
-        <strong>Índice por clase:</strong><br>
   `;
-
-  // Añadir índice por clase
-  clasesOrdenadas.forEach(clase => {
-    const idClase = clase.replace(/[^a-zA-Z0-9]/g, '_');
-    contenidoHTML += `<a href="#${idClase}">${clase} (${especiesPorClase[clase].length})</a> `;
-  });
-
-  contenidoHTML += `</div>`;
 
   // Procesar cada clase
   for (const clase of clasesOrdenadas) {
-    const idClase = clase.replace(/[^a-zA-Z0-9]/g, '_');
-    contenidoHTML += `<h2 id="${idClase}">📊 ${clase} (${especiesPorClase[clase].length} especies)</h2>`;
+    const ordenes = especiesPorClase[clase];
+    const totalEnClase = Object.values(ordenes).reduce((sum, arr) => sum + arr.length, 0);
     
-    // Agrupar por orden dentro de la clase
-    const ordenesEnClase = {};
-    especiesPorClase[clase].forEach(item => {
-      const orden = item.taxon.order || 'No clasificado';
-      if (!ordenesEnClase[orden]) ordenesEnClase[orden] = [];
-      ordenesEnClase[orden].push(item);
-    });
-
-    const ordenesOrdenadas = Object.keys(ordenesEnClase).sort();
+    contenidoHTML += `<h2>📊 ${clase} (${totalEnClase} especies)</h2>`;
+    
+    // Ordenar órdenes alfabéticamente
+    const ordenesOrdenadas = Object.keys(ordenes).sort();
 
     for (const orden of ordenesOrdenadas) {
-      contenidoHTML += `<h3>📋 ${orden} (${ordenesEnClase[orden].length} especies)</h3>`;
+      const especies = ordenes[orden];
       
-      // Agrupar por familia dentro del orden
-      const familiasEnOrden = {};
-      ordenesEnClase[orden].forEach(item => {
-        const familia = item.taxon.family || 'No clasificado';
-        if (!familiasEnOrden[familia]) familiasEnOrden[familia] = [];
-        familiasEnOrden[familia].push(item);
-      });
+      contenidoHTML += `<h3>📋 ${orden} (${especies.length} especies)</h3>`;
+      contenidoHTML += `<table>`;
 
-      const familiasOrdenadas = Object.keys(familiasEnOrden).sort();
-
-      for (const familia of familiasOrdenadas) {
-        contenidoHTML += `<h4>🌱 ${familia} (${familiasEnOrden[familia].length} especies)</h4>`;
+      // Procesar cada especie de este orden
+      for (const item of especies) {
+        const taxon = item.taxon;
+        
+        // Intentar cargar la imagen (tamaño pequeño)
+        let imagenHTML = '<div class="sin-imagen">📷</div>';
+        if (taxon.default_photo && taxon.default_photo.small_url) {
+          try {
+            const base64 = await obtenerImagenBase64(taxon.default_photo.small_url);
+            if (base64) {
+              imagenHTML = `<img class="especie-imagen" src="${base64}" alt="${taxon.name}">`;
+            }
+          } catch (e) {
+            console.error("Error con imagen:", e);
+          }
+        } else if (taxon.default_photo && taxon.default_photo.medium_url) {
+          try {
+            const base64 = await obtenerImagenBase64(taxon.default_photo.medium_url);
+            if (base64) {
+              imagenHTML = `<img class="especie-imagen" src="${base64}" alt="${taxon.name}">`;
+            }
+          } catch (e) {
+            console.error("Error con imagen:", e);
+          }
+        }
         
         contenidoHTML += `
-          <table>
-            <thead>
-              <tr>
-                <th width="40px">Foto</th>
-                <th width="150px">Nombre científico</th>
-                <th width="120px">Nombre común</th>
-                <th>Género</th>
-              </tr>
-            </thead>
-            <tbody>
-        `;
-
-        // Procesar cada especie de esta familia
-        for (const item of familiasEnOrden[familia]) {
-          const taxon = item.taxon;
-          
-          // Intentar cargar la imagen
-          let imagenHTML = '<div class="sin-imagen">📷</div>';
-          if (taxon.default_photo && taxon.default_photo.medium_url) {
-            try {
-              const base64 = await obtenerImagenBase64(taxon.default_photo.medium_url);
-              if (base64) {
-                imagenHTML = `<img class="especie-imagen" src="${base64}" alt="${taxon.name}">`;
-              }
-            } catch (e) {
-              console.error("Error con imagen:", e);
-            }
-          }
-          
-          contenidoHTML += `
-            <tr>
-              <td style="text-align: center;">${imagenHTML}</td>
-              <td><strong>${taxon.name}</strong></td>
-              <td><em>${taxon.preferred_common_name || '—'}</em></td>
-              <td><span class="taxonomia-detalle">${taxon.genus || '—'}</span></td>
-            </tr>
-          `;
-        }
-
-        contenidoHTML += `
-            </tbody>
-          </table>
+          <tr>
+            <td width="25px">${imagenHTML}</td>
+            <td><span class="nombre-cientifico">${taxon.name}</span></td>
+            <td><span class="nombre-comun">${taxon.preferred_common_name || '—'}</span></td>
+          </tr>
         `;
       }
+
+      contenidoHTML += `</table>`;
     }
   }
 
@@ -1811,7 +1754,6 @@ async function descargarInformeWord() {
   mensajeAyuda.innerHTML = `✅ Informe Word descargado con ${todasLasEspeciesParaInforme.length} especies y sus imágenes`;
   mensajeAyuda.className = "success";
 }
-
   // ============================================
   // FUNCIÓN PARA MOSTRAR CITAS (OPTIMIZADA)
   // ============================================
