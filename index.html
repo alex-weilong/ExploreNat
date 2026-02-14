@@ -23,25 +23,59 @@
       font-size: 2.5em;
     }
 
+    /* Layout principal */
+    .main-container {
+      display: flex;
+      gap: 20px;
+      margin-top: 20px;
+    }
+
+    /* Columna izquierda: Mapa */
+    .map-container {
+      flex: 1;
+      min-width: 0; /* Para evitar desbordamiento */
+    }
+
     #map {
-      height: 500px;
-      margin-bottom: 15px;
+      height: 600px;
+      width: 100%;
       border-radius: 12px;
       box-shadow: 0 4px 15px rgba(0,0,0,0.2);
       border: 3px solid #4CAF50;
       position: relative;
     }
 
+    /* Columna derecha: Resultados */
+    .results-container {
+      width: 400px;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .results-container .resultados-seccion {
+      margin-top: 0;
+    }
+
+    .results-container .resultados-container {
+      max-height: 500px;
+      overflow-y: auto;
+      background: white;
+      padding: 15px;
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+
     .controls {
       background: white;
       padding: 20px;
       border-radius: 12px;
-      margin-bottom: 20px;
       box-shadow: 0 4px 15px rgba(0,0,0,0.1);
       display: flex;
       flex-wrap: wrap;
       align-items: center;
       gap: 15px;
+      margin-bottom: 20px;
     }
 
     button, select, input {
@@ -89,15 +123,6 @@
       overflow-y: auto;
     }
 
-    .resultados-container {
-      background: white;
-      padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-      max-height: 600px;
-      overflow-y: auto;
-    }
-
     .warning {
       color: #856404;
       background-color: #fff3cd;
@@ -120,9 +145,9 @@
       display: flex;
       align-items: flex-start;
       margin-bottom: 15px;
-      padding: 15px;
+      padding: 12px;
       background: white;
-      border-radius: 10px;
+      border-radius: 8px;
       border: 1px solid #eaeaea;
       cursor: pointer;
       transition: all 0.3s ease;
@@ -141,25 +166,25 @@
     }
 
     .inat-imagen {
-      width: 80px;
-      height: 80px;
+      width: 60px;
+      height: 60px;
       object-fit: cover;
-      border-radius: 10px;
-      margin-right: 15px;
+      border-radius: 8px;
+      margin-right: 12px;
       border: 2px solid #4CAF50;
     }
 
     .inat-placeholder {
-      width: 80px;
-      height: 80px;
+      width: 60px;
+      height: 60px;
       background: #e8f5e9;
-      margin-right: 15px;
-      border-radius: 10px;
+      margin-right: 12px;
+      border-radius: 8px;
       display: flex;
       align-items: center;
       justify-content: center;
       color: #4CAF50;
-      font-size: 30px;
+      font-size: 24px;
     }
 
     .inat-info {
@@ -169,17 +194,19 @@
     .inat-titulo {
       font-weight: bold;
       color: #2e7d32;
-      font-size: 16px;
+      font-size: 14px;
+      margin-bottom: 2px;
     }
 
     .badge {
       background: #e8f5e9;
-      padding: 4px 12px;
-      border-radius: 20px;
-      font-size: 12px;
+      padding: 2px 8px;
+      border-radius: 16px;
+      font-size: 11px;
       color: #2e7d32;
       display: inline-block;
-      margin-right: 8px;
+      margin-right: 4px;
+      margin-top: 4px;
     }
 
     .loading {
@@ -199,61 +226,33 @@
 
     .stats {
       background: #e8f5e9;
-      padding: 15px;
+      padding: 12px;
       border-radius: 8px;
-      margin-bottom: 20px;
+      margin-bottom: 15px;
       font-weight: bold;
+      font-size: 13px;
     }
 
     .pagination {
       display: flex;
       justify-content: center;
-      gap: 10px;
-      margin-top: 20px;
+      gap: 8px;
+      margin-top: 15px;
       padding: 10px;
     }
 
     .pagination button {
-      padding: 8px 16px;
-      background: #e9ecef;
-      color: #495057;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
+      padding: 6px 12px;
+      font-size: 12px;
     }
 
-    .pagination button.active {
-      background: #4CAF50;
-      color: white;
-    }
-
-    .pagination button:hover:not(.active) {
-      background: #d4d4d4;
-    }
-
-    .pagination button:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-
-    .sugerencias-taxon-container {
-      position: absolute;
-      background: white;
-      border: 2px solid #4CAF50;
-      border-radius: 8px;
-      max-height: 300px;
-      overflow-y: auto;
-      width: 500px;
-      z-index: 1000;
-      box-shadow: 0 6px 12px rgba(0,0,0,0.15);
-    }
-
+    .sugerencias-taxon-container,
     .sugerencias-pais-container {
       position: absolute;
       background: white;
       border: 2px solid #4CAF50;
       border-radius: 8px;
-      max-height: 300px;
+      max-height: 250px;
       overflow-y: auto;
       width: 400px;
       z-index: 1000;
@@ -261,7 +260,7 @@
     }
 
     .sugerencia-item {
-      padding: 12px;
+      padding: 10px;
       cursor: pointer;
       border-bottom: 1px solid #eee;
       display: flex;
@@ -280,10 +279,11 @@
     .sugerencia-item .taxon-name {
       font-weight: bold;
       color: #2e7d32;
+      font-size: 13px;
     }
 
     .sugerencia-item .taxon-rank {
-      font-size: 11px;
+      font-size: 10px;
       color: #666;
       text-transform: uppercase;
     }
@@ -291,7 +291,7 @@
     .enlace-inat {
       color: #4CAF50;
       text-decoration: none;
-      font-size: 13px;
+      font-size: 11px;
       margin-left: 8px;
     }
 
@@ -363,7 +363,7 @@
       background: white;
       padding: 20px;
       border-radius: 12px;
-      margin: 20px 0;
+      margin-bottom: 20px;
       border: 1px solid #4CAF50;
     }
 
@@ -406,19 +406,19 @@
     }
 
     .fenologia-container {
-      margin-top: 8px;
+      margin-top: 6px;
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
       flex-wrap: wrap;
     }
 
     .fenologia-barra {
       display: flex;
       gap: 2px;
-      height: 20px;
+      height: 16px;
       flex: 1;
-      max-width: 200px;
+      max-width: 150px;
     }
 
     .fenologia-mes {
@@ -462,13 +462,13 @@
       gap: 5px;
       align-items: center;
       background: #f5f5f5;
-      padding: 4px 8px;
+      padding: 2px 6px;
       border-radius: 12px;
-      font-size: 11px;
+      font-size: 10px;
     }
 
     .estacion-icono {
-      font-size: 14px;
+      font-size: 12px;
     }
 
     .tooltip {
@@ -478,20 +478,20 @@
 
     .tooltip .tooltiptext {
       visibility: hidden;
-      width: 120px;
+      width: 100px;
       background-color: #555;
       color: #fff;
       text-align: center;
-      border-radius: 6px;
-      padding: 5px;
+      border-radius: 4px;
+      padding: 4px;
       position: absolute;
       z-index: 1;
       bottom: 125%;
       left: 50%;
-      margin-left: -60px;
+      margin-left: -50px;
       opacity: 0;
       transition: opacity 0.3s;
-      font-size: 11px;
+      font-size: 10px;
     }
 
     .tooltip:hover .tooltiptext {
@@ -502,24 +502,24 @@
     .habitats-container {
       display: flex;
       flex-wrap: wrap;
-      gap: 8px;
-      margin-top: 10px;
+      gap: 6px;
+      margin-top: 8px;
     }
 
     .habitat-badge {
       background: #e0f2e0;
-      padding: 4px 12px;
-      border-radius: 20px;
-      font-size: 12px;
+      padding: 2px 8px;
+      border-radius: 16px;
+      font-size: 11px;
       color: #1b5e20;
       display: inline-flex;
       align-items: center;
-      gap: 5px;
+      gap: 3px;
       border: 1px solid #a5d6a5;
     }
 
     .habitat-icon {
-      font-size: 14px;
+      font-size: 12px;
     }
 
     .habitat-principal {
@@ -530,60 +530,59 @@
 
     .clima-info {
       display: flex;
-      gap: 15px;
-      margin-top: 8px;
+      gap: 10px;
+      margin-top: 6px;
       flex-wrap: wrap;
     }
 
     .clima-item {
       display: flex;
       align-items: center;
-      gap: 5px;
+      gap: 3px;
       background: #f5f5f5;
-      padding: 4px 10px;
-      border-radius: 20px;
-      font-size: 12px;
+      padding: 2px 8px;
+      border-radius: 16px;
+      font-size: 11px;
     }
 
     .cargando-mensaje {
       text-align: center;
-      padding: 40px;
+      padding: 30px;
       color: #666;
       font-style: italic;
     }
 
-    /* Leyenda del mapa */
     .map-legend {
       position: absolute;
-      bottom: 30px;
+      bottom: 20px;
       right: 10px;
       background: white;
-      padding: 15px;
+      padding: 10px;
       border-radius: 8px;
       box-shadow: 0 2px 10px rgba(0,0,0,0.2);
       z-index: 1000;
       border-left: 4px solid #4CAF50;
-      max-width: 250px;
+      max-width: 200px;
+      font-size: 11px;
     }
 
     .legend-title {
       font-weight: bold;
       color: #2e7d32;
-      margin-bottom: 10px;
-      font-size: 14px;
+      margin-bottom: 6px;
+      font-size: 12px;
     }
 
     .legend-item {
       display: flex;
       align-items: center;
-      gap: 8px;
-      margin-bottom: 8px;
-      font-size: 12px;
+      gap: 6px;
+      margin-bottom: 4px;
     }
 
     .legend-color {
-      width: 16px;
-      height: 16px;
+      width: 12px;
+      height: 12px;
       border-radius: 50%;
     }
 
@@ -591,12 +590,6 @@
     .legend-color.oculta { background: #FF9800; }
     .legend-color.privada { background: #9C27B0; }
     .legend-color.metodo { background: #2196F3; }
-
-    .legend-description {
-      font-size: 11px;
-      color: #666;
-      margin-left: 24px;
-    }
   </style>
 </head>
 <body>
@@ -611,12 +604,6 @@
     <input type="checkbox" id="soloResearch" checked> Solo grado investigación
   </label>
 </div>
-
-<div id="map">
-  <!-- Leyenda del mapa (se insertará aquí mediante JavaScript) -->
-</div>
-
-<div id="mensajeAyuda" style="display: none;" class="warning"></div>
 
 <!-- PASO 1: SELECCIÓN DE ÁREA -->
 <div class="seleccion-area">
@@ -636,21 +623,7 @@
   </div>
 </div>
 
-<div class="fenologia-leyenda">
-  <div class="fenologia-leyenda-item">
-    <div class="fenologia-color" style="background: #f0f0f0;"></div>
-    <span>Sin datos</span>
-  </div>
-  <div class="fenologia-leyenda-item">
-    <div class="fenologia-color" style="background: #c8e6c9;"></div>
-    <span>Pocas obs</span>
-  </div>
-  <div class="fenologia-leyenda-item">
-    <div class="fenologia-color" style="background: #4caf50;"></div>
-    <span>Muchas obs</span>
-  </div>
-</div>
-
+<!-- BUSCADOR DE TAXONES -->
 <div class="buscador-taxon-container">
   <div class="buscador-taxon-titulo">🔍 Filtrar por taxón (opcional)</div>
   <div style="position: relative;">
@@ -663,21 +636,51 @@
   </div>
 </div>
 
-<div class="resultados-seccion" id="todasEspeciesSeccion">
-  <div class="resultados-seccion-titulo">🌍 Todas las especies del área</div>
-  <div id="infoCarga" style="display: none;" class="progreso-carga"></div>
-  <div id="resultados" class="resultados-container" style="margin-top: 15px;">
-    <div class="cargando-mensaje">Selecciona un área para ver las especies</div>
+<!-- LAYOUT PRINCIPAL: MAPA + LISTA DE ESPECIES -->
+<div class="main-container">
+  <!-- Columna izquierda: Mapa -->
+  <div class="map-container">
+    <div id="map"></div>
   </div>
-  <div id="paginacion" class="pagination"></div>
+  
+  <!-- Columna derecha: Resultados -->
+  <div class="results-container">
+    <!-- Leyenda de fenología -->
+    <div class="fenologia-leyenda">
+      <div class="fenologia-leyenda-item">
+        <div class="fenologia-color" style="background: #f0f0f0;"></div>
+        <span>Sin datos</span>
+      </div>
+      <div class="fenologia-leyenda-item">
+        <div class="fenologia-color" style="background: #c8e6c9;"></div>
+        <span>Pocas obs</span>
+      </div>
+      <div class="fenologia-leyenda-item">
+        <div class="fenologia-color" style="background: #4caf50;"></div>
+        <span>Muchas obs</span>
+      </div>
+    </div>
+    
+    <!-- Resultados de todas las especies -->
+    <div class="resultados-seccion" id="todasEspeciesSeccion">
+      <div class="resultados-seccion-titulo">🌍 Todas las especies del área</div>
+      <div id="infoCarga" style="display: none;" class="progreso-carga"></div>
+      <div id="resultados" class="resultados-container">
+        <div class="cargando-mensaje">Selecciona un área para ver las especies</div>
+      </div>
+      <div id="paginacion" class="pagination"></div>
+    </div>
+    
+    <!-- Resultados de búsqueda por taxón -->
+    <div class="resultados-seccion" id="resultadosTaxonSeccion" style="display: none;">
+      <div class="resultados-seccion-titulo" id="resultadosTaxonTitulo">🔍 Resultados filtrados</div>
+      <div id="resultadosBusquedaTaxon" class="resultados-container"></div>
+      <div id="paginacionTaxon" class="pagination"></div>
+    </div>
+  </div>
 </div>
 
-<div class="resultados-seccion" id="resultadosTaxonSeccion" style="display: none;">
-  <div class="resultados-seccion-titulo" id="resultadosTaxonTitulo">🔍 Resultados filtrados</div>
-  <div id="resultadosBusquedaTaxon" class="resultados-container"></div>
-  <div id="paginacionTaxon" class="pagination"></div>
-</div>
-
+<!-- Scripts -->
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
 
@@ -710,49 +713,44 @@
     { nombre: 'Otoño', meses: [8,9,10], icono: '🍂', color: '#8b4513' }
   ];
 
-  // Función para determinar el tipo de ubicación
+  // ============================================
+  // FUNCIONES DE UBICACIÓN
+  // ============================================
+  
   function getLocationType(obs) {
-    // Si no tiene coordenadas, no se muestra
     if (!obs.geojson || !obs.geojson.coordinates) return null;
     
-    // Verificar si es privada/oculta
     if (obs.geoprivacy === 'private' || obs.geoprivacy === 'obscured') {
       return 'oculta';
     }
     
-    // Verificar si tiene coordenadas exactas
     if (obs.public_positional_accuracy === 0) {
       return 'exacta';
     }
     
-    // Verificar si tiene precisión
     if (obs.positional_accuracy) {
       if (obs.positional_accuracy < 100) return 'exacta';
       if (obs.positional_accuracy < 1000) return 'metodo';
       return 'oculta';
     }
     
-    // Verificar el método de coordenadas
     if (obs.private_positional_accuracy) {
       return 'privada';
     }
     
-    // Por defecto
     return 'metodo';
   }
 
-  // Función para obtener color según tipo
   function getMarkerColor(locationType) {
     switch(locationType) {
-      case 'exacta': return '#4CAF50'; // Verde
-      case 'oculta': return '#FF9800'; // Naranja
-      case 'privada': return '#9C27B0'; // Púrpura
-      case 'metodo': return '#2196F3'; // Azul
-      default: return '#4CAF50'; // Verde por defecto
+      case 'exacta': return '#4CAF50';
+      case 'oculta': return '#FF9800';
+      case 'privada': return '#9C27B0';
+      case 'metodo': return '#2196F3';
+      default: return '#4CAF50';
     }
   }
 
-  // Función para crear la leyenda
   function crearLeyendaMapa() {
     const legend = L.control({ position: 'bottomright' });
     
@@ -775,9 +773,6 @@
         <div class="legend-item">
           <div class="legend-color privada"></div>
           <span>Precisión &gt; 1km</span>
-        </div>
-        <div class="legend-description">
-          <small>Pasa el cursor sobre los puntos<br>para ver más detalles</small>
         </div>
       `;
       return div;
@@ -802,7 +797,6 @@
     markersLayer = L.featureGroup().addTo(map);
     zoneLayer = L.featureGroup().addTo(map);
 
-    // Añadir leyenda
     crearLeyendaMapa();
 
     var drawControl = new L.Control.Draw({
@@ -926,12 +920,12 @@
     
     let html = `
       <p><strong>📍 Área seleccionada</strong></p>
-      <p style="font-size: 13px; color: #666;">
+      <p style="font-size: 12px; color: #666;">
         Centro: ${centro.lat.toFixed(4)}°, ${centro.lng.toFixed(4)}°<br>
         Extensión: ${area.toFixed(0)} km²
       </p>
       
-      <p><strong>🌍 Clima predominante</strong></p>
+      <p><strong>🌍 Clima</strong></p>
       <div class="clima-info">
         <div class="clima-item">
           <span>${infoHabitats.clima.icono}</span>
@@ -943,7 +937,7 @@
         </div>
       </div>
       
-      <p><strong>🏞️ Hábitats presentes</strong></p>
+      <p><strong>🏞️ Hábitats</strong></p>
       <div class="habitats-container">
     `;
     
@@ -958,7 +952,7 @@
     
     if (infoHabitats.especiesCaracteristicas.length > 0) {
       html += `<p><strong>🌿 Especies características</strong></p>`;
-      html += `<div style="font-size: 12px; color: #666;">`;
+      html += `<div style="font-size: 11px; color: #666;">`;
       infoHabitats.especiesCaracteristicas.slice(0, 3).forEach(esp => {
         html += `• ${esp}<br>`;
       });
@@ -1080,8 +1074,6 @@
                   `&nelat=${bounds.getNorth()}` +
                   `&nelng=${bounds.getEast()}`;
 
-      console.log("Cargando página:", url);
-      
       const response = await fetch(url);
       const data = await response.json();
       
@@ -1125,7 +1117,7 @@
       html += `<div class="inat-titulo">${taxon.name} 
                <a href="https://www.inaturalist.org/taxa/${taxon.id}" target="_blank" class="enlace-inat" onclick="event.stopPropagation()">🔗 iNat</a>
                </div>`;
-      html += `<div>${taxon.preferred_common_name || ''}</div>`;
+      html += `<div style="font-size: 11px;">${taxon.preferred_common_name || ''}</div>`;
       html += `<span class="badge">📊 ${item.count} obs</span>`;
       if (taxon.iconic_taxon_name) {
         html += `<span class="badge">${taxon.iconic_taxon_name}</span>`;
@@ -1244,7 +1236,7 @@
   }
 
   function crearBarraFenologia(fenologia) {
-    if (!fenologia) return '<div class="fenologia-estacion">📊 Sin datos fenológicos</div>';
+    if (!fenologia) return '<div class="fenologia-estacion">📊 Sin datos</div>';
     
     let html = '<div class="fenologia-container">';
     
@@ -1263,8 +1255,7 @@
     
     html += `<div class="fenologia-estacion">
               <span class="estacion-icono">${fenologia.mejorEstacion.icono}</span>
-              <span>Mejor: ${fenologia.mejorEstacion.nombre}</span>
-              <span style="color: #666; font-size: 10px;">(${fenologia.mejorEstacion.total} obs)</span>
+              <span>${fenologia.mejorEstacion.nombre}</span>
             </div>`;
     
     html += '</div>';
@@ -1295,7 +1286,7 @@
       let html = '<div class="sugerencias-pais-container">';
       sugerencias.forEach(s => {
         html += `<div class="sugerencia-item" onclick="seleccionarZona('${s.display_name.replace(/'/g, "\\'")}', ${s.boundingbox[0]}, ${s.boundingbox[1]}, ${s.boundingbox[2]}, ${s.boundingbox[3]}, ${s.lat}, ${s.lon})">`;
-        html += `<div style="font-size: 16px;">📍</div>`;
+        html += `<div style="font-size: 14px;">📍</div>`;
         html += `<div class="taxon-info">`;
         html += `<div class="taxon-name">${s.display_name}</div>`;
         html += `<div class="taxon-rank">${s.type || 'lugar'}</div>`;
@@ -1357,7 +1348,7 @@
   }
 
   // ============================================
-  // FUNCIÓN PARA MOSTRAR CITAS (ACTUALIZADA CON COLORES)
+  // FUNCIÓN PARA MOSTRAR CITAS
   // ============================================
   
   async function mostrarCitasEspecie(taxonId, taxonNombre, elemento) {
@@ -1404,13 +1395,11 @@
           const locationType = getLocationType(obs);
           const color = getMarkerColor(locationType);
           
-          // Contar para estadísticas
           if (locationType === 'exacta') exactas++;
           else if (locationType === 'oculta') ocultas++;
           else if (locationType === 'privada') privadas++;
           else if (locationType === 'metodo') metodo++;
           
-          // Crear texto descriptivo de la precisión
           let precisionText = '';
           if (obs.positional_accuracy) {
             precisionText = `Precisión: ${obs.positional_accuracy}m`;
@@ -1490,7 +1479,7 @@
         else if (rango === 'class') icono = '📊';
         
         html += `<div class="sugerencia-item" onclick="seleccionarTaxon(${taxon.id}, '${taxon.name.replace(/'/g, "\\'")}', '${rango}')">`;
-        html += `<div style="font-size: 20px; min-width: 30px;">${icono}</div>`;
+        html += `<div style="font-size: 18px; min-width: 30px;">${icono}</div>`;
         html += `<div class="taxon-info">`;
         html += `<div class="taxon-name">${nombreCientifico}</div>`;
         html += `<div class="taxon-rank">${rango} ${nombreComun ? '• ' + nombreComun : ''}</div>`;
@@ -1601,8 +1590,6 @@
                   `&nelat=${bounds.getNorth()}` +
                   `&nelng=${bounds.getEast()}`;
 
-      console.log("Cargando página taxón:", url);
-      
       const response = await fetch(url);
       const data = await response.json();
       
@@ -1643,7 +1630,7 @@
       html += `<div class="inat-titulo">${taxon.name} 
                <a href="https://www.inaturalist.org/taxa/${taxon.id}" target="_blank" class="enlace-inat" onclick="event.stopPropagation()">🔗 iNat</a>
                </div>`;
-      html += `<div>${taxon.preferred_common_name || ''}</div>`;
+      html += `<div style="font-size: 11px;">${taxon.preferred_common_name || ''}</div>`;
       html += `<span class="badge">📊 ${item.count} obs</span>`;
       if (taxon.iconic_taxon_name) {
         html += `<span class="badge">${taxon.iconic_taxon_name}</span>`;
