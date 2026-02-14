@@ -103,6 +103,14 @@
       background-color: #ff9800;
     }
 
+    .button-cargar-todas {
+      background-color: #9C27B0;
+      color: white;
+      font-size: 12px;
+      padding: 8px 12px;
+      margin-top: 10px;
+    }
+
     select, input {
       background-color: white;
       border: 2px solid #e0e0e0;
@@ -148,6 +156,12 @@
       margin-bottom: 15px;
       border-left: 4px solid #4CAF50;
       display: none;
+    }
+
+    .info-mensaje .botones-accion {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
     }
 
     .inat-card {
@@ -717,6 +731,11 @@
 
   const cacheFenologia = {};
 
+  // Variables para seguimiento de carga de citas
+  let taxonActualCitas = null;
+  let totalCitasDisponibles = 0;
+  let citasCargadas = [];
+
   const meses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
   const estaciones = [
     { nombre: 'Invierno', meses: [0,1,11], icono: '❄️', color: '#2196f3' },
@@ -1002,6 +1021,7 @@
     if (zoneLayer) zoneLayer.clearLayers();
     areaSeleccionada = null;
     taxonActual = null;
+    taxonActualCitas = null;
     
     document.getElementById("infoArea").innerHTML = `
       <p><strong>📍 Área seleccionada:</strong> Ninguna. Dibuja un rectángulo o busca un país.</p>
@@ -1376,7 +1396,7 @@
   }
 
   // ============================================
-  // FUNCIÓN PARA MOSTRAR CITAS (CORREGIDA)
+  // FUNCIÓN PARA MOSTRAR CITAS (OPTIMIZADA)
   // ============================================
   
   async function mostrarCitasEspecie(taxonId, taxonNombre, elemento) {
@@ -1386,7 +1406,6 @@
     }
 
     console.log(`🔍 Mostrando citas para: ${taxonNombre} (ID: ${taxonId})`);
-    console.log(`Área seleccionada:`, areaSeleccionada);
 
     markersLayer.clearLayers();
     document.querySelectorAll('.inat-card').forEach(card => {
@@ -1400,7 +1419,6 @@
     const soloResearch = document.getElementById("soloResearch").checked;
     const bounds = areaSeleccionada;
 
-    // Verificar que el elemento mensajeAyuda existe
     const mensajeAyuda = document.getElementById("mensajeAyuda");
     if (!mensajeAyuda) {
       console.error("❌ No se encontró el elemento mensajeAyuda");
@@ -1409,11 +1427,6 @@
     }
 
     try {
-      // Mostrar mensaje de carga
-      mensajeAyuda.innerHTML = `Cargando citas de ${taxonNombre}...`;
-      mensajeAyuda.className = "warning";
-      mensajeAyuda.style.display = "block";
-
       // Primero obtener el total de observaciones
       const urlTotal = `https://api.inaturalist.org/v1/observations?` +
                        `taxon_id=${taxonId}` +
@@ -1422,15 +1435,10 @@
                        `&swlat=${bounds.getSouth()}&swlng=${bounds.getWest()}` +
                        `&nelat=${bounds.getNorth()}&nelng=${bounds.getEast()}`;
 
-      console.log("📡 URL total:", urlTotal);
-
       const responseTotal = await fetch(urlTotal);
       const dataTotal = await responseTotal.json();
       
-      console.log("📊 Respuesta total:", dataTotal);
-      
       if (!dataTotal.total_results || dataTotal.total_results === 0) {
-        console.log("❌ No hay citas para esta especie en el área");
         mensajeAyuda.innerHTML = `No hay citas de ${taxonNombre} en esta área`;
         mensajeAyuda.className = "warning";
         mensajeAyuda.style.display = "block";
@@ -1438,20 +1446,25 @@
       }
 
       const totalCitas = dataTotal.total_results;
-      console.log(`✅ Total citas encontradas: ${totalCitas}`);
       
-      // Calcular cuántas páginas necesitamos (máximo 100 por página)
+      // Guardar información para posible carga completa
+      taxonActualCitas = {
+        id: taxonId,
+        nombre: taxonNombre,
+        total: totalCitas
+      };
+      
+      // Cargar solo las primeras 200 citas (2 páginas)
       const citasPorPagina = 100;
-      const totalPaginas = Math.ceil(totalCitas / citasPorPagina);
-      console.log(`📑 Páginas necesarias: ${totalPaginas}`);
+      const paginasACargar = Math.min(2, Math.ceil(totalCitas / citasPorPagina));
       
-      let todasLasCitas = [];
+      mensajeAyuda.innerHTML = `Cargando ${paginasACargar * citasPorPagina} citas de ${taxonNombre} (total: ${totalCitas})...`;
+      mensajeAyuda.className = "warning";
+      mensajeAyuda.style.display = "block";
       
-      // Cargar todas las páginas
-      for (let pagina = 1; pagina <= totalPaginas; pagina++) {
-        mensajeAyuda.innerHTML = 
-          `Cargando citas de ${taxonNombre}... Página ${pagina} de ${totalPaginas}`;
-        
+      let citasMostradas = [];
+      
+      for (let pagina = 1; pagina <= paginasACargar; pagina++) {
         const url = `https://api.inaturalist.org/v1/observations?` +
                     `taxon_id=${taxonId}` +
                     `&verifiable=${soloResearch}` +
@@ -1460,130 +1473,178 @@
                     `&swlat=${bounds.getSouth()}&swlng=${bounds.getWest()}` +
                     `&nelat=${bounds.getNorth()}&nelng=${bounds.getEast()}`;
 
-        console.log(`📡 Cargando página ${pagina}:`, url);
-
         const response = await fetch(url);
         const data = await response.json();
         
-        console.log(`📊 Página ${pagina}:`, data);
-        
         if (data.results && data.results.length > 0) {
-          console.log(`➕ Añadidas ${data.results.length} citas de la página ${pagina}`);
-          todasLasCitas = [...todasLasCitas, ...data.results];
-        } else {
-          console.log(`⚠️ Página ${pagina} sin resultados`);
+          citasMostradas = [...citasMostradas, ...data.results];
         }
-        
-        // Pequeña pausa para no saturar la API
-        await new Promise(resolve => setTimeout(resolve, 100));
       }
 
-      console.log(`📦 Total citas cargadas: ${todasLasCitas.length}`);
+      citasCargadas = citasMostradas;
 
-      if (todasLasCitas.length === 0) {
-        console.log("❌ No se cargó ninguna cita");
+      if (citasMostradas.length === 0) {
         mensajeAyuda.innerHTML = `No se pudieron cargar las citas de ${taxonNombre}`;
         mensajeAyuda.className = "warning";
         mensajeAyuda.style.display = "block";
         return;
       }
 
-      // Contadores por tipo de ubicación
-      let exactas = 0, ocultas = 0, privadas = 0, metodo = 0;
-      let puntosValidos = 0;
-
-      // Mostrar todas las citas en el mapa
-      todasLasCitas.forEach(obs => {
-        if (obs.geojson && obs.geojson.coordinates) {
-          const [lng, lat] = obs.geojson.coordinates;
-          
-          // Verificar que las coordenadas son válidas
-          if (isNaN(lat) || isNaN(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
-            console.log("⚠️ Coordenadas inválidas:", lat, lng);
-            return;
-          }
-          
-          console.log(`📍 Punto válido: ${lat}, ${lng}`);
-          
-          const locationType = getLocationType(obs);
-          const color = getMarkerColor(locationType);
-          
-          if (locationType === 'exacta') exactas++;
-          else if (locationType === 'oculta') ocultas++;
-          else if (locationType === 'privada') privadas++;
-          else if (locationType === 'metodo') metodo++;
-          
-          let precisionText = '';
-          if (obs.positional_accuracy) {
-            precisionText = `Precisión: ${obs.positional_accuracy}m`;
-          } else if (obs.public_positional_accuracy) {
-            precisionText = `Precisión: ${obs.public_positional_accuracy}m`;
-          } else if (obs.geoprivacy) {
-            precisionText = `Privacidad: ${obs.geoprivacy}`;
-          } else {
-            precisionText = 'Ubicación exacta';
-          }
-          
-          try {
-            L.circleMarker([lat, lng], {
-              radius: 6,
-              color: color,
-              weight: 2,
-              fillColor: color,
-              fillOpacity: 0.8
-            }).addTo(markersLayer).bindPopup(`
-              <b>${taxonNombre}</b><br>
-              📅 ${obs.observed_on || 'Fecha desconocida'}<br>
-              👤 ${obs.user?.login || 'Anónimo'}<br>
-              🏅 ${obs.quality_grade}<br>
-              📍 Tipo: ${locationType}<br>
-              ${precisionText}<br>
-              <a href="https://www.inaturalist.org/observations/${obs.id}" target="_blank">🔗 Ver en iNaturalist</a>
-            `);
-            
-            puntosValidos++;
-          } catch (markerError) {
-            console.error("Error creando marcador:", markerError, lat, lng);
-          }
-        } else {
-          console.log("⚠️ Observación sin coordenadas geojson:", obs.id);
-        }
-      });
-
-      console.log(`✅ Puntos añadidos al mapa: ${puntosValidos}`);
-
-      // Ajustar el mapa para mostrar todos los puntos
-      if (markersLayer.getLayers().length > 0) {
-        console.log("🔄 Ajustando mapa a los puntos");
-        try {
-          map.fitBounds(markersLayer.getBounds().pad(0.1));
-        } catch (boundsError) {
-          console.error("Error ajustando bounds:", boundsError);
-        }
-      } else {
-        console.log("⚠️ No hay puntos para ajustar el mapa");
-        mensajeAyuda.innerHTML = `Se encontraron ${todasLasCitas.length} citas pero ninguna tiene coordenadas válidas`;
-        mensajeAyuda.className = "warning";
-        mensajeAyuda.style.display = "block";
-        return;
+      // Mostrar las citas en el mapa
+      const estadisticas = mostrarCitasEnMapa(citasMostradas, taxonNombre);
+      
+      // Mostrar mensaje con opción de cargar más si hay más citas
+      let mensajeHTML = `📍 Mostrando ${citasMostradas.length} de ${totalCitas} citas de ${taxonNombre}<br>` +
+                       `🟢 Exactas: ${estadisticas.exactas} | 🟠 Ocultas: ${estadisticas.ocultas} | 🟣 Privadas: ${estadisticas.privadas} | 🔵 M. precisión: ${estadisticas.metodo}`;
+      
+      if (totalCitas > citasMostradas.length) {
+        mensajeHTML += `<div class="botones-accion">
+                         <button class="button-cargar-todas" onclick="cargarTodasLasCitas()">📥 Cargar todas las citas (${totalCitas - citasMostradas.length} más)</button>
+                       </div>`;
       }
-
-      // Mostrar estadísticas
-      mensajeAyuda.innerHTML = 
-        `📍 Mostrando ${todasLasCitas.length} citas de ${taxonNombre} (${puntosValidos} en el mapa)<br>` +
-        `🟢 Exactas: ${exactas} | 🟠 Ocultas: ${ocultas} | 🟣 Privadas: ${privadas} | 🔵 M. precisión: ${metodo}`;
+      
+      mensajeAyuda.innerHTML = mensajeHTML;
       mensajeAyuda.className = "success";
       mensajeAyuda.style.display = "block";
 
     } catch (error) {
       console.error("❌ Error:", error);
-      if (mensajeAyuda) {
-        mensajeAyuda.innerHTML = `Error al cargar las citas: ${error.message}`;
-        mensajeAyuda.className = "warning";
-        mensajeAyuda.style.display = "block";
-      } else {
-        alert(`Error al cargar las citas: ${error.message}`);
+      mensajeAyuda.innerHTML = `Error al cargar las citas: ${error.message}`;
+      mensajeAyuda.className = "warning";
+      mensajeAyuda.style.display = "block";
+    }
+  }
+
+  // ============================================
+  // FUNCIÓN AUXILIAR PARA MOSTRAR CITAS EN EL MAPA
+  // ============================================
+  
+  function mostrarCitasEnMapa(citas, taxonNombre) {
+    let exactas = 0, ocultas = 0, privadas = 0, metodo = 0;
+    let puntosValidos = 0;
+
+    markersLayer.clearLayers();
+
+    citas.forEach(obs => {
+      if (obs.geojson && obs.geojson.coordinates) {
+        const [lng, lat] = obs.geojson.coordinates;
+        
+        if (isNaN(lat) || isNaN(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+          return;
+        }
+        
+        const locationType = getLocationType(obs);
+        const color = getMarkerColor(locationType);
+        
+        if (locationType === 'exacta') exactas++;
+        else if (locationType === 'oculta') ocultas++;
+        else if (locationType === 'privada') privadas++;
+        else if (locationType === 'metodo') metodo++;
+        
+        let precisionText = '';
+        if (obs.positional_accuracy) {
+          precisionText = `Precisión: ${obs.positional_accuracy}m`;
+        } else if (obs.public_positional_accuracy) {
+          precisionText = `Precisión: ${obs.public_positional_accuracy}m`;
+        } else if (obs.geoprivacy) {
+          precisionText = `Privacidad: ${obs.geoprivacy}`;
+        } else {
+          precisionText = 'Ubicación exacta';
+        }
+        
+        try {
+          L.circleMarker([lat, lng], {
+            radius: 6,
+            color: color,
+            weight: 2,
+            fillColor: color,
+            fillOpacity: 0.8
+          }).addTo(markersLayer).bindPopup(`
+            <b>${taxonNombre}</b><br>
+            📅 ${obs.observed_on || 'Fecha desconocida'}<br>
+            👤 ${obs.user?.login || 'Anónimo'}<br>
+            🏅 ${obs.quality_grade}<br>
+            📍 Tipo: ${locationType}<br>
+            ${precisionText}<br>
+            <a href="https://www.inaturalist.org/observations/${obs.id}" target="_blank">🔗 Ver en iNaturalist</a>
+          `);
+          
+          puntosValidos++;
+        } catch (markerError) {
+          console.error("Error creando marcador:", markerError);
+        }
       }
+    });
+
+    if (markersLayer.getLayers().length > 0) {
+      try {
+        map.fitBounds(markersLayer.getBounds().pad(0.1));
+      } catch (boundsError) {
+        console.error("Error ajustando bounds:", boundsError);
+      }
+    }
+
+    return { exactas, ocultas, privadas, metodo, puntosValidos };
+  }
+
+  // ============================================
+  // FUNCIÓN PARA CARGAR TODAS LAS CITAS
+  // ============================================
+  
+  async function cargarTodasLasCitas() {
+    if (!taxonActualCitas) return;
+    
+    const mensajeAyuda = document.getElementById("mensajeAyuda");
+    const soloResearch = document.getElementById("soloResearch").checked;
+    const bounds = areaSeleccionada;
+    
+    try {
+      const totalCitas = taxonActualCitas.total;
+      const citasPorPagina = 100;
+      const totalPaginas = Math.ceil(totalCitas / citasPorPagina);
+      
+      mensajeAyuda.innerHTML = `Cargando todas las citas de ${taxonActualCitas.nombre}...`;
+      mensajeAyuda.className = "warning";
+      mensajeAyuda.style.display = "block";
+      
+      let todasLasCitas = [...citasCargadas]; // Empezar con las ya cargadas
+      
+      // Empezar desde la página 3 (asumiendo que ya cargamos páginas 1-2)
+      for (let pagina = 3; pagina <= totalPaginas; pagina++) {
+        mensajeAyuda.innerHTML = 
+          `Cargando citas de ${taxonActualCitas.nombre}... Página ${pagina} de ${totalPaginas}`;
+        
+        const url = `https://api.inaturalist.org/v1/observations?` +
+                    `taxon_id=${taxonActualCitas.id}` +
+                    `&verifiable=${soloResearch}` +
+                    `&per_page=${citasPorPagina}` +
+                    `&page=${pagina}` +
+                    `&swlat=${bounds.getSouth()}&swlng=${bounds.getWest()}` +
+                    `&nelat=${bounds.getNorth()}&nelng=${bounds.getEast()}`;
+
+        const response = await fetch(url);
+        const data = await response.json();
+        
+        if (data.results && data.results.length > 0) {
+          todasLasCitas = [...todasLasCitas, ...data.results];
+        }
+        
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+
+      const estadisticas = mostrarCitasEnMapa(todasLasCitas, taxonActualCitas.nombre);
+      
+      mensajeAyuda.innerHTML = 
+        `📍 Mostrando TODAS las ${todasLasCitas.length} citas de ${taxonActualCitas.nombre}<br>` +
+        `🟢 Exactas: ${estadisticas.exactas} | 🟠 Ocultas: ${estadisticas.ocultas} | 🟣 Privadas: ${estadisticas.privadas} | 🔵 M. precisión: ${estadisticas.metodo}`;
+      mensajeAyuda.className = "success";
+      mensajeAyuda.style.display = "block";
+
+    } catch (error) {
+      console.error("❌ Error:", error);
+      mensajeAyuda.innerHTML = `Error al cargar todas las citas: ${error.message}`;
+      mensajeAyuda.className = "warning";
+      mensajeAyuda.style.display = "block";
     }
   }
 
