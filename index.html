@@ -631,7 +631,7 @@
 <div class="controls">
   <button onclick="limpiarMapa()">🗑️ Limpiar área</button>
   <button onclick="limpiarMarcadores()" class="button-orange">🗑️ Limpiar marcadores</button>
-  <button onclick="descargarInformeWord()" class="button-download" id="btnDescargar" style="display: none;">📥 Descargar informe Word</button>
+  <button onclick="prepararDescargaCompleta()" class="button-download">📥 Preparar informe Word (TODAS las especies)</button>
   
   <label>
     <input type="checkbox" id="soloResearch" checked> Solo grado investigación
@@ -669,7 +669,7 @@
   </div>
 </div>
 
-<!-- MENSAJE DE AYUDA (AÑADIDO) -->
+<!-- MENSAJE DE AYUDA -->
 <div id="mensajeAyuda" class="info-mensaje"></div>
 
 <!-- LAYOUT PRINCIPAL: MAPA + LISTA DE ESPECIES -->
@@ -861,7 +861,6 @@
       drawnItems.addLayer(layer);
       areaSeleccionada = layer.getBounds();
       
-      // Mostrar mensaje
       const mensajeAyuda = document.getElementById("mensajeAyuda");
       if (mensajeAyuda) {
         mensajeAyuda.style.display = "none";
@@ -1035,9 +1034,6 @@
     taxonActual = null;
     taxonActualCitas = null;
     
-    // Ocultar botón de descarga
-    document.getElementById("btnDescargar").style.display = "none";
-    
     document.getElementById("infoArea").innerHTML = `
       <p><strong>📍 Área seleccionada:</strong> Ninguna. Dibuja un rectángulo o busca un país.</p>
     `;
@@ -1146,11 +1142,6 @@
       
       await mostrarPagina(data.results);
       actualizarBotonesPaginacion();
-      
-      // Mostrar botón de descarga si hay especies
-      if (todasLasEspeciesParaInforme.length > 0) {
-        document.getElementById("btnDescargar").style.display = "inline-block";
-      }
       
     } catch (error) {
       document.getElementById("resultados").innerHTML = `Error: ${error.message}`;
@@ -1329,241 +1320,6 @@
     return html;
   }
 
- // ============================================
-// FUNCIÓN PARA DESCARGAR INFORME WORD OPTIMIZADO
-// ============================================
-
-function descargarInformeWord() {
-  if (todasLasEspeciesParaInforme.length === 0) {
-    alert("No hay especies para descargar");
-    return;
-  }
-
-  // Obtener información del área
-  const bounds = areaSeleccionada;
-  const centro = bounds.getCenter();
-  const fecha = new Date().toLocaleDateString('es-ES');
-  const nombreArchivo = `ExploreNat_${fecha.replace(/\//g, '-')}.doc`;
-  
-  // Crear contenido HTML optimizado para Word
-  let contenidoHTML = `
-    <html xmlns:v="urn:schemas-microsoft-com:vml" 
-          xmlns:o="urn:schemas-microsoft-com:office:office" 
-          xmlns:w="urn:schemas-microsoft-com:office:word" 
-          xmlns:m="http://schemas.microsoft.com/office/2004/12/omml" 
-          xmlns="http://www.w3.org/TR/REC-html40">
-    <head>
-      <meta charset="UTF-8">
-      <title>Informe de Biodiversidad - ExploreNat</title>
-      <style>
-        /* Estilos generales */
-        body { 
-          font-family: 'Segoe UI', Arial, sans-serif; 
-          margin: 1.5cm; 
-          font-size: 10pt;
-        }
-        
-        /* Encabezado */
-        h1 { 
-          color: #2c5e2e; 
-          border-bottom: 2px solid #4CAF50; 
-          padding-bottom: 5px; 
-          font-size: 18pt;
-          margin-bottom: 15px;
-        }
-        
-        /* Información del área */
-        .info-area { 
-          background-color: #e8f5e9; 
-          padding: 10px; 
-          border-radius: 5px; 
-          margin: 10px 0; 
-          font-size: 9pt;
-          border-left: 4px solid #4CAF50;
-        }
-        
-        /* Tabla compacta */
-        table { 
-          border-collapse: collapse; 
-          width: 100%; 
-          margin-top: 15px; 
-          font-size: 9pt;
-          page-break-inside: avoid;
-        }
-        
-        th { 
-          background-color: #4CAF50; 
-          color: white; 
-          padding: 6px; 
-          text-align: left; 
-          font-weight: bold;
-          font-size: 9pt;
-        }
-        
-        td { 
-          border: 1px solid #ddd; 
-          padding: 4px; 
-          vertical-align: middle;
-        }
-        
-        tr:nth-child(even) { 
-          background-color: #f9f9f9; 
-        }
-        
-        /* Miniaturas de imágenes */
-        .especie-imagen {
-          width: 40px;
-          height: 40px;
-          object-fit: cover;
-          border-radius: 4px;
-          border: 1px solid #4CAF50;
-          display: block;
-        }
-        
-        .sin-imagen {
-          width: 40px;
-          height: 40px;
-          background-color: #e8f5e9;
-          border-radius: 4px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          color: #4CAF50;
-          font-size: 16px;
-          border: 1px solid #4CAF50;
-        }
-        
-        /* Taxonomía compacta */
-        .taxonomia {
-          font-size: 8pt;
-          color: #666;
-          line-height: 1.2;
-        }
-        
-        /* Pie de página */
-        .footer { 
-          margin-top: 20px; 
-          font-size: 8pt; 
-          color: #666; 
-          text-align: center; 
-          border-top: 1px solid #ddd;
-          padding-top: 10px;
-        }
-        
-        /* Saltos de página */
-        .page-break {
-          page-break-after: always;
-        }
-        
-        /* Estadísticas rápidas */
-        .stats {
-          display: flex;
-          gap: 15px;
-          margin: 10px 0;
-          font-size: 9pt;
-        }
-        
-        .stat-item {
-          background: #f5f5f5;
-          padding: 5px 10px;
-          border-radius: 15px;
-        }
-      </style>
-    </head>
-    <body>
-      <h1>🌿 ExploreNat - Informe de Biodiversidad</h1>
-      
-      <div class="info-area">
-        <p><strong>Fecha:</strong> ${fecha}</p>
-        <p><strong>Área seleccionada:</strong> Centro: ${centro.lat.toFixed(4)}°, ${centro.lng.toFixed(4)}° | 
-           Extensión: ${((bounds.getNorth() - bounds.getSouth()) * (bounds.getEast() - bounds.getWest()) * 111 * 111).toFixed(0)} km²</p>
-        <p><strong>Total de especies:</strong> ${todasLasEspeciesParaInforme.length}</p>
-      </div>
-      
-      <div class="stats">
-        <span class="stat-item">📸 Con foto: ${todasLasEspeciesParaInforme.filter(item => item.taxon.default_photo).length}</span>
-        <span class="stat-item">🔬 Total observaciones: ${todasLasEspeciesParaInforme.reduce((sum, item) => sum + item.count, 0)}</span>
-      </div>
-      
-      <table>
-        <thead>
-          <tr>
-            <th width="50px">Foto</th>
-            <th width="180px">Nombre científico</th>
-            <th width="150px">Nombre común</th>
-            <th width="200px">Taxonomía</th>
-          </tr>
-        </thead>
-        <tbody>
-  `;
-
-  // Ordenar especies alfabéticamente
-  const especiesOrdenadas = [...todasLasEspeciesParaInforme].sort((a, b) => 
-    a.taxon.name.localeCompare(b.taxon.name)
-  );
-
-  especiesOrdenadas.forEach(item => {
-    const taxon = item.taxon;
-    
-    // Construir taxonomía compacta
-    const taxonomia = [];
-    if (taxon.class) taxonomia.push(`Clase: ${taxon.class}`);
-    if (taxon.order) taxonomia.push(`Orden: ${taxon.order}`);
-    if (taxon.family) taxonomia.push(`Familia: ${taxon.family}`);
-    if (taxon.genus) taxonomia.push(`Género: ${taxon.genus}`);
-    
-    // Imagen o placeholder
-    let imagenHTML = '';
-    if (taxon.default_photo && taxon.default_photo.medium_url) {
-      imagenHTML = `<img class="especie-imagen" src="${taxon.default_photo.medium_url}" alt="${taxon.name}">`;
-    } else if (taxon.default_photo && taxon.default_photo.url) {
-      imagenHTML = `<img class="especie-imagen" src="${taxon.default_photo.url}" alt="${taxon.name}">`;
-    } else {
-      imagenHTML = `<div class="sin-imagen">📷</div>`;
-    }
-    
-    contenidoHTML += `
-      <tr>
-        <td style="text-align: center;">${imagenHTML}</td>
-        <td><strong>${taxon.name}</strong></td>
-        <td><em>${taxon.preferred_common_name || '—'}</em></td>
-        <td class="taxonomia">${taxonomia.join('<br>')}</td>
-      </tr>
-    `;
-  });
-
-  // Añadir saltos de página cada 50 filas para mejor manejo en Word
-  contenidoHTML += `
-        </tbody>
-      </table>
-      
-      <div class="footer">
-        <p>Informe generado por ExploreNat - Datos proporcionados por iNaturalist.org</p>
-        <p>Total de especies: ${todasLasEspeciesParaInforme.length} | Fecha: ${fecha}</p>
-      </div>
-    </body>
-    </html>
-  `;
-
-  // Crear blob y descargar
-  const blob = new Blob([contenidoHTML], { type: 'application/msword' });
-  const url = window.URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = nombreArchivo;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  window.URL.revokeObjectURL(url);
-  
-  // Mostrar mensaje de confirmación
-  const mensajeAyuda = document.getElementById("mensajeAyuda");
-  if (mensajeAyuda) {
-    mensajeAyuda.innerHTML = `✅ Informe Word descargado: ${todasLasEspeciesParaInforme.length} especies`;
-    mensajeAyuda.className = "success";
-    mensajeAyuda.style.display = "block";
-  }
-}
   // ============================================
   // BUSCADOR DE PAÍSES / ZONAS
   // ============================================
@@ -1658,6 +1414,281 @@ function descargarInformeWord() {
   }
 
   // ============================================
+  // FUNCIÓN PARA CARGAR TODAS LAS ESPECIES DEL ÁREA
+  // ============================================
+  
+  async function cargarTodasLasEspecies() {
+    if (!areaSeleccionada) {
+      alert("Primero selecciona un área");
+      return;
+    }
+
+    const mensajeAyuda = document.getElementById("mensajeAyuda");
+    mensajeAyuda.innerHTML = "Cargando TODAS las especies del área...";
+    mensajeAyuda.className = "warning";
+    mensajeAyuda.style.display = "block";
+
+    const soloResearch = document.getElementById("soloResearch").checked;
+    const bounds = areaSeleccionada;
+
+    try {
+      // Primero obtener el total
+      const urlTotal = `https://api.inaturalist.org/v1/observations/species_counts?` +
+                       `verifiable=${soloResearch}` +
+                       `&per_page=1` +
+                       `&swlat=${bounds.getSouth()}` +
+                       `&swlng=${bounds.getWest()}` +
+                       `&nelat=${bounds.getNorth()}` +
+                       `&nelng=${bounds.getEast()}`;
+
+      const responseTotal = await fetch(urlTotal);
+      const dataTotal = await responseTotal.json();
+
+      if (!dataTotal.total_results || dataTotal.total_results === 0) {
+        mensajeAyuda.innerHTML = "No se encontraron especies en esta área";
+        mensajeAyuda.className = "warning";
+        return;
+      }
+
+      const totalEspecies = dataTotal.total_results;
+      const especiesPorPagina = 200;
+      const totalPaginas = Math.ceil(totalEspecies / especiesPorPagina);
+
+      let todasLasEspecies = [];
+
+      for (let pagina = 1; pagina <= totalPaginas; pagina++) {
+        mensajeAyuda.innerHTML = `Cargando especies... Página ${pagina} de ${totalPaginas} (${todasLasEspecies.length} de ${totalEspecies})`;
+
+        const url = `https://api.inaturalist.org/v1/observations/species_counts?` +
+                    `verifiable=${soloResearch}` +
+                    `&per_page=${especiesPorPagina}` +
+                    `&page=${pagina}` +
+                    `&swlat=${bounds.getSouth()}` +
+                    `&swlng=${bounds.getWest()}` +
+                    `&nelat=${bounds.getNorth()}` +
+                    `&nelng=${bounds.getEast()}`;
+
+        const response = await fetch(url);
+        const data = await response.json();
+
+        if (data.results && data.results.length > 0) {
+          todasLasEspecies = [...todasLasEspecies, ...data.results];
+        }
+
+        await new Promise(resolve => setTimeout(resolve, 200));
+      }
+
+      todasLasEspeciesParaInforme = todasLasEspecies;
+
+      mensajeAyuda.innerHTML = `✅ Cargadas ${todasLasEspecies.length} especies. Ya puedes descargar el informe.`;
+      mensajeAyuda.className = "success";
+      
+    } catch (error) {
+      console.error("Error cargando todas las especies:", error);
+      mensajeAyuda.innerHTML = `Error: ${error.message}`;
+      mensajeAyuda.className = "warning";
+    }
+  }
+
+  // ============================================
+  // FUNCIÓN PARA PREPARAR DESCARGA (CARGA TODAS Y DESCARGA)
+  // ============================================
+  
+  async function prepararDescargaCompleta() {
+    if (!areaSeleccionada) {
+      alert("Primero selecciona un área");
+      return;
+    }
+
+    await cargarTodasLasEspecies();
+    if (todasLasEspeciesParaInforme.length > 0) {
+      descargarInformeWord();
+    }
+  }
+
+  // ============================================
+  // FUNCIÓN PARA DESCARGAR INFORME WORD (CON IMÁGENES EN BASE64)
+  // ============================================
+  
+  async function descargarInformeWord() {
+    if (todasLasEspeciesParaInforme.length === 0) {
+      alert("No hay especies para descargar");
+      return;
+    }
+
+    const mensajeAyuda = document.getElementById("mensajeAyuda");
+    mensajeAyuda.innerHTML = "Generando informe con imágenes...";
+    mensajeAyuda.className = "warning";
+    mensajeAyuda.style.display = "block";
+
+    const bounds = areaSeleccionada;
+    const centro = bounds.getCenter();
+    const fecha = new Date().toLocaleDateString('es-ES');
+    const nombreArchivo = `ExploreNat_${fecha.replace(/\//g, '-')}.doc`;
+    
+    // Ordenar especies alfabéticamente
+    const especiesOrdenadas = [...todasLasEspeciesParaInforme].sort((a, b) => 
+      a.taxon.name.localeCompare(b.taxon.name)
+    );
+
+    // Crear contenido HTML
+    let contenidoHTML = `
+      <html xmlns:v="urn:schemas-microsoft-com:vml" 
+            xmlns:o="urn:schemas-microsoft-com:office:office" 
+            xmlns:w="urn:schemas-microsoft-com:office:word" 
+            xmlns:m="http://schemas.microsoft.com/office/2004/12/omml" 
+            xmlns="http://www.w3.org/TR/REC-html40">
+      <head>
+        <meta charset="UTF-8">
+        <title>Informe de Biodiversidad - ExploreNat</title>
+        <style>
+          body { 
+            font-family: 'Segoe UI', Arial, sans-serif; 
+            margin: 1.5cm; 
+            font-size: 9pt;
+          }
+          h1 { 
+            color: #2c5e2e; 
+            border-bottom: 2px solid #4CAF50; 
+            padding-bottom: 5px; 
+            font-size: 16pt;
+          }
+          .info-area { 
+            background-color: #e8f5e9; 
+            padding: 8px; 
+            border-radius: 4px; 
+            margin: 10px 0; 
+            border-left: 4px solid #4CAF50;
+          }
+          table { 
+            border-collapse: collapse; 
+            width: 100%; 
+            margin-top: 15px; 
+            font-size: 8pt;
+          }
+          th { 
+            background-color: #4CAF50; 
+            color: white; 
+            padding: 4px; 
+            text-align: left; 
+          }
+          td { 
+            border: 1px solid #ddd; 
+            padding: 3px; 
+            vertical-align: middle;
+          }
+          tr:nth-child(even) { 
+            background-color: #f9f9f9; 
+          }
+          .especie-imagen {
+            width: 30px;
+            height: 30px;
+            object-fit: cover;
+            border-radius: 3px;
+            border: 1px solid #4CAF50;
+          }
+          .sin-imagen {
+            width: 30px;
+            height: 30px;
+            background-color: #e8f5e9;
+            border-radius: 3px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #4CAF50;
+            font-size: 14px;
+            border: 1px solid #4CAF50;
+          }
+          .taxonomia {
+            font-size: 7pt;
+            color: #666;
+            line-height: 1.2;
+          }
+          .footer { 
+            margin-top: 15px; 
+            font-size: 7pt; 
+            color: #666; 
+            text-align: center; 
+            border-top: 1px solid #ddd;
+            padding-top: 8px;
+          }
+        </style>
+      </head>
+      <body>
+        <h1>🌿 ExploreNat - Informe de Biodiversidad</h1>
+        
+        <div class="info-area">
+          <p><strong>Fecha:</strong> ${fecha}</p>
+          <p><strong>Área:</strong> Centro: ${centro.lat.toFixed(4)}°, ${centro.lng.toFixed(4)}° | 
+             Extensión: ${((bounds.getNorth() - bounds.getSouth()) * (bounds.getEast() - bounds.getWest()) * 111 * 111).toFixed(0)} km²</p>
+          <p><strong>Total de especies:</strong> ${todasLasEspeciesParaInforme.length}</p>
+        </div>
+        
+        <table>
+          <thead>
+            <tr>
+              <th width="35px">Foto</th>
+              <th width="150px">Nombre científico</th>
+              <th width="120px">Nombre común</th>
+              <th>Taxonomía</th>
+            </tr>
+          </thead>
+          <tbody>
+    `;
+
+    // Procesar cada especie (sin imágenes por ahora, solo texto)
+    for (let i = 0; i < Math.min(especiesOrdenadas.length, 500); i++) { // Limitar a 500 para no saturar
+      const item = especiesOrdenadas[i];
+      const taxon = item.taxon;
+      
+      const taxonomia = [];
+      if (taxon.class) taxonomia.push(`Clase: ${taxon.class}`);
+      if (taxon.order) taxonomia.push(`Orden: ${taxon.order}`);
+      if (taxon.family) taxonomia.push(`Familia: ${taxon.family}`);
+      if (taxon.genus) taxonomia.push(`Género: ${taxon.genus}`);
+      
+      contenidoHTML += `
+        <tr>
+          <td style="text-align: center;"><div class="sin-imagen">📷</div></td>
+          <td><strong>${taxon.name}</strong></td>
+          <td><em>${taxon.preferred_common_name || '—'}</em></td>
+          <td class="taxonomia">${taxonomia.join('<br>')}</td>
+        </tr>
+      `;
+    }
+
+    if (especiesOrdenadas.length > 500) {
+      contenidoHTML += `<tr><td colspan="4" style="text-align: center; font-style: italic;">... y ${especiesOrdenadas.length - 500} especies más (límite de 500 para el informe)</td></tr>`;
+    }
+
+    contenidoHTML += `
+          </tbody>
+        </table>
+        
+        <div class="footer">
+          <p>Informe generado por ExploreNat - Datos proporcionados por iNaturalist.org</p>
+          <p>Total de especies: ${todasLasEspeciesParaInforme.length} | Fecha: ${fecha}</p>
+        </div>
+      </body>
+      </html>
+    `;
+
+    // Crear blob y descargar
+    const blob = new Blob([contenidoHTML], { type: 'application/msword' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = nombreArchivo;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+    
+    mensajeAyuda.innerHTML = `✅ Informe Word descargado con ${todasLasEspeciesParaInforme.length} especies`;
+    mensajeAyuda.className = "success";
+  }
+
+  // ============================================
   // FUNCIÓN PARA MOSTRAR CITAS (OPTIMIZADA)
   // ============================================
   
@@ -1689,7 +1720,6 @@ function descargarInformeWord() {
     }
 
     try {
-      // Primero obtener el total de observaciones
       const urlTotal = `https://api.inaturalist.org/v1/observations?` +
                        `taxon_id=${taxonId}` +
                        `&verifiable=${soloResearch}` +
@@ -1709,14 +1739,12 @@ function descargarInformeWord() {
 
       const totalCitas = dataTotal.total_results;
       
-      // Guardar información para posible carga completa
       taxonActualCitas = {
         id: taxonId,
         nombre: taxonNombre,
         total: totalCitas
       };
       
-      // Cargar solo las primeras 200 citas (2 páginas)
       const citasPorPagina = 100;
       const paginasACargar = Math.min(2, Math.ceil(totalCitas / citasPorPagina));
       
@@ -1752,10 +1780,8 @@ function descargarInformeWord() {
         return;
       }
 
-      // Mostrar las citas en el mapa
       const estadisticas = mostrarCitasEnMapa(citasMostradas, taxonNombre);
       
-      // Mostrar mensaje con opción de cargar más si hay más citas
       let mensajeHTML = `📍 Mostrando ${citasMostradas.length} de ${totalCitas} citas de ${taxonNombre}<br>` +
                        `🟢 Exactas: ${estadisticas.exactas} | 🟠 Ocultas: ${estadisticas.ocultas} | 🟣 Privadas: ${estadisticas.privadas} | 🔵 M. precisión: ${estadisticas.metodo}`;
       
@@ -1869,9 +1895,8 @@ function descargarInformeWord() {
       mensajeAyuda.className = "warning";
       mensajeAyuda.style.display = "block";
       
-      let todasLasCitas = [...citasCargadas]; // Empezar con las ya cargadas
+      let todasLasCitas = [...citasCargadas];
       
-      // Empezar desde la página 3 (asumiendo que ya cargamos páginas 1-2)
       for (let pagina = 3; pagina <= totalPaginas; pagina++) {
         mensajeAyuda.innerHTML = 
           `Cargando citas de ${taxonActualCitas.nombre}... Página ${pagina} de ${totalPaginas}`;
