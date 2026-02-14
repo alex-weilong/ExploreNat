@@ -1347,12 +1347,9 @@
     }
   }
 
-  // ============================================
-  // FUNCIÓN PARA MOSTRAR CITAS (CORREGIDA - TODAS LAS CITAS)
-  // ============================================
-  
+ 
  // ============================================
-// FUNCIÓN PARA MOSTRAR CITAS (CORREGIDA CON LOGS)
+// FUNCIÓN PARA MOSTRAR CITAS (CORREGIDA)
 // ============================================
 
 async function mostrarCitasEspecie(taxonId, taxonNombre, elemento) {
@@ -1376,11 +1373,19 @@ async function mostrarCitasEspecie(taxonId, taxonNombre, elemento) {
   const soloResearch = document.getElementById("soloResearch").checked;
   const bounds = areaSeleccionada;
 
+  // Verificar que el elemento mensajeAyuda existe
+  const mensajeAyuda = document.getElementById("mensajeAyuda");
+  if (!mensajeAyuda) {
+    console.error("❌ No se encontró el elemento mensajeAyuda");
+    alert("Error: No se encontró el elemento de mensajes");
+    return;
+  }
+
   try {
     // Mostrar mensaje de carga
-    document.getElementById("mensajeAyuda").innerHTML = `Cargando citas de ${taxonNombre}...`;
-    document.getElementById("mensajeAyuda").className = "warning";
-    document.getElementById("mensajeAyuda").style.display = "block";
+    mensajeAyuda.innerHTML = `Cargando citas de ${taxonNombre}...`;
+    mensajeAyuda.className = "warning";
+    mensajeAyuda.style.display = "block";
 
     // Primero obtener el total de observaciones
     const urlTotal = `https://api.inaturalist.org/v1/observations?` +
@@ -1399,9 +1404,9 @@ async function mostrarCitasEspecie(taxonId, taxonNombre, elemento) {
     
     if (!dataTotal.total_results || dataTotal.total_results === 0) {
       console.log("❌ No hay citas para esta especie en el área");
-      document.getElementById("mensajeAyuda").innerHTML = `No hay citas de ${taxonNombre} en esta área`;
-      document.getElementById("mensajeAyuda").className = "warning";
-      document.getElementById("mensajeAyuda").style.display = "block";
+      mensajeAyuda.innerHTML = `No hay citas de ${taxonNombre} en esta área`;
+      mensajeAyuda.className = "warning";
+      mensajeAyuda.style.display = "block";
       return;
     }
 
@@ -1417,7 +1422,7 @@ async function mostrarCitasEspecie(taxonId, taxonNombre, elemento) {
     
     // Cargar todas las páginas
     for (let pagina = 1; pagina <= totalPaginas; pagina++) {
-      document.getElementById("mensajeAyuda").innerHTML = 
+      mensajeAyuda.innerHTML = 
         `Cargando citas de ${taxonNombre}... Página ${pagina} de ${totalPaginas}`;
       
       const url = `https://api.inaturalist.org/v1/observations?` +
@@ -1450,9 +1455,9 @@ async function mostrarCitasEspecie(taxonId, taxonNombre, elemento) {
 
     if (todasLasCitas.length === 0) {
       console.log("❌ No se cargó ninguna cita");
-      document.getElementById("mensajeAyuda").innerHTML = `No se pudieron cargar las citas de ${taxonNombre}`;
-      document.getElementById("mensajeAyuda").className = "warning";
-      document.getElementById("mensajeAyuda").style.display = "block";
+      mensajeAyuda.innerHTML = `No se pudieron cargar las citas de ${taxonNombre}`;
+      mensajeAyuda.className = "warning";
+      mensajeAyuda.style.display = "block";
       return;
     }
 
@@ -1464,7 +1469,14 @@ async function mostrarCitasEspecie(taxonId, taxonNombre, elemento) {
     todasLasCitas.forEach(obs => {
       if (obs.geojson && obs.geojson.coordinates) {
         const [lng, lat] = obs.geojson.coordinates;
-        console.log(`📍 Punto: ${lat}, ${lng}`);
+        
+        // Verificar que las coordenadas son válidas
+        if (isNaN(lat) || isNaN(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+          console.log("⚠️ Coordenadas inválidas:", lat, lng);
+          return;
+        }
+        
+        console.log(`📍 Punto válido: ${lat}, ${lng}`);
         
         const locationType = getLocationType(obs);
         const color = getMarkerColor(locationType);
@@ -1485,25 +1497,29 @@ async function mostrarCitasEspecie(taxonId, taxonNombre, elemento) {
           precisionText = 'Ubicación exacta';
         }
         
-        L.circleMarker([lat, lng], {
-          radius: 6,
-          color: color,
-          weight: 2,
-          fillColor: color,
-          fillOpacity: 0.8
-        }).addTo(markersLayer).bindPopup(`
-          <b>${taxonNombre}</b><br>
-          📅 ${obs.observed_on || 'Fecha desconocida'}<br>
-          👤 ${obs.user?.login || 'Anónimo'}<br>
-          🏅 ${obs.quality_grade}<br>
-          📍 Tipo: ${locationType}<br>
-          ${precisionText}<br>
-          <a href="https://www.inaturalist.org/observations/${obs.id}" target="_blank">🔗 Ver en iNaturalist</a>
-        `);
-        
-        puntosValidos++;
+        try {
+          L.circleMarker([lat, lng], {
+            radius: 6,
+            color: color,
+            weight: 2,
+            fillColor: color,
+            fillOpacity: 0.8
+          }).addTo(markersLayer).bindPopup(`
+            <b>${taxonNombre}</b><br>
+            📅 ${obs.observed_on || 'Fecha desconocida'}<br>
+            👤 ${obs.user?.login || 'Anónimo'}<br>
+            🏅 ${obs.quality_grade}<br>
+            📍 Tipo: ${locationType}<br>
+            ${precisionText}<br>
+            <a href="https://www.inaturalist.org/observations/${obs.id}" target="_blank">🔗 Ver en iNaturalist</a>
+          `);
+          
+          puntosValidos++;
+        } catch (markerError) {
+          console.error("Error creando marcador:", markerError, lat, lng);
+        }
       } else {
-        console.log("⚠️ Observación sin coordenadas:", obs.id);
+        console.log("⚠️ Observación sin coordenadas geojson:", obs.id);
       }
     });
 
@@ -1512,23 +1528,35 @@ async function mostrarCitasEspecie(taxonId, taxonNombre, elemento) {
     // Ajustar el mapa para mostrar todos los puntos
     if (markersLayer.getLayers().length > 0) {
       console.log("🔄 Ajustando mapa a los puntos");
-      map.fitBounds(markersLayer.getBounds().pad(0.1));
+      try {
+        map.fitBounds(markersLayer.getBounds().pad(0.1));
+      } catch (boundsError) {
+        console.error("Error ajustando bounds:", boundsError);
+      }
     } else {
       console.log("⚠️ No hay puntos para ajustar el mapa");
+      mensajeAyuda.innerHTML = `Se encontraron ${todasLasCitas.length} citas pero ninguna tiene coordenadas válidas`;
+      mensajeAyuda.className = "warning";
+      mensajeAyuda.style.display = "block";
+      return;
     }
 
     // Mostrar estadísticas
-    document.getElementById("mensajeAyuda").innerHTML = 
+    mensajeAyuda.innerHTML = 
       `📍 Mostrando ${todasLasCitas.length} citas de ${taxonNombre} (${puntosValidos} en el mapa)<br>` +
       `🟢 Exactas: ${exactas} | 🟠 Ocultas: ${ocultas} | 🟣 Privadas: ${privadas} | 🔵 M. precisión: ${metodo}`;
-    document.getElementById("mensajeAyuda").className = "success";
-    document.getElementById("mensajeAyuda").style.display = "block";
+    mensajeAyuda.className = "success";
+    mensajeAyuda.style.display = "block";
 
   } catch (error) {
     console.error("❌ Error:", error);
-    document.getElementById("mensajeAyuda").innerHTML = `Error al cargar las citas: ${error.message}`;
-    document.getElementById("mensajeAyuda").className = "warning";
-    document.getElementById("mensajeAyuda").style.display = "block";
+    if (mensajeAyuda) {
+      mensajeAyuda.innerHTML = `Error al cargar las citas: ${error.message}`;
+      mensajeAyuda.className = "warning";
+      mensajeAyuda.style.display = "block";
+    } else {
+      alert(`Error al cargar las citas: ${error.message}`);
+    }
   }
 }
   // ============================================
