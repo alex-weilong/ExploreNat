@@ -33,7 +33,7 @@
     /* Columna izquierda: Mapa */
     .map-container {
       flex: 1;
-      min-width: 0; /* Para evitar desbordamiento */
+      min-width: 0;
     }
 
     #map {
@@ -47,7 +47,7 @@
 
     /* Columna derecha: Resultados */
     .results-container {
-      width: 400px;
+      width: 450px;
       display: flex;
       flex-direction: column;
       gap: 15px;
@@ -1348,154 +1348,154 @@
   }
 
   // ============================================
-  // FUNCIÓN PARA MOSTRAR CITAS
+  // FUNCIÓN PARA MOSTRAR CITAS (CORREGIDA - TODAS LAS CITAS)
   // ============================================
   
- // ============================================
-// FUNCIÓN PARA MOSTRAR CITAS (CORREGIDA)
-// ============================================
-
-async function mostrarCitasEspecie(taxonId, taxonNombre, elemento) {
-  if (!areaSeleccionada) {
-    alert("Primero dibuja un área en el mapa");
-    return;
-  }
-
-  markersLayer.clearLayers();
-  document.querySelectorAll('.inat-card').forEach(card => {
-    card.classList.remove('selected');
-  });
-
-  if (elemento) {
-    elemento.classList.add('selected');
-  }
-
-  const soloResearch = document.getElementById("soloResearch").checked;
-  const bounds = areaSeleccionada;
-
-  try {
-    // Mostrar mensaje de carga
-    document.getElementById("mensajeAyuda").innerHTML = `Cargando citas de ${taxonNombre}...`;
-    document.getElementById("mensajeAyuda").className = "warning";
-    document.getElementById("mensajeAyuda").style.display = "block";
-
-    // Primero obtener el total de observaciones
-    const urlTotal = `https://api.inaturalist.org/v1/observations?` +
-                     `taxon_id=${taxonId}` +
-                     `&verifiable=${soloResearch}` +
-                     `&per_page=1` +
-                     `&swlat=${bounds.getSouth()}&swlng=${bounds.getWest()}` +
-                     `&nelat=${bounds.getNorth()}&nelng=${bounds.getEast()}`;
-
-    const responseTotal = await fetch(urlTotal);
-    const dataTotal = await responseTotal.json();
-    
-    if (!dataTotal.total_results || dataTotal.total_results === 0) {
-      document.getElementById("mensajeAyuda").innerHTML = `No hay citas de ${taxonNombre} en esta área`;
-      document.getElementById("mensajeAyuda").className = "warning";
-      document.getElementById("mensajeAyuda").style.display = "block";
+  async function mostrarCitasEspecie(taxonId, taxonNombre, elemento) {
+    if (!areaSeleccionada) {
+      alert("Primero dibuja un área en el mapa");
       return;
     }
 
-    const totalCitas = dataTotal.total_results;
-    
-    // Calcular cuántas páginas necesitamos (máximo 100 por página)
-    const citasPorPagina = 100;
-    const totalPaginas = Math.ceil(totalCitas / citasPorPagina);
-    
-    let todasLasCitas = [];
-    
-    // Cargar todas las páginas
-    for (let pagina = 1; pagina <= totalPaginas; pagina++) {
-      document.getElementById("mensajeAyuda").innerHTML = 
-        `Cargando citas de ${taxonNombre}... Página ${pagina} de ${totalPaginas}`;
-      
-      const url = `https://api.inaturalist.org/v1/observations?` +
-                  `taxon_id=${taxonId}` +
-                  `&verifiable=${soloResearch}` +
-                  `&per_page=${citasPorPagina}` +
-                  `&page=${pagina}` +
-                  `&swlat=${bounds.getSouth()}&swlng=${bounds.getWest()}` +
-                  `&nelat=${bounds.getNorth()}&nelng=${bounds.getEast()}`;
-
-      const response = await fetch(url);
-      const data = await response.json();
-      
-      if (data.results && data.results.length > 0) {
-        todasLasCitas = [...todasLasCitas, ...data.results];
-      }
-    }
-
-    if (todasLasCitas.length === 0) {
-      document.getElementById("mensajeAyuda").innerHTML = `No se pudieron cargar las citas de ${taxonNombre}`;
-      document.getElementById("mensajeAyuda").className = "warning";
-      document.getElementById("mensajeAyuda").style.display = "block";
-      return;
-    }
-
-    // Contadores por tipo de ubicación
-    let exactas = 0, ocultas = 0, privadas = 0, metodo = 0;
-
-    // Mostrar todas las citas en el mapa
-    todasLasCitas.forEach(obs => {
-      if (obs.geojson && obs.geojson.coordinates) {
-        const [lng, lat] = obs.geojson.coordinates;
-        const locationType = getLocationType(obs);
-        const color = getMarkerColor(locationType);
-        
-        if (locationType === 'exacta') exactas++;
-        else if (locationType === 'oculta') ocultas++;
-        else if (locationType === 'privada') privadas++;
-        else if (locationType === 'metodo') metodo++;
-        
-        let precisionText = '';
-        if (obs.positional_accuracy) {
-          precisionText = `Precisión: ${obs.positional_accuracy}m`;
-        } else if (obs.public_positional_accuracy) {
-          precisionText = `Precisión: ${obs.public_positional_accuracy}m`;
-        } else if (obs.geoprivacy) {
-          precisionText = `Privacidad: ${obs.geoprivacy}`;
-        } else {
-          precisionText = 'Ubicación exacta';
-        }
-        
-        L.circleMarker([lat, lng], {
-          radius: 6,
-          color: color,
-          weight: 2,
-          fillColor: color,
-          fillOpacity: 0.8
-        }).addTo(markersLayer).bindPopup(`
-          <b>${taxonNombre}</b><br>
-          📅 ${obs.observed_on || 'Fecha desconocida'}<br>
-          👤 ${obs.user?.login || 'Anónimo'}<br>
-          🏅 ${obs.quality_grade}<br>
-          📍 Tipo: ${locationType}<br>
-          ${precisionText}<br>
-          <a href="https://www.inaturalist.org/observations/${obs.id}" target="_blank">🔗 Ver en iNaturalist</a>
-        `);
-      }
+    markersLayer.clearLayers();
+    document.querySelectorAll('.inat-card').forEach(card => {
+      card.classList.remove('selected');
     });
 
-    // Ajustar el mapa para mostrar todos los puntos
-    if (markersLayer.getLayers().length > 0) {
-      map.fitBounds(markersLayer.getBounds().pad(0.1));
+    if (elemento) {
+      elemento.classList.add('selected');
     }
 
-    // Mostrar estadísticas
-    document.getElementById("mensajeAyuda").innerHTML = 
-      `📍 Mostrando ${todasLasCitas.length} citas de ${taxonNombre}<br>` +
-      `🟢 Exactas: ${exactas} | 🟠 Ocultas: ${ocultas} | 🟣 Privadas: ${privadas} | 🔵 M. precisión: ${metodo}`;
-    document.getElementById("mensajeAyuda").className = "success";
-    document.getElementById("mensajeAyuda").style.display = "block";
+    const soloResearch = document.getElementById("soloResearch").checked;
+    const bounds = areaSeleccionada;
 
-  } catch (error) {
-    console.error("Error:", error);
-    document.getElementById("mensajeAyuda").innerHTML = `Error al cargar las citas: ${error.message}`;
-    document.getElementById("mensajeAyuda").className = "warning";
-    document.getElementById("mensajeAyuda").style.display = "block";
+    try {
+      // Mostrar mensaje de carga
+      document.getElementById("mensajeAyuda").innerHTML = `Cargando citas de ${taxonNombre}...`;
+      document.getElementById("mensajeAyuda").className = "warning";
+      document.getElementById("mensajeAyuda").style.display = "block";
+
+      // Primero obtener el total de observaciones
+      const urlTotal = `https://api.inaturalist.org/v1/observations?` +
+                       `taxon_id=${taxonId}` +
+                       `&verifiable=${soloResearch}` +
+                       `&per_page=1` +
+                       `&swlat=${bounds.getSouth()}&swlng=${bounds.getWest()}` +
+                       `&nelat=${bounds.getNorth()}&nelng=${bounds.getEast()}`;
+
+      const responseTotal = await fetch(urlTotal);
+      const dataTotal = await responseTotal.json();
+      
+      if (!dataTotal.total_results || dataTotal.total_results === 0) {
+        document.getElementById("mensajeAyuda").innerHTML = `No hay citas de ${taxonNombre} en esta área`;
+        document.getElementById("mensajeAyuda").className = "warning";
+        document.getElementById("mensajeAyuda").style.display = "block";
+        return;
+      }
+
+      const totalCitas = dataTotal.total_results;
+      
+      // Calcular cuántas páginas necesitamos (máximo 100 por página)
+      const citasPorPagina = 100;
+      const totalPaginas = Math.ceil(totalCitas / citasPorPagina);
+      
+      let todasLasCitas = [];
+      
+      // Cargar todas las páginas
+      for (let pagina = 1; pagina <= totalPaginas; pagina++) {
+        document.getElementById("mensajeAyuda").innerHTML = 
+          `Cargando citas de ${taxonNombre}... Página ${pagina} de ${totalPaginas}`;
+        
+        const url = `https://api.inaturalist.org/v1/observations?` +
+                    `taxon_id=${taxonId}` +
+                    `&verifiable=${soloResearch}` +
+                    `&per_page=${citasPorPagina}` +
+                    `&page=${pagina}` +
+                    `&swlat=${bounds.getSouth()}&swlng=${bounds.getWest()}` +
+                    `&nelat=${bounds.getNorth()}&nelng=${bounds.getEast()}`;
+
+        const response = await fetch(url);
+        const data = await response.json();
+        
+        if (data.results && data.results.length > 0) {
+          todasLasCitas = [...todasLasCitas, ...data.results];
+        }
+        
+        // Pequeña pausa para no saturar la API
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+
+      if (todasLasCitas.length === 0) {
+        document.getElementById("mensajeAyuda").innerHTML = `No se pudieron cargar las citas de ${taxonNombre}`;
+        document.getElementById("mensajeAyuda").className = "warning";
+        document.getElementById("mensajeAyuda").style.display = "block";
+        return;
+      }
+
+      // Contadores por tipo de ubicación
+      let exactas = 0, ocultas = 0, privadas = 0, metodo = 0;
+
+      // Mostrar todas las citas en el mapa
+      todasLasCitas.forEach(obs => {
+        if (obs.geojson && obs.geojson.coordinates) {
+          const [lng, lat] = obs.geojson.coordinates;
+          const locationType = getLocationType(obs);
+          const color = getMarkerColor(locationType);
+          
+          if (locationType === 'exacta') exactas++;
+          else if (locationType === 'oculta') ocultas++;
+          else if (locationType === 'privada') privadas++;
+          else if (locationType === 'metodo') metodo++;
+          
+          let precisionText = '';
+          if (obs.positional_accuracy) {
+            precisionText = `Precisión: ${obs.positional_accuracy}m`;
+          } else if (obs.public_positional_accuracy) {
+            precisionText = `Precisión: ${obs.public_positional_accuracy}m`;
+          } else if (obs.geoprivacy) {
+            precisionText = `Privacidad: ${obs.geoprivacy}`;
+          } else {
+            precisionText = 'Ubicación exacta';
+          }
+          
+          L.circleMarker([lat, lng], {
+            radius: 6,
+            color: color,
+            weight: 2,
+            fillColor: color,
+            fillOpacity: 0.8
+          }).addTo(markersLayer).bindPopup(`
+            <b>${taxonNombre}</b><br>
+            📅 ${obs.observed_on || 'Fecha desconocida'}<br>
+            👤 ${obs.user?.login || 'Anónimo'}<br>
+            🏅 ${obs.quality_grade}<br>
+            📍 Tipo: ${locationType}<br>
+            ${precisionText}<br>
+            <a href="https://www.inaturalist.org/observations/${obs.id}" target="_blank">🔗 Ver en iNaturalist</a>
+          `);
+        }
+      });
+
+      // Ajustar el mapa para mostrar todos los puntos
+      if (markersLayer.getLayers().length > 0) {
+        map.fitBounds(markersLayer.getBounds().pad(0.1));
+      }
+
+      // Mostrar estadísticas
+      document.getElementById("mensajeAyuda").innerHTML = 
+        `📍 Mostrando ${todasLasCitas.length} citas de ${taxonNombre}<br>` +
+        `🟢 Exactas: ${exactas} | 🟠 Ocultas: ${ocultas} | 🟣 Privadas: ${privadas} | 🔵 M. precisión: ${metodo}`;
+      document.getElementById("mensajeAyuda").className = "success";
+      document.getElementById("mensajeAyuda").style.display = "block";
+
+    } catch (error) {
+      console.error("Error:", error);
+      document.getElementById("mensajeAyuda").innerHTML = `Error al cargar las citas: ${error.message}`;
+      document.getElementById("mensajeAyuda").className = "warning";
+      document.getElementById("mensajeAyuda").style.display = "block";
+    }
   }
-}
+
   // ============================================
   // BUSCADOR DE TAXONES
   // ============================================
