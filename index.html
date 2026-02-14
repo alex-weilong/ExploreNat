@@ -1329,110 +1329,241 @@
     return html;
   }
 
-  // ============================================
-  // FUNCIÓN PARA DESCARGAR INFORME WORD
-  // ============================================
-  
-  function descargarInformeWord() {
-    if (todasLasEspeciesParaInforme.length === 0) {
-      alert("No hay especies para descargar");
-      return;
-    }
+ // ============================================
+// FUNCIÓN PARA DESCARGAR INFORME WORD OPTIMIZADO
+// ============================================
 
-    // Obtener información del área
-    const bounds = areaSeleccionada;
-    const centro = bounds.getCenter();
-    const fecha = new Date().toLocaleDateString('es-ES');
-    
-    // Crear contenido HTML para el documento Word
-    let contenidoHTML = `
-      <html xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns:m="http://schemas.microsoft.com/office/2004/12/omml" xmlns="http://www.w3.org/TR/REC-html40">
-      <head>
-        <meta charset="UTF-8">
-        <title>Informe de Biodiversidad - ExploreNat</title>
-        <style>
-          body { font-family: 'Segoe UI', Arial, sans-serif; margin: 2cm; }
-          h1 { color: #2c5e2e; border-bottom: 2px solid #4CAF50; padding-bottom: 10px; }
-          h2 { color: #2e7d32; margin-top: 20px; }
-          table { border-collapse: collapse; width: 100%; margin-top: 20px; }
-          th { background-color: #4CAF50; color: white; padding: 10px; text-align: left; }
-          td { border: 1px solid #ddd; padding: 8px; }
-          tr:nth-child(even) { background-color: #f2f2f2; }
-          .info-area { background-color: #e8f5e9; padding: 15px; border-radius: 8px; margin: 20px 0; }
-          .footer { margin-top: 30px; font-size: 12px; color: #666; text-align: center; }
-        </style>
-      </head>
-      <body>
-        <h1>🌿 ExploreNat - Informe de Biodiversidad</h1>
-        
-        <div class="info-area">
-          <p><strong>Fecha del informe:</strong> ${fecha}</p>
-          <p><strong>Área seleccionada:</strong></p>
-          <p>
-            Centro: ${centro.lat.toFixed(4)}°, ${centro.lng.toFixed(4)}°<br>
-            Extensión: ${((bounds.getNorth() - bounds.getSouth()) * (bounds.getEast() - bounds.getWest()) * 111 * 111).toFixed(0)} km²
-          </p>
-          <p><strong>Total de especies encontradas:</strong> ${todasLasEspeciesParaInforme.length}</p>
-        </div>
-        
-        <h2>Listado de especies</h2>
-        
-        <table>
-          <thead>
-            <tr>
-              <th>Nombre científico</th>
-              <th>Nombre común</th>
-              <th>Clase</th>
-              <th>Orden</th>
-              <th>Familia</th>
-              <th>Observaciones</th>
-            </tr>
-          </thead>
-          <tbody>
-    `;
-
-    // Ordenar especies alfabéticamente por nombre científico
-    const especiesOrdenadas = [...todasLasEspeciesParaInforme].sort((a, b) => 
-      a.taxon.name.localeCompare(b.taxon.name)
-    );
-
-    especiesOrdenadas.forEach(item => {
-      const taxon = item.taxon;
-      contenidoHTML += `
-        <tr>
-          <td>${taxon.name}</td>
-          <td>${taxon.preferred_common_name || 'No disponible'}</td>
-          <td>${taxon.iconic_taxon_name || taxon.class || 'No disponible'}</td>
-          <td>${taxon.order || 'No disponible'}</td>
-          <td>${taxon.family || 'No disponible'}</td>
-          <td>${item.count}</td>
-        </tr>
-      `;
-    });
-
-    contenidoHTML += `
-          </tbody>
-        </table>
-        
-        <div class="footer">
-          <p>Informe generado por ExploreNat - Datos proporcionados por iNaturalist</p>
-        </div>
-      </body>
-      </html>
-    `;
-
-    // Crear blob y descargar
-    const blob = new Blob([contenidoHTML], { type: 'application/msword' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `ExploreNat_Informe_${fecha.replace(/\//g, '-')}.doc`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    window.URL.revokeObjectURL(url);
+function descargarInformeWord() {
+  if (todasLasEspeciesParaInforme.length === 0) {
+    alert("No hay especies para descargar");
+    return;
   }
 
+  // Obtener información del área
+  const bounds = areaSeleccionada;
+  const centro = bounds.getCenter();
+  const fecha = new Date().toLocaleDateString('es-ES');
+  const nombreArchivo = `ExploreNat_${fecha.replace(/\//g, '-')}.doc`;
+  
+  // Crear contenido HTML optimizado para Word
+  let contenidoHTML = `
+    <html xmlns:v="urn:schemas-microsoft-com:vml" 
+          xmlns:o="urn:schemas-microsoft-com:office:office" 
+          xmlns:w="urn:schemas-microsoft-com:office:word" 
+          xmlns:m="http://schemas.microsoft.com/office/2004/12/omml" 
+          xmlns="http://www.w3.org/TR/REC-html40">
+    <head>
+      <meta charset="UTF-8">
+      <title>Informe de Biodiversidad - ExploreNat</title>
+      <style>
+        /* Estilos generales */
+        body { 
+          font-family: 'Segoe UI', Arial, sans-serif; 
+          margin: 1.5cm; 
+          font-size: 10pt;
+        }
+        
+        /* Encabezado */
+        h1 { 
+          color: #2c5e2e; 
+          border-bottom: 2px solid #4CAF50; 
+          padding-bottom: 5px; 
+          font-size: 18pt;
+          margin-bottom: 15px;
+        }
+        
+        /* Información del área */
+        .info-area { 
+          background-color: #e8f5e9; 
+          padding: 10px; 
+          border-radius: 5px; 
+          margin: 10px 0; 
+          font-size: 9pt;
+          border-left: 4px solid #4CAF50;
+        }
+        
+        /* Tabla compacta */
+        table { 
+          border-collapse: collapse; 
+          width: 100%; 
+          margin-top: 15px; 
+          font-size: 9pt;
+          page-break-inside: avoid;
+        }
+        
+        th { 
+          background-color: #4CAF50; 
+          color: white; 
+          padding: 6px; 
+          text-align: left; 
+          font-weight: bold;
+          font-size: 9pt;
+        }
+        
+        td { 
+          border: 1px solid #ddd; 
+          padding: 4px; 
+          vertical-align: middle;
+        }
+        
+        tr:nth-child(even) { 
+          background-color: #f9f9f9; 
+        }
+        
+        /* Miniaturas de imágenes */
+        .especie-imagen {
+          width: 40px;
+          height: 40px;
+          object-fit: cover;
+          border-radius: 4px;
+          border: 1px solid #4CAF50;
+          display: block;
+        }
+        
+        .sin-imagen {
+          width: 40px;
+          height: 40px;
+          background-color: #e8f5e9;
+          border-radius: 4px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: #4CAF50;
+          font-size: 16px;
+          border: 1px solid #4CAF50;
+        }
+        
+        /* Taxonomía compacta */
+        .taxonomia {
+          font-size: 8pt;
+          color: #666;
+          line-height: 1.2;
+        }
+        
+        /* Pie de página */
+        .footer { 
+          margin-top: 20px; 
+          font-size: 8pt; 
+          color: #666; 
+          text-align: center; 
+          border-top: 1px solid #ddd;
+          padding-top: 10px;
+        }
+        
+        /* Saltos de página */
+        .page-break {
+          page-break-after: always;
+        }
+        
+        /* Estadísticas rápidas */
+        .stats {
+          display: flex;
+          gap: 15px;
+          margin: 10px 0;
+          font-size: 9pt;
+        }
+        
+        .stat-item {
+          background: #f5f5f5;
+          padding: 5px 10px;
+          border-radius: 15px;
+        }
+      </style>
+    </head>
+    <body>
+      <h1>🌿 ExploreNat - Informe de Biodiversidad</h1>
+      
+      <div class="info-area">
+        <p><strong>Fecha:</strong> ${fecha}</p>
+        <p><strong>Área seleccionada:</strong> Centro: ${centro.lat.toFixed(4)}°, ${centro.lng.toFixed(4)}° | 
+           Extensión: ${((bounds.getNorth() - bounds.getSouth()) * (bounds.getEast() - bounds.getWest()) * 111 * 111).toFixed(0)} km²</p>
+        <p><strong>Total de especies:</strong> ${todasLasEspeciesParaInforme.length}</p>
+      </div>
+      
+      <div class="stats">
+        <span class="stat-item">📸 Con foto: ${todasLasEspeciesParaInforme.filter(item => item.taxon.default_photo).length}</span>
+        <span class="stat-item">🔬 Total observaciones: ${todasLasEspeciesParaInforme.reduce((sum, item) => sum + item.count, 0)}</span>
+      </div>
+      
+      <table>
+        <thead>
+          <tr>
+            <th width="50px">Foto</th>
+            <th width="180px">Nombre científico</th>
+            <th width="150px">Nombre común</th>
+            <th width="200px">Taxonomía</th>
+          </tr>
+        </thead>
+        <tbody>
+  `;
+
+  // Ordenar especies alfabéticamente
+  const especiesOrdenadas = [...todasLasEspeciesParaInforme].sort((a, b) => 
+    a.taxon.name.localeCompare(b.taxon.name)
+  );
+
+  especiesOrdenadas.forEach(item => {
+    const taxon = item.taxon;
+    
+    // Construir taxonomía compacta
+    const taxonomia = [];
+    if (taxon.class) taxonomia.push(`Clase: ${taxon.class}`);
+    if (taxon.order) taxonomia.push(`Orden: ${taxon.order}`);
+    if (taxon.family) taxonomia.push(`Familia: ${taxon.family}`);
+    if (taxon.genus) taxonomia.push(`Género: ${taxon.genus}`);
+    
+    // Imagen o placeholder
+    let imagenHTML = '';
+    if (taxon.default_photo && taxon.default_photo.medium_url) {
+      imagenHTML = `<img class="especie-imagen" src="${taxon.default_photo.medium_url}" alt="${taxon.name}">`;
+    } else if (taxon.default_photo && taxon.default_photo.url) {
+      imagenHTML = `<img class="especie-imagen" src="${taxon.default_photo.url}" alt="${taxon.name}">`;
+    } else {
+      imagenHTML = `<div class="sin-imagen">📷</div>`;
+    }
+    
+    contenidoHTML += `
+      <tr>
+        <td style="text-align: center;">${imagenHTML}</td>
+        <td><strong>${taxon.name}</strong></td>
+        <td><em>${taxon.preferred_common_name || '—'}</em></td>
+        <td class="taxonomia">${taxonomia.join('<br>')}</td>
+      </tr>
+    `;
+  });
+
+  // Añadir saltos de página cada 50 filas para mejor manejo en Word
+  contenidoHTML += `
+        </tbody>
+      </table>
+      
+      <div class="footer">
+        <p>Informe generado por ExploreNat - Datos proporcionados por iNaturalist.org</p>
+        <p>Total de especies: ${todasLasEspeciesParaInforme.length} | Fecha: ${fecha}</p>
+      </div>
+    </body>
+    </html>
+  `;
+
+  // Crear blob y descargar
+  const blob = new Blob([contenidoHTML], { type: 'application/msword' });
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = nombreArchivo;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  window.URL.revokeObjectURL(url);
+  
+  // Mostrar mensaje de confirmación
+  const mensajeAyuda = document.getElementById("mensajeAyuda");
+  if (mensajeAyuda) {
+    mensajeAyuda.innerHTML = `✅ Informe Word descargado: ${todasLasEspeciesParaInforme.length} especies`;
+    mensajeAyuda.className = "success";
+    mensajeAyuda.style.display = "block";
+  }
+}
   // ============================================
   // BUSCADOR DE PAÍSES / ZONAS
   // ============================================
