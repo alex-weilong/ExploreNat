@@ -1,2259 +1,1703 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <title>ExploreNat - Explorador de Biodiversidad</title>
-
-  <!-- Leaflet CSS -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
-  <!-- Leaflet Draw CSS -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css"/>
-
-  <style>
-    body {
-      font-family: 'Segoe UI', Arial, sans-serif;
-      margin: 20px;
-      background-color: #f0f7f0;
-    }
-
-    h1 {
-      color: #2c5e2e;
-      text-align: center;
-      margin-bottom: 20px;
-      font-size: 2.5em;
-    }
-
-    /* Layout principal */
-    .main-container {
-      display: flex;
-      gap: 20px;
-      margin-top: 20px;
-    }
-
-    /* Columna izquierda: Mapa */
-    .map-container {
-      flex: 1;
-      min-width: 0;
-    }
-
-    #map {
-      height: 600px;
-      width: 100%;
-      border-radius: 12px;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-      border: 3px solid #4CAF50;
-      position: relative;
-    }
-
-    /* Columna derecha: Resultados */
-    .results-container {
-      width: 450px;
-      display: flex;
-      flex-direction: column;
-      gap: 15px;
-    }
-
-    .results-container .resultados-seccion {
-      margin-top: 0;
-    }
-
-    .results-container .resultados-container {
-      max-height: 500px;
-      overflow-y: auto;
-      background: white;
-      padding: 15px;
-      border-radius: 12px;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-    }
-
-    .controls {
-      background: white;
-      padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 15px;
-      margin-bottom: 20px;
-    }
-
-    button, select, input {
-      padding: 12px 20px;
-      cursor: pointer;
-      border: none;
-      border-radius: 8px;
-      font-size: 14px;
-    }
-
-    button {
-      background-color: #4CAF50;
-      color: white;
-    }
-
-    button:hover {
-      background-color: #388E3C;
-    }
-
-    .button-blue {
-      background-color: #2196F3;
-    }
-
-    .button-orange {
-      background-color: #ff9800;
-    }
-
-    .button-cargar-todas {
-      background-color: #9C27B0;
-      color: white;
-      font-size: 12px;
-      padding: 8px 12px;
-      margin-top: 10px;
-    }
-
-    .button-download {
-      background-color: #795548;
-      color: white;
-      font-size: 12px;
-      padding: 8px 12px;
-      margin-top: 10px;
-    }
-
-    select, input {
-      background-color: white;
-      border: 2px solid #e0e0e0;
-    }
-
-    input {
-      cursor: text;
-      min-width: 300px;
-    }
-
-    pre {
-      background: white;
-      padding: 15px;
-      border-radius: 8px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-      white-space: pre-wrap;
-      max-height: 300px;
-      overflow-y: auto;
-    }
-
-    .warning {
-      color: #856404;
-      background-color: #fff3cd;
-      border: 1px solid #ffeeba;
-      padding: 15px;
-      border-radius: 8px;
-      margin-bottom: 15px;
-    }
-
-    .success {
-      color: #155724;
-      background-color: #d4edda;
-      border: 1px solid #c3e6cb;
-      padding: 15px;
-      border-radius: 8px;
-      margin-bottom: 15px;
-    }
-
-    .info-mensaje {
-      background: white;
-      padding: 15px;
-      border-radius: 8px;
-      margin-bottom: 15px;
-      border-left: 4px solid #4CAF50;
-      display: none;
-    }
-
-    .info-mensaje .botones-accion {
-      display: flex;
-      gap: 10px;
-      margin-top: 10px;
-      flex-wrap: wrap;
-    }
-
-    .inat-card {
-      display: flex;
-      align-items: flex-start;
-      margin-bottom: 15px;
-      padding: 12px;
-      background: white;
-      border-radius: 8px;
-      border: 1px solid #eaeaea;
-      cursor: pointer;
-      transition: all 0.3s ease;
-    }
-
-    .inat-card:hover {
-      transform: translateX(5px);
-      border-left: 4px solid #4CAF50;
-      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-      background-color: #f5f5f5;
-    }
-
-    .inat-card.selected {
-      background-color: #e8f5e9;
-      border-left: 4px solid #4CAF50;
-    }
-
-    .inat-imagen {
-      width: 60px;
-      height: 60px;
-      object-fit: cover;
-      border-radius: 8px;
-      margin-right: 12px;
-      border: 2px solid #4CAF50;
-    }
-
-    .inat-placeholder {
-      width: 60px;
-      height: 60px;
-      background: #e8f5e9;
-      margin-right: 12px;
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #4CAF50;
-      font-size: 24px;
-    }
-
-    .inat-info {
-      flex: 1;
-    }
-
-    .inat-titulo {
-      font-weight: bold;
-      color: #2e7d32;
-      font-size: 14px;
-      margin-bottom: 2px;
-    }
-
-    .badge {
-      background: #e8f5e9;
-      padding: 2px 8px;
-      border-radius: 16px;
-      font-size: 11px;
-      color: #2e7d32;
-      display: inline-block;
-      margin-right: 4px;
-      margin-top: 4px;
-    }
-
-    .loading {
-      display: inline-block;
-      width: 30px;
-      height: 30px;
-      border: 4px solid #f3f3f3;
-      border-top: 4px solid #4CAF50;
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-    }
-
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-
-    .stats {
-      background: #e8f5e9;
-      padding: 12px;
-      border-radius: 8px;
-      margin-bottom: 15px;
-      font-weight: bold;
-      font-size: 13px;
-    }
-
-    .pagination {
-      display: flex;
-      justify-content: center;
-      gap: 8px;
-      margin-top: 15px;
-      padding: 10px;
-    }
-
-    .pagination button {
-      padding: 6px 12px;
-      font-size: 12px;
-    }
-
-    .sugerencias-taxon-container,
-    .sugerencias-pais-container {
-      position: absolute;
-      background: white;
-      border: 2px solid #4CAF50;
-      border-radius: 8px;
-      max-height: 250px;
-      overflow-y: auto;
-      width: 400px;
-      z-index: 1000;
-      box-shadow: 0 6px 12px rgba(0,0,0,0.15);
-    }
-
-    .sugerencia-item {
-      padding: 10px;
-      cursor: pointer;
-      border-bottom: 1px solid #eee;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .sugerencia-item:hover {
-      background-color: #e8f5e9;
-    }
-
-    .sugerencia-item .taxon-info {
-      flex: 1;
-    }
-
-    .sugerencia-item .taxon-name {
-      font-weight: bold;
-      color: #2e7d32;
-      font-size: 13px;
-    }
-
-    .sugerencia-item .taxon-rank {
-      font-size: 10px;
-      color: #666;
-      text-transform: uppercase;
-    }
-
-    .enlace-inat {
-      color: #4CAF50;
-      text-decoration: none;
-      font-size: 11px;
-      margin-left: 8px;
-    }
-
-    .enlace-inat:hover {
-      text-decoration: underline;
-    }
-
-    .progreso-carga {
-      text-align: center;
-      padding: 20px;
-      color: #2e7d32;
-      font-weight: bold;
-    }
-
-    .seleccion-area {
-      background: white;
-      padding: 20px;
-      border-radius: 12px;
-      margin-bottom: 20px;
-      border: 2px solid #4CAF50;
-    }
-
-    .seleccion-area-titulo {
-      font-weight: bold;
-      color: #2e7d32;
-      margin-bottom: 15px;
-      font-size: 1.2em;
-    }
-
-    .buscador-pais-container {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 15px;
-      position: relative;
-    }
-
-    .buscador-pais-input {
-      flex: 1;
-      padding: 12px;
-      border: 2px solid #4CAF50;
-      border-radius: 8px;
-      font-size: 14px;
-    }
-
-    .buscador-pais-input:focus {
-      outline: none;
-      border-color: #2e7d32;
-      box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.2);
-    }
-
-    .info-area {
-      background: #e8f5e9;
-      padding: 15px;
-      border-radius: 8px;
-      margin: 15px 0;
-      border-left: 4px solid #4CAF50;
-    }
-
-    .info-area p {
-      margin: 5px 0;
-      color: #666;
-    }
-
-    .info-area strong {
-      color: #2e7d32;
-    }
-
-    .buscador-taxon-container {
-      background: white;
-      padding: 20px;
-      border-radius: 12px;
-      margin-bottom: 20px;
-      border: 1px solid #4CAF50;
-    }
-
-    .buscador-taxon-titulo {
-      font-weight: bold;
-      color: #2e7d32;
-      margin-bottom: 15px;
-      font-size: 1.1em;
-    }
-
-    .buscador-taxon-input-container {
-      display: flex;
-      gap: 10px;
-      position: relative;
-    }
-
-    .buscador-taxon-input {
-      flex: 1;
-      padding: 12px;
-      border: 2px solid #4CAF50;
-      border-radius: 8px;
-      font-size: 14px;
-    }
-
-    .buscador-taxon-input:focus {
-      outline: none;
-      border-color: #2e7d32;
-      box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.2);
-    }
-
-    .resultados-seccion {
-      margin-top: 20px;
-    }
-
-    .resultados-seccion-titulo {
-      font-size: 1.2em;
-      color: #2e7d32;
-      margin-bottom: 10px;
-      font-weight: bold;
-    }
-
-    .fenologia-container {
-      margin-top: 6px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-
-    .fenologia-barra {
-      display: flex;
-      gap: 2px;
-      height: 16px;
-      flex: 1;
-      max-width: 150px;
-    }
-
-    .fenologia-mes {
-      flex: 1;
-      height: 100%;
-      border-radius: 2px;
-      transition: all 0.2s;
-      position: relative;
-    }
-
-    .fenologia-mes:hover {
-      transform: scaleY(1.2);
-      cursor: help;
-    }
-
-    .fenologia-leyenda {
-      display: flex;
-      gap: 20px;
-      font-size: 11px;
-      color: #666;
-      margin-top: 5px;
-      padding: 10px;
-      background: white;
-      border-radius: 8px;
-    }
-
-    .fenologia-leyenda-item {
-      display: flex;
-      align-items: center;
-      gap: 3px;
-    }
-
-    .fenologia-color {
-      width: 12px;
-      height: 12px;
-      border-radius: 2px;
-    }
-
-    .fenologia-estacion {
-      display: flex;
-      gap: 5px;
-      align-items: center;
-      background: #f5f5f5;
-      padding: 2px 6px;
-      border-radius: 12px;
-      font-size: 10px;
-    }
-
-    .estacion-icono {
-      font-size: 12px;
-    }
-
-    .tooltip {
-      position: relative;
-      display: inline-block;
-    }
-
-    .tooltip .tooltiptext {
-      visibility: hidden;
-      width: 100px;
-      background-color: #555;
-      color: #fff;
-      text-align: center;
-      border-radius: 4px;
-      padding: 4px;
-      position: absolute;
-      z-index: 1;
-      bottom: 125%;
-      left: 50%;
-      margin-left: -50px;
-      opacity: 0;
-      transition: opacity 0.3s;
-      font-size: 10px;
-    }
-
-    .tooltip:hover .tooltiptext {
-      visibility: visible;
-      opacity: 1;
-    }
-
-    .habitats-container {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      margin-top: 8px;
-    }
-
-    .habitat-badge {
-      background: #e0f2e0;
-      padding: 2px 8px;
-      border-radius: 16px;
-      font-size: 11px;
-      color: #1b5e20;
-      display: inline-flex;
-      align-items: center;
-      gap: 3px;
-      border: 1px solid #a5d6a5;
-    }
-
-    .habitat-icon {
-      font-size: 12px;
-    }
-
-    .habitat-principal {
-      background: #c8e6c9;
-      font-weight: bold;
-      border: 2px solid #4CAF50;
-    }
-
-    .clima-info {
-      display: flex;
-      gap: 10px;
-      margin-top: 6px;
-      flex-wrap: wrap;
-    }
-
-    .clima-item {
-      display: flex;
-      align-items: center;
-      gap: 3px;
-      background: #f5f5f5;
-      padding: 2px 8px;
-      border-radius: 16px;
-      font-size: 11px;
-    }
-
-    .cargando-mensaje {
-      text-align: center;
-      padding: 30px;
-      color: #666;
-      font-style: italic;
-    }
-
-    .map-legend {
-      position: absolute;
-      bottom: 20px;
-      right: 10px;
-      background: white;
-      padding: 10px;
-      border-radius: 8px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-      z-index: 1000;
-      border-left: 4px solid #4CAF50;
-      max-width: 200px;
-      font-size: 11px;
-    }
-
-    .legend-title {
-      font-weight: bold;
-      color: #2e7d32;
-      margin-bottom: 6px;
-      font-size: 12px;
-    }
-
-    .legend-item {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      margin-bottom: 4px;
-    }
-
-    .legend-color {
-      width: 12px;
-      height: 12px;
-      border-radius: 50%;
-    }
-
-    .legend-color.exacta { background: #4CAF50; }
-    .legend-color.oculta { background: #FF9800; }
-    .legend-color.privada { background: #9C27B0; }
-    .legend-color.metodo { background: #2196F3; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ExploreNat - Explorador de Biodiversidad</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css"/>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=DM+Mono:wght@400;500&family=Crimson+Pro:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --ink:#191510;--parchment:#f6f0e4;--paper:#faf7f1;
+  --moss:#3a5728;--fern:#587840;--sage:#89ab6b;
+  --clay:#9e4e28;--amber:#c07d08;--stone:#7a6e5f;--mist:#e4dccf;
+  --shadow:rgba(25,21,16,.13);
+  --rep:#2e7d5e;--amp:#1a6b8a;--mam:#7b4f2e;
+  --ave:#5d4087;--pla:#4a7d38;--ins:#c07000;
+}
+html{scroll-behavior:smooth}
+body{font-family:'Crimson Pro',Georgia,serif;background:var(--paper);color:var(--ink);font-size:16px;line-height:1.55}
+
+/* HEADER */
+header{background:var(--moss);color:var(--parchment);padding:0 24px;height:54px;display:flex;align-items:center;justify-content:space-between;border-bottom:3px solid var(--amber);position:sticky;top:0;z-index:900;box-shadow:0 2px 18px var(--shadow)}
+.logo{display:flex;align-items:center;gap:10px}
+.logo-name{font-family:'Playfair Display',serif;font-size:1.45rem}
+.logo-tag{font-size:.68rem;font-style:italic;opacity:.7;margin-top:-2px}
+.hdr-btns{display:flex;gap:8px;align-items:center}
+
+/* BUTTONS */
+.btn{font-family:'DM Mono',monospace;font-size:.67rem;font-weight:500;padding:7px 14px;border:none;border-radius:6px;cursor:pointer;letter-spacing:.04em;text-transform:uppercase;display:inline-flex;align-items:center;gap:5px;transition:all .17s;text-decoration:none}
+.btn-moss{background:var(--fern);color:#fff}
+.btn-moss:hover{background:var(--moss);transform:translateY(-1px)}
+.btn-ghost{background:transparent;color:var(--parchment);border:1px solid rgba(246,240,228,.35)}
+.btn-ghost:hover{background:rgba(255,255,255,.1)}
+.btn-amber{background:var(--amber);color:#fff}
+.btn-amber:hover{background:#9a6406}
+.btn-clay{background:var(--clay);color:#fff}
+.btn-clay:hover{background:#7d3d1e}
+.btn-stone{background:var(--mist);color:var(--stone)}
+.btn-stone:hover{background:#d8cfc0}
+.btn-word{background:#1f5196;color:#fff}
+.btn-word:hover{background:#163c72}
+.btn-word2{background:#1a4070;color:#fff}
+.btn-word2:hover{background:#112d52}
+
+/* LAYOUT */
+.app{display:grid;grid-template-columns:330px 1fr;height:calc(100vh - 54px);overflow:hidden}
+
+/* SIDEBAR */
+aside{background:var(--parchment);border-right:2px solid var(--mist);display:flex;flex-direction:column;overflow:hidden}
+.sb-scroll{flex:1;overflow-y:auto;padding:18px 16px}
+.sb-scroll::-webkit-scrollbar{width:4px}
+.sb-scroll::-webkit-scrollbar-thumb{background:var(--sage);border-radius:99px}
+.slabel{font-family:'DM Mono',monospace;font-size:.58rem;text-transform:uppercase;letter-spacing:.13em;color:var(--stone);margin-bottom:9px;display:flex;align-items:center;gap:8px}
+.slabel::after{content:'';flex:1;height:1px;background:var(--mist)}
+.sblock{margin-bottom:20px}
+
+/* INPUTS */
+.sinput-wrap{position:relative}
+.sinput{width:100%;padding:9px 12px 9px 32px;background:#fff;border:1.5px solid var(--mist);border-radius:6px;font-family:'Crimson Pro',serif;font-size:.95rem;color:var(--ink);transition:border-color .15s}
+.sinput:focus{outline:none;border-color:var(--fern);box-shadow:0 0 0 3px rgba(88,120,64,.14)}
+.sinput-icon{position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:13px;pointer-events:none}
+
+/* AUTOCOMPLETE */
+.ac-list{position:absolute;top:calc(100% + 3px);left:0;right:0;background:#fff;border:1.5px solid var(--fern);border-radius:6px;box-shadow:0 8px 24px var(--shadow);z-index:600;max-height:210px;overflow-y:auto;display:none}
+.ac-item{padding:8px 12px;cursor:pointer;border-bottom:1px solid var(--mist);font-size:.88rem}
+.ac-item:hover{background:#eef6e6}
+.ac-item:last-child{border-bottom:none}
+.ac-name{font-weight:600;color:var(--moss)}
+.ac-sub{font-size:.72rem;color:var(--stone);font-style:italic}
+
+/* AREA BOX */
+.area-box{background:#fff;border:1.5px solid var(--mist);border-left:3px solid var(--fern);border-radius:6px;padding:10px 12px;font-size:.84rem;color:var(--stone);line-height:1.5;margin-top:10px}
+.area-box strong{color:var(--moss)}
+
+/* PILLS */
+.pills{display:flex;flex-wrap:wrap;gap:6px}
+.pill{display:flex;align-items:center;gap:4px;padding:4px 10px;border-radius:99px;border:1.5px solid var(--mist);background:#fff;cursor:pointer;font-family:'DM Mono',monospace;font-size:.6rem;font-weight:500;text-transform:uppercase;letter-spacing:.05em;color:var(--stone);transition:all .14s}
+.pill:hover{border-color:var(--fern);color:var(--moss)}
+.pill.active{background:var(--moss);border-color:var(--moss);color:#fff;box-shadow:0 2px 8px rgba(58,87,40,.28)}
+.pill.fav{border-color:var(--fern);color:var(--fern);font-weight:600}
+.pill.fav.active{background:var(--fern)}
+.pill-icon{font-size:13px}
+
+/* PROGRESS */
+.progress-wrap{background:var(--mist);border-radius:99px;height:3px;margin:6px 0;overflow:hidden;display:none}
+.progress-bar{height:100%;background:var(--fern);border-radius:99px;transition:width .3s;width:0}
+
+/* SPECIES CARDS */
+.sp-count{font-family:'DM Mono',monospace;font-size:.62rem;color:var(--stone);padding:5px 9px;background:#fff;border:1px solid var(--mist);border-radius:5px;margin-bottom:10px}
+.sp-count span{color:var(--moss);font-weight:500}
+.sp-card{display:flex;align-items:center;gap:9px;padding:9px;border-radius:7px;border:1.5px solid var(--mist);background:#fff;margin-bottom:7px;cursor:pointer;transition:all .17s}
+.sp-card:hover{border-color:var(--fern);transform:translateX(2px);box-shadow:0 3px 12px var(--shadow)}
+.sp-card.selected{background:#eef5e6;border-color:var(--fern)}
+.sp-card.in-cl{border-color:var(--amber)}
+.sp-thumb{width:50px;height:50px;border-radius:6px;object-fit:cover;border:1.5px solid var(--mist);flex-shrink:0}
+.sp-thumb-ph{width:50px;height:50px;border-radius:6px;background:var(--mist);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.sp-info{flex:1;min-width:0}
+.sp-sci{font-style:italic;font-size:.88rem;color:var(--moss);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sp-com{font-size:.75rem;color:var(--stone);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sp-meta{display:flex;align-items:center;gap:5px;margin-top:3px;flex-wrap:wrap}
+.badge{font-family:'DM Mono',monospace;font-size:.56rem;padding:1px 6px;border-radius:99px;font-weight:500}
+.b-obs{background:#e8f5e9;color:#2e7d32}
+.b-rep{background:#e0f2ec;color:var(--rep)}
+.b-amp{background:#e0eff7;color:var(--amp)}
+.b-mam{background:#f5ebe3;color:var(--mam)}
+.b-ave{background:#ede8f5;color:var(--ave)}
+.b-pla{background:#e9f5e3;color:var(--pla)}
+.b-ins{background:#fff6e0;color:var(--ins)}
+.b-gen{background:#f0f0e8;color:var(--stone)}
+.pheno{display:flex;gap:1.5px;height:9px;margin-top:4px;border-radius:3px;overflow:hidden}
+.pheno-s{flex:1;height:100%}
+.cl-btn{width:24px;height:24px;border-radius:50%;background:var(--mist);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;transition:all .14s}
+.cl-btn:hover{background:var(--sage);color:#fff}
+.cl-btn.added{background:var(--amber);color:#fff}
+
+/* PAGINATION */
+.pagination{display:flex;align-items:center;justify-content:center;gap:5px;padding:10px 0;flex-wrap:wrap}
+.pg-btn{font-family:'DM Mono',monospace;font-size:.62rem;padding:3px 8px;border:1.5px solid var(--mist);background:#fff;border-radius:5px;cursor:pointer;transition:all .12s}
+.pg-btn:hover:not(:disabled){border-color:var(--fern);color:var(--moss)}
+.pg-btn.active{background:var(--moss);color:#fff;border-color:var(--moss)}
+.pg-btn:disabled{opacity:.35;cursor:default}
+
+/* EXPORT BAR */
+.export-bar{background:#fff;border-top:2px solid var(--mist);padding:12px 16px;display:flex;flex-direction:column;gap:8px;flex-shrink:0}
+.export-bar-label{font-family:'DM Mono',monospace;font-size:.58rem;text-transform:uppercase;letter-spacing:.13em;color:var(--stone)}
+.export-bar-btns{display:flex;gap:7px;flex-wrap:wrap}
+.export-progress{font-family:'DM Mono',monospace;font-size:.62rem;color:var(--fern);display:none;align-items:center;gap:8px}
+.export-progress.on{display:flex}
+.export-spinner{width:13px;height:13px;border:2px solid var(--mist);border-top:2px solid var(--fern);border-radius:50%;animation:spin .75s linear infinite;flex-shrink:0}
+
+/* MAP */
+.map-panel{position:relative;overflow:hidden;height:100%}
+#map{width:100%;height:100%;min-height:500px;background:#e6e2d8}
+
+/* DETAIL BOX */
+.detail{position:absolute;bottom:16px;left:16px;width:310px;background:#fff;border-radius:12px;box-shadow:0 8px 32px var(--shadow);border:1.5px solid var(--mist);border-top:3px solid var(--fern);z-index:400;display:none;overflow:hidden}
+.detail.on{display:block}
+.detail-img{width:100%;height:150px;object-fit:cover;display:block}
+.detail-img-ph{width:100%;height:150px;background:var(--mist);display:flex;align-items:center;justify-content:center;font-size:52px}
+.detail-body{padding:12px 14px 14px}
+.detail-sci{font-family:'Playfair Display',serif;font-size:1rem;font-style:italic;color:var(--moss)}
+.detail-com{font-size:.8rem;color:var(--stone);margin-bottom:8px}
+.detail-meta{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.detail-actions{display:flex;gap:6px;flex-wrap:wrap}
+.detail-close{position:absolute;top:8px;right:8px;background:rgba(255,255,255,.88);border:none;border-radius:50%;width:26px;height:26px;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 6px var(--shadow)}
+
+/* DIST STATS */
+.dist-stats{position:absolute;top:14px;left:14px;background:#fff;border-radius:8px;padding:10px 14px;border:1.5px solid var(--mist);border-top:3px solid var(--fern);z-index:400;font-family:'DM Mono',monospace;font-size:.62rem;box-shadow:0 3px 14px var(--shadow);display:none;max-width:210px}
+.dist-stats.on{display:block}
+.dist-title{font-weight:500;color:var(--moss);font-style:italic;font-size:.68rem;margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dist-row{display:flex;justify-content:space-between;gap:12px;color:var(--stone);margin-bottom:2px}
+.dist-val{color:var(--ink);font-weight:500}
+
+/* MAP CONTROLS */
+.map-controls{position:absolute;top:14px;right:14px;display:flex;flex-direction:column;gap:6px;z-index:400}
+.map-ctrl-btn{background:#fff;border:1.5px solid var(--mist);border-radius:6px;padding:6px 10px;font-family:'DM Mono',monospace;font-size:.6rem;cursor:pointer;color:var(--stone);transition:all .13s;box-shadow:0 1px 6px var(--shadow)}
+.map-ctrl-btn:hover,.map-ctrl-btn.active{border-color:var(--fern);color:var(--moss);background:#eef5e6}
+
+/* LEGEND */
+.legend{position:absolute;bottom:16px;right:16px;background:#fff;border-radius:7px;padding:10px 13px;border:1.5px solid var(--mist);border-left:3px solid var(--fern);z-index:400;font-family:'DM Mono',monospace;font-size:.64rem;box-shadow:0 3px 12px var(--shadow)}
+.leg-title{font-weight:500;color:var(--moss);margin-bottom:5px}
+.leg-row{display:flex;align-items:center;gap:6px;margin-bottom:2px;color:var(--stone)}
+.leg-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+
+/* CHECKLIST PANEL */
+.cl-panel{position:fixed;top:0;right:-490px;width:470px;height:100vh;background:var(--parchment);border-left:2px solid var(--mist);z-index:800;transition:right .28s ease;display:flex;flex-direction:column;box-shadow:-8px 0 32px var(--shadow)}
+.cl-panel.open{right:0}
+.cl-hdr{background:var(--moss);color:var(--parchment);padding:15px 18px;display:flex;align-items:center;justify-content:space-between}
+.cl-hdr-title{font-family:'Playfair Display',serif;font-size:1.15rem}
+.cl-hdr-sub{font-size:.65rem;opacity:.72;font-family:'DM Mono',monospace;margin-top:1px}
+.cl-body{flex:1;overflow-y:auto;padding:14px}
+.cl-body::-webkit-scrollbar{width:3px}
+.cl-body::-webkit-scrollbar-thumb{background:var(--sage);border-radius:99px}
+.cl-grp-title{font-family:'DM Mono',monospace;font-size:.6rem;text-transform:uppercase;letter-spacing:.1em;color:var(--stone);padding:3px 0 5px;border-bottom:1px solid var(--mist);margin-bottom:7px}
+.cl-item{display:flex;align-items:center;gap:9px;padding:7px 9px;border-radius:6px;border:1px solid var(--mist);background:#fff;margin-bottom:5px}
+.cl-item img{width:38px;height:38px;object-fit:cover;border-radius:4px;flex-shrink:0}
+.cl-item-ph{width:38px;height:38px;background:var(--mist);border-radius:4px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:16px}
+.cl-item-info{flex:1;min-width:0}
+.cl-item-sci{font-style:italic;font-size:.84rem;color:var(--moss)}
+.cl-item-com{font-size:.7rem;color:var(--stone)}
+.cl-obs{width:21px;height:21px;border-radius:50%;border:2px solid var(--mist);background:#fff;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;transition:all .12s}
+.cl-obs:hover{border-color:var(--fern)}
+.cl-obs.ok{background:var(--fern);border-color:var(--fern);color:#fff}
+.cl-rm{font-size:11px;color:var(--stone);cursor:pointer;padding:2px 5px;border-radius:3px}
+.cl-rm:hover{background:#ffecec;color:#c62828}
+.cl-footer{padding:14px;border-top:2px solid var(--mist);background:#fff;display:flex;gap:7px;flex-wrap:wrap;align-items:center}
+
+/* TOAST */
+.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(70px);background:var(--moss);color:#fff;padding:9px 20px;border-radius:99px;font-family:'DM Mono',monospace;font-size:.68rem;z-index:9999;transition:transform .26s ease;box-shadow:0 4px 20px rgba(0,0,0,.28)}
+.toast.on{transform:translateX(-50%) translateY(0)}
+.cl-badge{background:var(--amber);color:#fff;border-radius:99px;padding:1px 7px;font-family:'DM Mono',monospace;font-size:.6rem}
+.loading-msg{text-align:center;padding:28px 16px;color:var(--stone);font-style:italic;font-size:.9rem}
+.spinner{width:18px;height:18px;border:2px solid var(--mist);border-top:2px solid var(--fern);border-radius:50%;animation:spin .75s linear infinite;display:inline-block;margin-bottom:8px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.toggle-wrap{display:flex;align-items:center;gap:7px;font-size:.82rem;color:var(--stone);cursor:pointer}
+.toggle-wrap input{width:13px;height:13px;accent-color:var(--fern);cursor:pointer}
+</style>
 </head>
 <body>
 
-<h1>🌿 ExploreNat</h1>
-
-<div class="controls">
-  <button onclick="limpiarMapa()">🗑️ Limpiar área</button>
-  <button onclick="limpiarMarcadores()" class="button-orange">🗑️ Limpiar marcadores</button>
-  <button onclick="prepararDescargaCompleta()" class="button-download">📥 Preparar informe Word (TODAS las especies)</button>
-  
-  <label>
-    <input type="checkbox" id="soloResearch" checked> Solo grado investigación
-  </label>
-</div>
-
-<!-- PASO 1: SELECCIÓN DE ÁREA -->
-<div class="seleccion-area">
-  <div class="seleccion-area-titulo">📍 PASO 1: Selecciona un área</div>
-  
-  <div style="position: relative;">
-    <div class="buscador-pais-container">
-      <input type="text" id="buscadorPais" class="buscador-pais-input" 
-             placeholder="Buscar por país, parque, ciudad... (ej: España, Doñana, Madrid)" autocomplete="off">
-      <button onclick="buscarZona()" class="button-blue">Buscar zona</button>
+<header>
+  <div class="logo">
+    <span style="font-size:24px">🌿</span>
+    <div>
+      <div class="logo-name">ExploreNat</div>
+      <div class="logo-tag">Tu cuaderno de campo digital</div>
     </div>
-    <div id="sugerenciasPais" style="position: relative;"></div>
   </div>
-  
-  <div class="info-area" id="infoArea">
-    <p><strong>📍 Área seleccionada:</strong> Ninguna. Dibuja un rectángulo o busca un país.</p>
+  <div class="hdr-btns">
+    <button class="btn btn-ghost" onclick="limpiarTodo()">🗑 Limpiar</button>
+    <button class="btn btn-ghost" onclick="limpiarMarcadores()">🗺 Limpiar mapa</button>
+    <button class="btn btn-amber" onclick="abrirChecklist()">
+      📋 Checklist <span class="cl-badge" id="clBadge">0</span>
+    </button>
   </div>
-</div>
+</header>
 
-<!-- BUSCADOR DE TAXONES -->
-<div class="buscador-taxon-container">
-  <div class="buscador-taxon-titulo">🔍 Filtrar por taxón (opcional)</div>
-  <div style="position: relative;">
-    <div class="buscador-taxon-input-container">
-      <input type="text" id="buscadorTaxon" class="buscador-taxon-input" 
-             placeholder="Ej: Lynx pardinus, Reptilia, Aves, Canis, Fabaceae..." autocomplete="off">
-      <button onclick="buscarTaxon()" class="button-blue">Filtrar</button>
+<div class="app">
+  <aside>
+    <div class="sb-scroll">
+
+      <div class="sblock">
+        <div class="slabel">① Area de busqueda</div>
+        <div class="sinput-wrap" style="position:relative">
+          <span class="sinput-icon">📍</span>
+          <input id="inputZona" class="sinput" type="text" placeholder="Pais, parque, ciudad..." autocomplete="off">
+          <div id="acZona" class="ac-list"></div>
+        </div>
+        <div style="display:flex;gap:7px;margin-top:7px;align-items:center">
+          <button class="btn btn-moss" onclick="buscarZona()">Buscar</button>
+          <span style="font-size:.73rem;color:var(--stone)">o dibuja un rectangulo</span>
+        </div>
+        <div class="area-box" id="areaBox"><strong>Sin area.</strong> Busca un lugar o dibuja.</div>
+      </div>
+
+      <div class="sblock">
+        <div class="slabel">② Grupos taxonomicos</div>
+        <div class="pills">
+          <div class="pill active" data-id="" onclick="setPill(this)"><span class="pill-icon">🌍</span>Todos</div>
+          <div class="pill fav" data-id="26036" onclick="setPill(this)"><span class="pill-icon">🦎</span>Reptiles</div>
+          <div class="pill fav" data-id="20978" onclick="setPill(this)"><span class="pill-icon">🐸</span>Anfibios</div>
+          <div class="pill fav" data-id="40151" onclick="setPill(this)"><span class="pill-icon">🦊</span>Mamiferos</div>
+          <div class="pill" data-id="3"     onclick="setPill(this)"><span class="pill-icon">🦅</span>Aves</div>
+          <div class="pill" data-id="47126" onclick="setPill(this)"><span class="pill-icon">🌿</span>Plantas</div>
+          <div class="pill" data-id="47158" onclick="setPill(this)"><span class="pill-icon">🦋</span>Insectos</div>
+          <div class="pill" data-id="47178" onclick="setPill(this)"><span class="pill-icon">🍄</span>Hongos</div>
+        </div>
+      </div>
+
+      <div class="sblock">
+        <div class="slabel">③ Taxon especifico (opcional)</div>
+        <div class="sinput-wrap" style="position:relative">
+          <span class="sinput-icon">🔬</span>
+          <input id="inputTaxon" class="sinput" type="text" placeholder="Ej: Lacerta, Myotis, Bufo..." autocomplete="off">
+          <div id="acTaxon" class="ac-list"></div>
+        </div>
+        <div style="display:flex;gap:7px;margin-top:7px">
+          <button class="btn btn-moss" onclick="aplicarTaxon()">Filtrar</button>
+          <button class="btn btn-stone" onclick="quitarTaxon()">x Quitar</button>
+        </div>
+      </div>
+
+      <div class="sblock">
+        <div class="slabel">Opciones</div>
+        <label class="toggle-wrap">
+          <input type="checkbox" id="soloResearch" checked>
+          Solo research grade
+        </label>
+      </div>
+
+      <div class="sblock">
+        <div class="slabel">Especies encontradas</div>
+        <div class="progress-wrap" id="progressWrap"><div class="progress-bar" id="progressBar"></div></div>
+        <div id="spContainer"><div class="loading-msg">Selecciona un area para comenzar</div></div>
+        <div id="paginacion" class="pagination"></div>
+      </div>
+
     </div>
-    <div id="sugerenciasTaxon" style="position: relative;"></div>
-  </div>
-</div>
 
-<!-- MENSAJE DE AYUDA -->
-<div id="mensajeAyuda" class="info-mensaje"></div>
+    <div class="export-bar">
+      <div class="export-bar-label">Exportar todas las especies del area</div>
+      <div class="export-bar-btns">
+        <button class="btn btn-word"  onclick="exportarTodoWord(false)">📝 Word</button>
+        <button class="btn btn-word2" onclick="exportarTodoWord(true)"  title="Incluye mapa de distribucion por especie">🗺 Word+mapas</button>
+        <button class="btn btn-clay"  onclick="exportarTodoCSV()">📊 CSV</button>
+      </div>
+      <div class="export-progress" id="exportProgress">
+        <div class="export-spinner"></div>
+        <span id="exportProgressTxt">Cargando...</span>
+      </div>
+    </div>
+  </aside>
 
-<!-- LAYOUT PRINCIPAL: MAPA + LISTA DE ESPECIES -->
-<div class="main-container">
-  <!-- Columna izquierda: Mapa -->
-  <div class="map-container">
+  <div class="map-panel">
     <div id="map"></div>
-  </div>
-  
-  <!-- Columna derecha: Resultados -->
-  <div class="results-container">
-    <!-- Leyenda de fenología -->
-    <div class="fenologia-leyenda">
-      <div class="fenologia-leyenda-item">
-        <div class="fenologia-color" style="background: #f0f0f0;"></div>
-        <span>Sin datos</span>
-      </div>
-      <div class="fenologia-leyenda-item">
-        <div class="fenologia-color" style="background: #c8e6c9;"></div>
-        <span>Pocas obs</span>
-      </div>
-      <div class="fenologia-leyenda-item">
-        <div class="fenologia-color" style="background: #4caf50;"></div>
-        <span>Muchas obs</span>
+
+    <div class="map-controls">
+      <button class="map-ctrl-btn" id="btnHeat" onclick="toggleHeatmap()">🔥 Densidad</button>
+      <button class="map-ctrl-btn" onclick="limpiarMarcadores()">🗑 Limpiar</button>
+    </div>
+
+    <div class="detail" id="detail">
+      <button class="detail-close" onclick="cerrarDetalle()">x</button>
+      <div id="detImgWrap"></div>
+      <div class="detail-body">
+        <div class="detail-sci"  id="detSci"></div>
+        <div class="detail-com"  id="detCom"></div>
+        <div class="detail-meta" id="detMeta"></div>
+        <div class="detail-actions">
+          <button class="btn btn-moss"  id="detBtnDist">📍 Distribucion</button>
+          <button class="btn btn-amber" id="detBtnCL">+ Checklist</button>
+          <a class="btn btn-stone" id="detInat" href="#" target="_blank">🔗 iNat</a>
+        </div>
       </div>
     </div>
-    
-    <!-- Resultados de todas las especies -->
-    <div class="resultados-seccion" id="todasEspeciesSeccion">
-      <div class="resultados-seccion-titulo">🌍 Todas las especies del área</div>
-      <div id="infoCarga" style="display: none;" class="progreso-carga"></div>
-      <div id="resultados" class="resultados-container">
-        <div class="cargando-mensaje">Selecciona un área para ver las especies</div>
-      </div>
-      <div id="paginacion" class="pagination"></div>
+
+    <div class="dist-stats" id="distStats">
+      <div class="dist-title" id="distTitle">-</div>
+      <div class="dist-row"><span>Observaciones</span><span class="dist-val" id="distTotal">-</span></div>
+      <div class="dist-row"><span>Exactas</span><span class="dist-val" id="distExactas">-</span></div>
+      <div class="dist-row"><span>Mas reciente</span><span class="dist-val" id="distReciente">-</span></div>
     </div>
-    
-    <!-- Resultados de búsqueda por taxón -->
-    <div class="resultados-seccion" id="resultadosTaxonSeccion" style="display: none;">
-      <div class="resultados-seccion-titulo" id="resultadosTaxonTitulo">🔍 Resultados filtrados</div>
-      <div id="resultadosBusquedaTaxon" class="resultados-container"></div>
-      <div id="paginacionTaxon" class="pagination"></div>
+
+    <div class="legend">
+      <div class="leg-title">Observaciones</div>
+      <div class="leg-row"><div class="leg-dot" style="background:#4CAF50"></div>Exacta</div>
+      <div class="leg-row"><div class="leg-dot" style="background:#FF9800"></div>Baja precision</div>
+      <div class="leg-row"><div class="leg-dot" style="background:#9C27B0"></div>Oculta</div>
     </div>
   </div>
 </div>
 
-<!-- Scripts -->
-<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<div class="cl-panel" id="clPanel">
+  <div class="cl-hdr">
+    <div>
+      <div class="cl-hdr-title">📋 Checklist de campo</div>
+      <div class="cl-hdr-sub" id="clAreaLabel">Sin area</div>
+    </div>
+    <button class="btn btn-ghost" onclick="cerrarChecklist()">x Cerrar</button>
+  </div>
+  <div class="cl-body" id="clBody"><div class="loading-msg">Añade especies con el boton +</div></div>
+  <div class="cl-footer">
+    <button class="btn btn-moss"  onclick="exportarPDF()">📄 PDF</button>
+    <button class="btn btn-word"  onclick="exportarWord()">📝 Word</button>
+    <button class="btn btn-clay"  onclick="exportarCSV()">📊 CSV</button>
+    <button class="btn btn-stone" onclick="vaciarChecklist()">🗑 Vaciar</button>
+    <span style="font-family:'DM Mono',monospace;font-size:.6rem;color:var(--stone);margin-left:auto" id="clObs">0 / 0</span>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
-
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script>
-  // ============================================
-  // VARIABLES GLOBALES
-  // ============================================
-  let map;
-  let drawnItems;
-  let markersLayer;
-  let zoneLayer;
-  let areaSeleccionada = null;
-  
-  let totalEspeciesGlobal = 0;
-  let paginaActual = 1;
-  const especiesPorPagina = 20;
-  let cargandoPagina = false;
-  
-  let taxonActual = null;
-  let totalEspeciesTaxon = 0;
-  let paginaActualTaxon = 1;
 
-  const cacheFenologia = {};
+// ============================================================
+// ESTADO
+// ============================================================
+var S = {
+  area: null, areaLabel: '',
+  polygon: null,
+  placeId: null,
+  pilId: '', taxonId: null, taxonNombre: '',
+  total: 0, page: 1, perPage: 20,
+  loading: false,
+  pheno: {}, taxa: {},
+  checklist: [],
+  heatOn: false, heatCircles: [],
+  distActual: null
+};
 
-  // Variables para seguimiento de carga de citas
-  let taxonActualCitas = null;
-  let citasCargadas = [];
+var GRUPOS = {
+  '':      { label:'Todos',    icon:'🌍', cls:'b-gen' },
+  '3':     { label:'Aves',     icon:'🦅', cls:'b-ave' },
+  '26036': { label:'Reptiles', icon:'🦎', cls:'b-rep' },
+  '20978': { label:'Anfibios', icon:'🐸', cls:'b-amp' },
+  '40151': { label:'Mamiferos',icon:'🦊', cls:'b-mam' },
+  '47126': { label:'Plantas',  icon:'🌿', cls:'b-pla' },
+  '47158': { label:'Insectos', icon:'🦋', cls:'b-ins' },
+  '47178': { label:'Hongos',   icon:'🍄', cls:'b-gen' }
+};
 
-  // Variable para almacenar todas las especies para el informe
-  let todasLasEspeciesParaInforme = [];
+var ICONIC = {
+  Aves:'3', Reptilia:'26036', Amphibia:'20978', Mammalia:'40151',
+  Plantae:'47126', Insecta:'47158', Fungi:'47178'
+};
 
-  const meses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
-  const estaciones = [
-    { nombre: 'Invierno', meses: [0,1,11], icono: '❄️', color: '#2196f3' },
-    { nombre: 'Primavera', meses: [2,3,4], icono: '🌸', color: '#4caf50' },
-    { nombre: 'Verano', meses: [5,6,7], icono: '☀️', color: '#ff9800' },
-    { nombre: 'Otoño', meses: [8,9,10], icono: '🍂', color: '#8b4513' }
-  ];
+var MESES = ['E','F','M','A','M','J','J','A','S','O','N','D'];
 
-  // ============================================
-  // FUNCIONES DE UBICACIÓN
-  // ============================================
-  
-  function getLocationType(obs) {
-    if (!obs.geojson || !obs.geojson.coordinates) return null;
-    
-    if (obs.geoprivacy === 'private' || obs.geoprivacy === 'obscured') {
-      return 'oculta';
-    }
-    
-    if (obs.public_positional_accuracy === 0) {
-      return 'exacta';
-    }
-    
-    if (obs.positional_accuracy) {
-      if (obs.positional_accuracy < 100) return 'exacta';
-      if (obs.positional_accuracy < 1000) return 'metodo';
-      return 'oculta';
-    }
-    
-    if (obs.private_positional_accuracy) {
-      return 'privada';
-    }
-    
-    return 'metodo';
-  }
+// ============================================================
+// MAPA - inicializado en window.load
+// ============================================================
+var map, drawnItems, markersLayer, zoneLayer;
 
-  function getMarkerColor(locationType) {
-    switch(locationType) {
-      case 'exacta': return '#4CAF50';
-      case 'oculta': return '#FF9800';
-      case 'privada': return '#9C27B0';
-      case 'metodo': return '#2196F3';
-      default: return '#4CAF50';
-    }
-  }
+window.addEventListener('load', function() {
+  setTimeout(function() {
+    delete L.Icon.Default.prototype._getIconUrl;
+    L.Icon.Default.mergeOptions({
+      iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+      iconUrl:       'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+      shadowUrl:     'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png'
+    });
 
-  function crearLeyendaMapa() {
-    const legend = L.control({ position: 'bottomright' });
-    
-    legend.onAdd = function(map) {
-      const div = L.DomUtil.create('div', 'map-legend');
-      div.innerHTML = `
-        <div class="legend-title">📍 Tipos de ubicación</div>
-        <div class="legend-item">
-          <div class="legend-color exacta"></div>
-          <span>Exacta (sin error)</span>
-        </div>
-        <div class="legend-item">
-          <div class="legend-color oculta"></div>
-          <span>Oculta / Privada</span>
-        </div>
-        <div class="legend-item">
-          <div class="legend-color metodo"></div>
-          <span>Precisión &lt; 1km</span>
-        </div>
-        <div class="legend-item">
-          <div class="legend-color privada"></div>
-          <span>Precisión &gt; 1km</span>
-        </div>
-      `;
-      return div;
-    };
-    
-    legend.addTo(map);
-  }
-
-  // ============================================
-  // INICIALIZACIÓN
-  // ============================================
-  window.onload = function() {
-    console.log("Iniciando ExploreNat...");
-    
-    map = L.map('map').setView([40.4168, -3.7038], 6);
-
+    map = L.map('map', { zoomControl: true }).setView([40.4, -3.7], 5);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap'
+      attribution: '© OpenStreetMap', maxZoom: 19
     }).addTo(map);
 
-    drawnItems = L.featureGroup().addTo(map);
+    drawnItems   = L.featureGroup().addTo(map);
     markersLayer = L.featureGroup().addTo(map);
-    zoneLayer = L.featureGroup().addTo(map);
+    zoneLayer    = L.featureGroup().addTo(map);
 
-    crearLeyendaMapa();
-
-    var drawControl = new L.Control.Draw({
+    var drawCtrl = new L.Control.Draw({
       edit: { featureGroup: drawnItems },
-      draw: { 
-        polygon: false, 
-        polyline: false, 
-        circle: false, 
-        marker: false, 
-        circlemarker: false, 
-        rectangle: true 
-      }
+      draw: { polygon:false, polyline:false, circle:false, marker:false, circlemarker:false, rectangle:true }
     });
-    map.addControl(drawControl);
+    map.addControl(drawCtrl);
 
     map.on(L.Draw.Event.CREATED, function(e) {
-      var layer = e.layer;
       drawnItems.clearLayers();
-      drawnItems.addLayer(layer);
-      areaSeleccionada = layer.getBounds();
-      
-      const mensajeAyuda = document.getElementById("mensajeAyuda");
-      if (mensajeAyuda) {
-        mensajeAyuda.style.display = "none";
-      }
-      
-      actualizarInfoArea();
-      cargarPrimeraPagina();
+      drawnItems.addLayer(e.layer);
+      S.area = e.layer.getBounds();
+      S.areaLabel = 'Area personalizada';
+      actualizarAreaBox();
+      cargarEspecies();
     });
 
-    console.log("✅ Mapa cargado correctamente");
-  };
+    map.invalidateSize();
+  }, 50);
+});
 
-  // ============================================
-  // FUNCIÓN PARA ANALIZAR HÁBITATS
-  // ============================================
-  
-  function identificarHabitats(lat, lon) {
-    const habitats = [];
-    
-    if (lat > 35 && lat < 70 && lon > -10 && lon < 40) {
-      habitats.push({ tipo: 'Bosque templado', icono: '🌳', principal: true });
-      if (lat < 45) habitats.push({ tipo: 'Mediterráneo', icono: '🌿', principal: false });
-      if (lat > 55) habitats.push({ tipo: 'Taiga', icono: '🌲', principal: false });
-    }
-    
-    if (lat > -30 && lat < 30 && lon > -120 && lon < -35) {
-      habitats.push({ tipo: 'Selva tropical', icono: '🌴', principal: true });
-      habitats.push({ tipo: 'Bosque nuboso', icono: '☁️', principal: false });
-    }
-    
-    if ((lat > 15 && lat < 30 && lon > -20 && lon < 50) ||
-        (lat > 30 && lat < 40 && lon > -120 && lon < -110)) {
-      habitats.push({ tipo: 'Desierto', icono: '🏜️', principal: true });
-      habitats.push({ tipo: 'Matorral xerófilo', icono: '🌵', principal: false });
-    }
-    
-    if (habitats.length === 0) {
-      habitats.push({ tipo: 'Zona de estudio', icono: '🔬', principal: true });
-    }
-    
-    return habitats;
-  }
+// ============================================================
+// BUSQUEDA DE ZONA
+// ============================================================
+var dZ;
+document.getElementById('inputZona').addEventListener('input', function() {
+  clearTimeout(dZ);
+  var q = this.value.trim();
+  if (q.length < 3) { hideAC('acZona'); return; }
+  dZ = setTimeout(function() { sugZona(q); }, 320);
+});
+document.getElementById('inputZona').addEventListener('keypress', function(e) {
+  if (e.key === 'Enter') buscarZona();
+});
 
-  function obtenerClimaAproximado(lat) {
-    if (Math.abs(lat) < 23.5) return { nombre: 'Tropical', icono: '☀️', temp: '25-30°C' };
-    if (Math.abs(lat) < 35) return { nombre: 'Subtropical', icono: '🌤️', temp: '15-25°C' };
-    if (Math.abs(lat) < 50) return { nombre: 'Templado', icono: '⛅', temp: '10-20°C' };
-    if (Math.abs(lat) < 60) return { nombre: 'Continental', icono: '🌡️', temp: '5-15°C' };
-    return { nombre: 'Subártico', icono: '❄️', temp: '-5-5°C' };
-  }
 
-  async function analizarHabitats(bounds) {
-    const centro = bounds.getCenter();
-    const lat = centro.lat;
-    const lon = centro.lng;
-    
-    const habitats = identificarHabitats(lat, lon);
-    const clima = obtenerClimaAproximado(lat);
-    
-    try {
-      const url = `https://api.inaturalist.org/v1/observations/species_counts?` +
-                  `verifiable=true` +
-                  `&per_page=5` +
-                  `&swlat=${bounds.getSouth()}&swlng=${bounds.getWest()}` +
-                  `&nelat=${bounds.getNorth()}&nelng=${bounds.getEast()}`;
-
-      const response = await fetch(url);
-      const data = await response.json();
-      
-      const especiesCaracteristicas = data.results ? data.results.map(r => r.taxon.name) : [];
-      
-      return {
-        habitats: habitats,
-        clima: clima,
-        especiesCaracteristicas: especiesCaracteristicas
-      };
-    } catch (error) {
-      console.error("Error analizando hábitats:", error);
-      return {
-        habitats: habitats,
-        clima: clima,
-        especiesCaracteristicas: []
-      };
-    }
-  }
-
-  async function actualizarInfoArea() {
-    if (!areaSeleccionada) {
-      document.getElementById("infoArea").innerHTML = `
-        <p><strong>📍 Área seleccionada:</strong> Ninguna. Dibuja un rectángulo o busca un país.</p>
-      `;
-      return;
-    }
-    
-    const infoArea = document.getElementById("infoArea");
-    infoArea.innerHTML = '<p><strong>📍 Analizando hábitats...</strong></p>';
-    
-    const bounds = areaSeleccionada;
-    const centro = bounds.getCenter();
-    const area = (bounds.getNorth() - bounds.getSouth()) * 
-                 (bounds.getEast() - bounds.getWest()) * 111 * 111;
-    
-    const infoHabitats = await analizarHabitats(bounds);
-    
-    let html = `
-      <p><strong>📍 Área seleccionada</strong></p>
-      <p style="font-size: 12px; color: #666;">
-        Centro: ${centro.lat.toFixed(4)}°, ${centro.lng.toFixed(4)}°<br>
-        Extensión: ${area.toFixed(0)} km²
-      </p>
-      
-      <p><strong>🌍 Clima</strong></p>
-      <div class="clima-info">
-        <div class="clima-item">
-          <span>${infoHabitats.clima.icono}</span>
-          <span>${infoHabitats.clima.nombre}</span>
-        </div>
-        <div class="clima-item">
-          <span>🌡️</span>
-          <span>${infoHabitats.clima.temp}</span>
-        </div>
-      </div>
-      
-      <p><strong>🏞️ Hábitats</strong></p>
-      <div class="habitats-container">
-    `;
-    
-    infoHabitats.habitats.forEach(h => {
-      html += `<span class="habitat-badge ${h.principal ? 'habitat-principal' : ''}">
-                <span class="habitat-icon">${h.icono}</span>
-                ${h.tipo}
-               </span>`;
+// Busca el place_id de iNaturalist para un nombre de lugar
+// iNaturalist tiene sus propios lugares con geometrias exactas
+function buscarPlaceId(nombre) {
+  return fetch(
+    'https://api.inaturalist.org/v1/places/autocomplete?q=' + encodeURIComponent(nombre) + '&per_page=5'
+  )
+  .then(function(r) { return r.json(); })
+  .then(function(d) {
+    if (!d.results || !d.results.length) return null;
+    // Preferir el resultado con nombre exacto o más corto (más genérico = más probable que sea el país/región)
+    var results = d.results;
+    // Primero buscar coincidencia exacta
+    var exact = results.find(function(p) {
+      return p.name && p.name.toLowerCase() === nombre.split(',')[0].trim().toLowerCase();
     });
-    
-    html += `</div>`;
-    
-    if (infoHabitats.especiesCaracteristicas.length > 0) {
-      html += `<p><strong>🌿 Especies características</strong></p>`;
-      html += `<div style="font-size: 11px; color: #666;">`;
-      infoHabitats.especiesCaracteristicas.slice(0, 3).forEach(esp => {
-        html += `• ${esp}<br>`;
-      });
-      html += `</div>`;
+    if (exact) return exact;
+    // Si no, devolver el primero
+    return results[0];
+  })
+  .catch(function() { return null; });
+}
+
+// Obtiene el GeoJSON del polígono de un place_id de iNaturalist para dibujarlo en el mapa
+function obtenerPoligonoPlace(placeId) {
+  return fetch('https://api.inaturalist.org/v1/places/' + placeId)
+  .then(function(r) { return r.json(); })
+  .then(function(d) {
+    if (d.results && d.results[0] && d.results[0].geometry_geojson) {
+      return d.results[0].geometry_geojson;
     }
-    
-    const biomas = [
-      { nombre: 'Bosque mediterráneo', condicion: () => centro.lat > 35 && centro.lat < 45 && centro.lng > -10 && centro.lng < 40 },
-      { nombre: 'Selva amazónica', condicion: () => centro.lat > -15 && centro.lat < 5 && centro.lng > -80 && centro.lng < -50 },
-      { nombre: 'Bosque atlántico', condicion: () => centro.lat > 40 && centro.lat < 60 && centro.lng > -10 && centro.lng < 10 },
-      { nombre: 'Desierto del Sahara', condicion: () => centro.lat > 15 && centro.lat < 30 && centro.lng > -15 && centro.lng < 35 },
-      { nombre: 'Gran Cuenca', condicion: () => centro.lat > 35 && centro.lat < 45 && centro.lng > -120 && centro.lng < -110 }
-    ];
-    
-    const biomaEncontrado = biomas.find(b => b.condicion());
-    if (biomaEncontrado) {
-      html += `<p><strong>🗺️ Bioma:</strong> ${biomaEncontrado.nombre}</p>`;
-    }
-    
-    infoArea.innerHTML = html;
-  }
+    return null;
+  })
+  .catch(function() { return null; });
+}
 
-  // ============================================
-  // FUNCIONES BÁSICAS
-  // ============================================
-  
-  function limpiarMapa() {
-    if (drawnItems) drawnItems.clearLayers();
-    if (markersLayer) markersLayer.clearLayers();
-    if (zoneLayer) zoneLayer.clearLayers();
-    areaSeleccionada = null;
-    taxonActual = null;
-    taxonActualCitas = null;
-    
-    document.getElementById("infoArea").innerHTML = `
-      <p><strong>📍 Área seleccionada:</strong> Ninguna. Dibuja un rectángulo o busca un país.</p>
-    `;
-    
-    document.getElementById("resultados").innerHTML = '<div class="cargando-mensaje">Selecciona un área para ver las especies</div>';
-    document.getElementById("resultadosBusquedaTaxon").innerHTML = "";
-    document.getElementById("resultadosTaxonSeccion").style.display = "none";
-    document.getElementById("todasEspeciesSeccion").style.display = "block";
-    
-    const mensajeAyuda = document.getElementById("mensajeAyuda");
-    if (mensajeAyuda) {
-      mensajeAyuda.style.display = "none";
-    }
-    
-    document.getElementById("paginacion").innerHTML = "";
-    document.getElementById("paginacionTaxon").innerHTML = "";
-    
-    totalEspeciesGlobal = 0;
-    paginaActual = 1;
-    totalEspeciesTaxon = 0;
-    paginaActualTaxon = 1;
-    todasLasEspeciesParaInforme = [];
-    
-    for (let key in cacheFenologia) {
-      delete cacheFenologia[key];
-    }
-  }
+// Cache de resultados de Nominatim para selección por índice
+var nominatimCache = [];
 
-  function limpiarMarcadores() {
-    if (markersLayer) markersLayer.clearLayers();
-    document.querySelectorAll('.inat-card').forEach(card => {
-      card.classList.remove('selected');
-    });
-  }
+function sugZona(q) {
+  fetch('https://nominatim.openstreetmap.org/search?format=json&q=' + encodeURIComponent(q) + '&limit=6', {
+    headers: { 'User-Agent': 'NatTrip/2.0' }
+  }).then(function(r) { return r.json(); }).then(function(data) {
+    var el = document.getElementById('acZona');
+    if (!data.length) { hideAC('acZona'); return; }
+    nominatimCache = data;
+    el.innerHTML = data.map(function(s, idx) {
+      var name = s.display_name.split(',')[0];
+      return '<div class="ac-item" data-idx="' + idx + '" onclick="selZonaIdx(' + idx + ')">' +
+        '<div class="ac-name">' + name + '</div>' +
+        '<div class="ac-sub">' + s.display_name + '</div></div>';
+    }).join('');
+    el.style.display = 'block';
+  }).catch(function() {});
+}
 
-  // ============================================
-  // FUNCIONES DE CARGA POR PÁGINAS
-  // ============================================
-  
-  async function cargarPrimeraPagina() {
-    if (!areaSeleccionada) return;
-    
-    document.getElementById("resultados").innerHTML = '<div class="cargando-mensaje">Cargando especies...</div>';
-    document.getElementById("paginacion").innerHTML = '';
-    
-    const soloResearch = document.getElementById("soloResearch").checked;
-    const bounds = areaSeleccionada;
-    
-    try {
-      const urlTotal = `https://api.inaturalist.org/v1/observations/species_counts?` +
-                       `verifiable=${soloResearch}` +
-                       `&per_page=1` +
-                       `&swlat=${bounds.getSouth()}` +
-                       `&swlng=${bounds.getWest()}` +
-                       `&nelat=${bounds.getNorth()}` +
-                       `&nelng=${bounds.getEast()}`;
+function selZonaIdx(idx) {
+  var s = nominatimCache[idx];
+  if (!s) return;
+  selZona(s.display_name, s.boundingbox[0], s.boundingbox[1], s.boundingbox[2], s.boundingbox[3],
+          s.lat, s.lon, s.osm_type||'', s.osm_id||0);
+}
 
-      const responseTotal = await fetch(urlTotal);
-      const dataTotal = await responseTotal.json();
-      
-      if (!dataTotal.total_results || dataTotal.total_results === 0) {
-        document.getElementById("resultados").innerHTML = "No se encontraron especies en esta área";
-        return;
-      }
+function buscarZona() {
+  var q = document.getElementById('inputZona').value.trim();
+  if (!q) return;
+  fetch('https://nominatim.openstreetmap.org/search?format=json&q=' + encodeURIComponent(q) + '&limit=1', {
+    headers: { 'User-Agent': 'NatTrip/2.0' }
+  }).then(function(r) { return r.json(); }).then(function(data) {
+    if (!data.length) { toast('Lugar no encontrado'); return; }
+    var s = data[0];
+    selZona(s.display_name, s.boundingbox[0], s.boundingbox[1], s.boundingbox[2], s.boundingbox[3], s.lat, s.lon, s.osm_type||'', s.osm_id||0);
+  });
+}
 
-      totalEspeciesGlobal = dataTotal.total_results;
-      await cargarPagina(1);
-      
-    } catch (error) {
-      document.getElementById("resultados").innerHTML = `Error: ${error.message}`;
-    }
-  }
+function selZona(nombre, s, n, w, e, lat, lon, osmType, osmId) {
+  document.getElementById('inputZona').value = nombre.split(',').slice(0,2).join(', ');
+  hideAC('acZona');
+  var bounds = L.latLngBounds([parseFloat(s), parseFloat(w)], [parseFloat(n), parseFloat(e)]);
+  if (drawnItems) drawnItems.clearLayers();
+  S.area = bounds;
+  S.polygon = null;
+  S.placeId = null;
+  S.areaLabel = nombre.split(',').slice(0,2).join(', ');
 
-  async function cargarPagina(pagina) {
-    if (!areaSeleccionada || cargandoPagina) return;
-    
-    cargandoPagina = true;
-    paginaActual = pagina;
-    
-    document.getElementById("resultados").innerHTML = '<div class="cargando-mensaje">Cargando página...</div>';
-    
-    const soloResearch = document.getElementById("soloResearch").checked;
-    const bounds = areaSeleccionada;
-    
-    try {
-      const url = `https://api.inaturalist.org/v1/observations/species_counts?` +
-                  `verifiable=${soloResearch}` +
-                  `&per_page=${especiesPorPagina}` +
-                  `&page=${pagina}` +
-                  `&swlat=${bounds.getSouth()}` +
-                  `&swlng=${bounds.getWest()}` +
-                  `&nelat=${bounds.getNorth()}` +
-                  `&nelng=${bounds.getEast()}`;
+  // Buscar place_id en iNaturalist para usar su geometria exacta
+  toast('Buscando area en iNaturalist...');
+  var nombreBusqueda = nombre.split(',')[0].trim();
 
-      const response = await fetch(url);
-      const data = await response.json();
-      
-      if (!data.results || data.results.length === 0) {
-        document.getElementById("resultados").innerHTML = "No hay especies en esta página";
-        cargandoPagina = false;
-        return;
-      }
-
-      // Almacenar las especies para el informe
-      todasLasEspeciesParaInforme = [...todasLasEspeciesParaInforme, ...data.results];
-      
-      await mostrarPagina(data.results);
-      actualizarBotonesPaginacion();
-      
-    } catch (error) {
-      document.getElementById("resultados").innerHTML = `Error: ${error.message}`;
-    } finally {
-      cargandoPagina = false;
-    }
-  }
-
-  async function mostrarPagina(especiesPagina) {
-    let html = `<div class="stats">📊 Total especies: ${totalEspeciesGlobal} (página ${paginaActual})</div>`;
-
-    for (let i = 0; i < especiesPagina.length; i++) {
-      const item = especiesPagina[i];
-      const taxon = item.taxon;
-      
-      if (!cacheFenologia[taxon.id]) {
-        cacheFenologia[taxon.id] = await obtenerFenologia(taxon.id);
-      }
-      const fenologia = cacheFenologia[taxon.id];
-      
-      html += `<div class="inat-card" onclick="mostrarCitasEspecie(${taxon.id}, '${taxon.name.replace(/'/g, "\\'")}', this)">`;
-      
-      if (taxon.default_photo && taxon.default_photo.medium_url) {
-        html += `<img class="inat-imagen" src="${taxon.default_photo.medium_url}" alt="${taxon.name}">`;
-      } else {
-        html += `<div class="inat-placeholder">📷</div>`;
-      }
-      
-      html += `<div class="inat-info">`;
-      html += `<div class="inat-titulo">${taxon.name} 
-               <a href="https://www.inaturalist.org/taxa/${taxon.id}" target="_blank" class="enlace-inat" onclick="event.stopPropagation()">🔗 iNat</a>
-               </div>`;
-      html += `<div style="font-size: 11px;">${taxon.preferred_common_name || ''}</div>`;
-      html += `<span class="badge">📊 ${item.count} obs</span>`;
-      if (taxon.iconic_taxon_name) {
-        html += `<span class="badge">${taxon.iconic_taxon_name}</span>`;
-      }
-      
-      html += crearBarraFenologia(fenologia);
-      
-      html += `</div></div>`;
-    }
-
-    document.getElementById("resultados").innerHTML = html;
-  }
-
-  function actualizarBotonesPaginacion() {
-    const totalPaginas = Math.ceil(totalEspeciesGlobal / especiesPorPagina);
-    if (totalPaginas <= 1) {
-      document.getElementById("paginacion").innerHTML = '';
-      return;
-    }
-
-    let html = '<div class="pagination">';
-    
-    html += `<button onclick="cambiarPagina(${paginaActual - 1})" ${paginaActual === 1 ? 'disabled' : ''}>◀ Anterior</button>`;
-    
-    for (let i = 1; i <= totalPaginas; i++) {
-      if (i === 1 || i === totalPaginas || (i >= paginaActual - 2 && i <= paginaActual + 2)) {
-        html += `<button onclick="cambiarPagina(${i})" class="${i === paginaActual ? 'active' : ''}">${i}</button>`;
-      } else if (i === paginaActual - 3 || i === paginaActual + 3) {
-        html += `<button disabled>...</button>`;
-      }
-    }
-    
-    html += `<button onclick="cambiarPagina(${paginaActual + 1})" ${paginaActual === totalPaginas ? 'disabled' : ''}>Siguiente ▶</button>`;
-    html += '</div>';
-    
-    document.getElementById("paginacion").innerHTML = html;
-  }
-
-  function cambiarPagina(nuevaPagina) {
-    const totalPaginas = Math.ceil(totalEspeciesGlobal / especiesPorPagina);
-    if (nuevaPagina >= 1 && nuevaPagina <= totalPaginas && !cargandoPagina) {
-      cargarPagina(nuevaPagina);
-    }
-  }
-
-  // ============================================
-  // FUNCIÓN PARA OBTENER FENOLOGÍA
-  // ============================================
-  
-  async function obtenerFenologia(taxonId) {
-    if (!areaSeleccionada) return null;
-    
-    if (cacheFenologia[taxonId]) {
-      return cacheFenologia[taxonId];
-    }
-    
-    const soloResearch = document.getElementById("soloResearch").checked;
-    const bounds = areaSeleccionada;
-    
-    try {
-      const url = `https://api.inaturalist.org/v1/observations?` +
-                  `taxon_id=${taxonId}` +
-                  `&verifiable=${soloResearch}` +
-                  `&per_page=100` +
-                  `&swlat=${bounds.getSouth()}&swlng=${bounds.getWest()}` +
-                  `&nelat=${bounds.getNorth()}&nelng=${bounds.getEast()}`;
-
-      const response = await fetch(url);
-      const data = await response.json();
-      
-      if (!data.results || data.results.length === 0) return null;
-      
-      const conteoMeses = new Array(12).fill(0);
-      
-      data.results.forEach(obs => {
-        if (obs.observed_on) {
-          const fecha = new Date(obs.observed_on);
-          const mes = fecha.getMonth();
-          conteoMeses[mes]++;
+  buscarPlaceId(nombreBusqueda).then(function(place) {
+    if (place && place.id) {
+      S.placeId = place.id;
+      // Obtener el poligono para dibujarlo en el mapa
+      obtenerPoligonoPlace(place.id).then(function(geojson) {
+        if (zoneLayer) zoneLayer.clearLayers();
+        if (geojson && map) {
+          try {
+            L.geoJSON(geojson, {
+              style: { color:'#587840', weight:2, fillOpacity:.07, fillColor:'#587840' }
+            }).addTo(zoneLayer);
+          } catch(ex) {}
         }
+        if (map) map.fitBounds(bounds.pad(.04));
+        toast('Area: ' + place.display_name + ' (iNaturalist ID: ' + place.id + ')');
+        actualizarAreaBox();
+        cargarEspecies();
       });
-      
-      const max = Math.max(...conteoMeses);
-      const normalizado = conteoMeses.map(val => max > 0 ? val / max : 0);
-      
-      const mejorEstacion = calcularMejorEstacion(conteoMeses);
-      
-      const fenologia = {
-        conteo: conteoMeses,
-        normalizado: normalizado,
-        total: data.results.length,
-        mejorEstacion: mejorEstacion
-      };
-      
-      cacheFenologia[taxonId] = fenologia;
-      return fenologia;
-      
-    } catch (error) {
-      console.error("Error obteniendo fenología:", error);
-      return null;
-    }
-  }
-
-  function calcularMejorEstacion(conteoMeses) {
-    const sumaEstaciones = estaciones.map(est => 
-      est.meses.reduce((sum, mes) => sum + conteoMeses[mes], 0)
-    );
-    
-    const maxSum = Math.max(...sumaEstaciones);
-    const mejorIndex = sumaEstaciones.indexOf(maxSum);
-    
-    return {
-      ...estaciones[mejorIndex],
-      total: maxSum
-    };
-  }
-
-  function crearBarraFenologia(fenologia) {
-    if (!fenologia) return '<div class="fenologia-estacion">📊 Sin datos</div>';
-    
-    let html = '<div class="fenologia-container">';
-    
-    html += '<div class="fenologia-barra">';
-    for (let i = 0; i < 12; i++) {
-      const intensidad = fenologia.normalizado[i];
-      const color = intensidad === 0 ? '#f0f0f0' : 
-                   intensidad < 0.3 ? '#c8e6c9' :
-                   intensidad < 0.6 ? '#81c784' : '#4caf50';
-      
-      html += `<div class="fenologia-mes tooltip" style="background: ${color}; flex: 1;">
-                <span class="tooltiptext">${meses[i]}: ${fenologia.conteo[i]} obs</span>
-              </div>`;
-    }
-    html += '</div>';
-    
-    html += `<div class="fenologia-estacion">
-              <span class="estacion-icono">${fenologia.mejorEstacion.icono}</span>
-              <span>${fenologia.mejorEstacion.nombre}</span>
-            </div>`;
-    
-    html += '</div>';
-    
-    return html;
-  }
-
-  // ============================================
-  // BUSCADOR DE PAÍSES / ZONAS
-  // ============================================
-  
-  document.getElementById("buscadorPais").addEventListener("input", async function(e) {
-    const query = e.target.value.trim();
-    if (query.length < 3) {
-      document.getElementById("sugerenciasPais").innerHTML = '';
-      return;
-    }
-    
-    try {
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5`,
-        { headers: { 'User-Agent': 'ExploreNat/1.0' } }
-      );
-      const sugerencias = await response.json();
-      
-      if (sugerencias.length === 0) return;
-      
-      let html = '<div class="sugerencias-pais-container">';
-      sugerencias.forEach(s => {
-        html += `<div class="sugerencia-item" onclick="seleccionarZona('${s.display_name.replace(/'/g, "\\'")}', ${s.boundingbox[0]}, ${s.boundingbox[1]}, ${s.boundingbox[2]}, ${s.boundingbox[3]}, ${s.lat}, ${s.lon})">`;
-        html += `<div style="font-size: 14px;">📍</div>`;
-        html += `<div class="taxon-info">`;
-        html += `<div class="taxon-name">${s.display_name}</div>`;
-        html += `<div class="taxon-rank">${s.type || 'lugar'}</div>`;
-        html += `</div>`;
-        html += `</div>`;
-      });
-      html += '</div>';
-      
-      document.getElementById("sugerenciasPais").innerHTML = html;
-    } catch (error) {
-      console.error("Error:", error);
+    } else {
+      // Fallback: bounding box
+      S.placeId = null;
+      if (zoneLayer) {
+        zoneLayer.clearLayers();
+        L.rectangle(bounds, {color:'#587840',weight:2,fillOpacity:.07}).addTo(zoneLayer);
+      }
+      if (map) map.fitBounds(bounds.pad(.07));
+      toast('Usando bounding box (lugar no encontrado en iNaturalist)');
+      actualizarAreaBox();
+      cargarEspecies();
     }
   });
+}
 
-  window.seleccionarZona = function(nombre, south, north, west, east, lat, lon) {
-    document.getElementById("buscadorPais").value = nombre;
-    document.getElementById("sugerenciasPais").innerHTML = '';
-    
-    const bounds = L.latLngBounds([parseFloat(south), parseFloat(west)], [parseFloat(north), parseFloat(east)]);
-    
-    zoneLayer.clearLayers();
-    L.rectangle(bounds, { color: "#4CAF50", weight: 3, fillOpacity: 0.1 }).addTo(zoneLayer);
-    L.marker([parseFloat(lat), parseFloat(lon)]).addTo(zoneLayer).bindPopup(nombre).openPopup();
-    
-    map.fitBounds(bounds.pad(0.1));
-    areaSeleccionada = bounds;
-    
-    // Reiniciar lista para informe
-    todasLasEspeciesParaInforme = [];
-    
-    actualizarInfoArea();
-    cargarPrimeraPagina();
+function actualizarAreaBox() {
+  if (!S.area) return;
+  var c = S.area.getCenter();
+  var km = ((S.area.getNorth()-S.area.getSouth())*(S.area.getEast()-S.area.getWest())*111*111).toFixed(0);
+  var tipoArea = S.placeId ? ' <span style="color:var(--fern);font-size:.7rem">(geometria iNaturalist)</span>' : ' <span style="color:var(--stone);font-size:.7rem">(rectangulo)</span>';
+  document.getElementById('areaBox').innerHTML = '<strong>' + S.areaLabel + '</strong>' + tipoArea + '<br>' +
+    '<span style="font-size:.78rem">Lat ' + c.lat.toFixed(3) + ' Lon ' + c.lng.toFixed(3) +
+    ' ~ ' + Number(km).toLocaleString('es') + ' km2</span>';
+  document.getElementById('clAreaLabel').textContent = S.areaLabel;
+}
+
+// ============================================================
+// BUSQUEDA DE TAXON
+// ============================================================
+var dT;
+document.getElementById('inputTaxon').addEventListener('input', function() {
+  clearTimeout(dT);
+  var q = this.value.trim();
+  if (q.length < 3) { hideAC('acTaxon'); return; }
+  dT = setTimeout(function() { sugTaxon(q); }, 320);
+});
+document.getElementById('inputTaxon').addEventListener('keypress', function(e) {
+  if (e.key === 'Enter') aplicarTaxon();
+});
+
+function sugTaxon(q) {
+  fetch('https://api.inaturalist.org/v1/taxa?q=' + encodeURIComponent(q) + '&per_page=8&all_names=true')
+  .then(function(r) { return r.json(); }).then(function(data) {
+    var el = document.getElementById('acTaxon');
+    if (!data.results || !data.results.length) { hideAC('acTaxon'); return; }
+    el.innerHTML = data.results.map(function(t) {
+      return '<div class="ac-item" onclick="selTaxon(' + t.id + ',\'' + esc(t.name) + '\')">' +
+        '<div class="ac-name">' + t.name + '</div>' +
+        '<div class="ac-sub">' + (t.rank||'') + ' - ' + (t.preferred_common_name||'') + '</div></div>';
+    }).join('');
+    el.style.display = 'block';
+  }).catch(function() {});
+}
+
+function selTaxon(id, nombre) {
+  document.getElementById('inputTaxon').value = nombre;
+  hideAC('acTaxon');
+  S.taxonId = id; S.taxonNombre = nombre; S.page = 1;
+  if (S.area) cargarEspecies();
+}
+
+function aplicarTaxon() {
+  var q = document.getElementById('inputTaxon').value.trim();
+  if (!q) return;
+  if (!S.area) { toast('Primero selecciona un area'); return; }
+  fetch('https://api.inaturalist.org/v1/taxa?q=' + encodeURIComponent(q) + '&per_page=1')
+  .then(function(r) { return r.json(); }).then(function(data) {
+    if (!data.results || !data.results.length) { toast('Taxon no encontrado'); return; }
+    selTaxon(data.results[0].id, data.results[0].name);
+  });
+}
+
+function quitarTaxon() {
+  S.taxonId = null; S.taxonNombre = '';
+  document.getElementById('inputTaxon').value = '';
+  S.page = 1;
+  if (S.area) cargarEspecies();
+}
+
+// ============================================================
+// PILLS
+// ============================================================
+function setPill(el) {
+  document.querySelectorAll('.pill').forEach(function(p) { p.classList.remove('active'); });
+  el.classList.add('active');
+  S.pilId = el.dataset.id;
+  S.page = 1;
+  if (S.area) cargarEspecies();
+}
+
+// ============================================================
+// CARGAR ESPECIES
+// ============================================================
+function buildBase() {
+  var b = S.area;
+  var sr = document.getElementById('soloResearch').checked;
+  var url = 'https://api.inaturalist.org/v1/observations/species_counts?verifiable=true';
+  if (S.placeId) {
+    url += '&place_id=' + S.placeId;
+  } else {
+    url += '&swlat=' + b.getSouth() + '&swlng=' + b.getWest() +
+           '&nelat=' + b.getNorth() + '&nelng=' + b.getEast();
+  }
+  if (sr) url += '&quality_grade=research';
+  return url;
+}
+
+
+// Devuelve los parametros de area para la API de observaciones
+function buildAreaParams() {
+  if (S.placeId) {
+    return '&place_id=' + S.placeId;
+  }
+  var b = S.area;
+  return '&swlat=' + b.getSouth() + '&swlng=' + b.getWest() +
+         '&nelat=' + b.getNorth() + '&nelng=' + b.getEast();
+}
+
+function buildExtra() {
+  if (S.taxonId) return '&taxon_id=' + S.taxonId;
+  if (S.pilId)   return '&taxon_id=' + S.pilId;
+  return '';
+}
+
+function cargarEspecies() {
+  if (!S.area || S.loading) return;
+  S.loading = true;
+  startProgress();
+  document.getElementById('spContainer').innerHTML = '<div class="loading-msg"><div class="spinner"></div><br>Cargando...</div>';
+  document.getElementById('paginacion').innerHTML = '';
+
+  fetch(buildBase() + buildExtra() + '&per_page=1')
+  .then(function(r) { return r.json(); })
+  .then(function(dt) {
+    S.total = dt.total_results || 0;
+    if (!S.total) {
+      document.getElementById('spContainer').innerHTML = '<div class="loading-msg">Sin resultados.</div>';
+      S.loading = false; stopProgress(); return;
+    }
+    cargarPagina(1);
+  })
+  .catch(function(err) {
+    document.getElementById('spContainer').innerHTML = '<div class="loading-msg">Error: ' + err.message + '</div>';
+    S.loading = false; stopProgress();
+  });
+}
+
+function cargarPagina(p) {
+  S.page = p;
+  document.getElementById('spContainer').innerHTML = '<div class="loading-msg"><div class="spinner"></div><br>Cargando...</div>';
+
+  fetch(buildBase() + buildExtra() + '&per_page=' + S.perPage + '&page=' + p)
+  .then(function(r) { return r.json(); })
+  .then(function(data) {
+    if (!data.results || !data.results.length) {
+      document.getElementById('spContainer').innerHTML = '<div class="loading-msg">Sin resultados.</div>';
+      S.loading = false; stopProgress(); return;
+    }
+    // Cargar fenologia en paralelo
+    var promises = data.results.map(function(item) { return fetchPheno(item.taxon.id); });
+    Promise.all(promises).then(function() {
+      renderCards(data.results);
+      renderPags();
+      S.loading = false; stopProgress();
+    });
+  })
+  .catch(function(err) {
+    document.getElementById('spContainer').innerHTML = '<div class="loading-msg">Error: ' + err.message + '</div>';
+    S.loading = false; stopProgress();
+  });
+}
+
+function fetchPheno(id) {
+  if (S.pheno[id] || !S.area) return Promise.resolve();
+  var b = S.area;
+  var sr = document.getElementById('soloResearch').checked;
+  return fetch('https://api.inaturalist.org/v1/observations?taxon_id=' + id +
+    '&verifiable=true' + (sr ? '&quality_grade=research' : '') + '&per_page=100' +
+    buildAreaParams())
+  .then(function(r) { return r.json(); })
+  .then(function(d) {
+    var cnt = [0,0,0,0,0,0,0,0,0,0,0,0];
+    (d.results||[]).forEach(function(o) {
+      if (o.observed_on) cnt[new Date(o.observed_on).getMonth()]++;
+    });
+    var mx = Math.max.apply(null, cnt.concat([1]));
+    S.pheno[id] = cnt.map(function(v) { return v/mx; });
+  })
+  .catch(function() { S.pheno[id] = null; });
+}
+
+// ============================================================
+// RENDER TARJETAS
+// ============================================================
+function inferirGrupo(t) {
+  var gId = ICONIC[t.iconic_taxon_name] || '';
+  return { gId: gId, g: GRUPOS[gId] || GRUPOS[''] };
+}
+
+function renderCards(lista) {
+  var from = Math.min((S.page-1)*S.perPage+1, S.total);
+  var to   = Math.min(S.page*S.perPage, S.total);
+  var html = '<div class="sp-count">' +
+    (S.taxonNombre ? '<b>'+S.taxonNombre+'</b> - ' : '') +
+    '<span>' + from + '-' + to + '</span> de <span>' + S.total + '</span></div>';
+
+  lista.forEach(function(item) {
+    var t = item.taxon;
+    var info = inferirGrupo(t);
+    var inCL = S.checklist.some(function(c) { return c.taxon.id === t.id; });
+    var phn  = S.pheno[t.id];
+    S.taxa[t.id] = t;
+
+    html += '<div class="sp-card' + (inCL?' in-cl':'') + '" id="card-'+t.id+'" onclick="abrirDetalle('+t.id+')">';
+
+    if (t.default_photo && (t.default_photo.square_url || t.default_photo.medium_url)) {
+      html += '<img class="sp-thumb" src="' + (t.default_photo.square_url||t.default_photo.medium_url) + '" alt="' + t.name + '" loading="lazy">';
+    } else {
+      html += '<div class="sp-thumb-ph">' + info.g.icon + '</div>';
+    }
+
+    html += '<div class="sp-info">' +
+      '<div class="sp-sci">' + t.name + '</div>' +
+      '<div class="sp-com">' + (t.preferred_common_name||'-') + '</div>' +
+      '<div class="sp-meta">' +
+        '<span class="badge b-obs">📊 ' + item.count + '</span>' +
+        (info.gId ? '<span class="badge '+info.g.cls+'">' + info.g.icon + ' ' + info.g.label + '</span>' : '') +
+      '</div>' +
+      (phn ? phenoBar(phn) : '<div style="height:9px"></div>') +
+    '</div>';
+
+    html += '<button class="cl-btn' + (inCL?' added':'') + '" ' +
+      'onclick="event.stopPropagation();toggleCL(' + t.id + ')">' +
+      (inCL?'✓':'+') + '</button>';
+    html += '</div>';
+  });
+
+  document.getElementById('spContainer').innerHTML = html;
+}
+
+function phenoBar(norm) {
+  var html = '<div class="pheno">';
+  norm.forEach(function(v, i) {
+    var c = v===0 ? '#e4dccf' : v<.3 ? '#c8e6c9' : v<.6 ? '#81c784' : '#4caf50';
+    html += '<div class="pheno-s" style="background:'+c+'" title="'+MESES[i]+'"></div>';
+  });
+  return html + '</div>';
+}
+
+function renderPags() {
+  var tot = Math.ceil(S.total / S.perPage);
+  if (tot <= 1) { document.getElementById('paginacion').innerHTML = ''; return; }
+  var p = S.page;
+  var pages = {};
+  pages[1] = true; pages[tot] = true; pages[p] = true;
+  if (p-1 >= 1) pages[p-1] = true;
+  if (p+1 <= tot) pages[p+1] = true;
+  var pageArr = Object.keys(pages).map(Number).sort(function(a,b){return a-b;});
+
+  var html = '<button class="pg-btn" onclick="cargarPagina('+(p-1)+')"' + (p===1?' disabled':'') + '>◀</button>';
+  var prev = null;
+  pageArr.forEach(function(pg) {
+    if (prev !== null && pg - prev > 1) html += '<button class="pg-btn" disabled>...</button>';
+    html += '<button class="pg-btn' + (pg===p?' active':'') + '" onclick="cargarPagina('+pg+')">' + pg + '</button>';
+    prev = pg;
+  });
+  html += '<button class="pg-btn" onclick="cargarPagina('+(p+1)+')"' + (p===tot?' disabled':'') + '>▶</button>';
+  document.getElementById('paginacion').innerHTML = html;
+}
+
+// ============================================================
+// DETALLE ESPECIE
+// ============================================================
+function abrirDetalle(id) {
+  var t = S.taxa[id];
+  if (!t) return;
+  var info = inferirGrupo(t);
+  var inCL = S.checklist.some(function(c) { return c.taxon.id === id; });
+
+  var iw = document.getElementById('detImgWrap');
+  if (t.default_photo && t.default_photo.medium_url) {
+    iw.innerHTML = '<img class="detail-img" src="' + t.default_photo.medium_url + '" alt="' + t.name + '">';
+  } else {
+    iw.innerHTML = '<div class="detail-img-ph">' + info.g.icon + '</div>';
+  }
+
+  document.getElementById('detSci').textContent = t.name;
+  document.getElementById('detCom').textContent = t.preferred_common_name || '';
+  document.getElementById('detMeta').innerHTML  = info.gId ?
+    '<span class="badge '+info.g.cls+'">'+info.g.icon+' '+info.g.label+'</span>' : '';
+  document.getElementById('detInat').href = 'https://www.inaturalist.org/taxa/' + id;
+
+  var detBtnCL = document.getElementById('detBtnCL');
+  detBtnCL.textContent = inCL ? '✓ En checklist' : '+ Checklist';
+  detBtnCL.onclick = function() {
+    toggleCL(id);
+    detBtnCL.textContent = S.checklist.some(function(c){return c.taxon.id===id;}) ? '✓ En checklist' : '+ Checklist';
   };
 
-  async function buscarZona() {
-    const query = document.getElementById("buscadorPais").value.trim();
-    if (!query) return alert("Escribe un lugar");
+  document.getElementById('detBtnDist').onclick = function() { mostrarDistribucion(id, t.name); };
+  document.getElementById('detail').classList.add('on');
+  document.querySelectorAll('.sp-card').forEach(function(c) { c.classList.remove('selected'); });
+  var card = document.getElementById('card-' + id);
+  if (card) card.classList.add('selected');
+}
 
-    try {
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`,
-        { headers: { 'User-Agent': 'ExploreNat/1.0' } }
-      );
-      const data = await response.json();
-      
-      if (!data.length) {
-        const mensajeAyuda = document.getElementById("mensajeAyuda");
-        if (mensajeAyuda) {
-          mensajeAyuda.innerHTML = "Lugar no encontrado";
-          mensajeAyuda.className = "warning";
-          mensajeAyuda.style.display = "block";
+function cerrarDetalle() {
+  document.getElementById('detail').classList.remove('on');
+  document.querySelectorAll('.sp-card').forEach(function(c) { c.classList.remove('selected'); });
+}
+
+// ============================================================
+// DISTRIBUCION EN MAPA
+// ============================================================
+function obsColor(o) {
+  if (o.geoprivacy === 'private' || o.geoprivacy === 'obscured') return '#9C27B0';
+  var acc = o.positional_accuracy || o.public_positional_accuracy;
+  return (!acc || acc < 500) ? '#4CAF50' : '#FF9800';
+}
+
+function mostrarDistribucion(taxonId, nombre) {
+  if (!S.area || !markersLayer) return;
+  markersLayer.clearLayers();
+  limpiarHeat();
+  S.distActual = { id: taxonId, nombre: nombre };
+
+  document.getElementById('distTitle').textContent = nombre;
+  document.getElementById('distStats').classList.add('on');
+  ['distTotal','distExactas','distReciente'].forEach(function(id) {
+    document.getElementById(id).textContent = '...';
+  });
+  toast('Cargando distribucion de ' + nombre + '...');
+
+  var b  = S.area;
+  var sr = document.getElementById('soloResearch').checked;
+  var srParam = '&verifiable=true' + (sr ? '&quality_grade=research' : '');
+
+  fetch('https://api.inaturalist.org/v1/observations?taxon_id=' + taxonId +
+    srParam + '&per_page=1' + buildAreaParams())
+  .then(function(r) { return r.json(); })
+  .then(function(d0) {
+    var total = d0.total_results || 0;
+    document.getElementById('distTotal').textContent = total.toLocaleString('es');
+
+    var paginas = Math.min(3, Math.ceil(total/100));
+    var promises = [];
+    for (var pg = 1; pg <= paginas; pg++) {
+      promises.push(fetch('https://api.inaturalist.org/v1/observations?taxon_id=' + taxonId +
+        srParam + '&per_page=100&page=' + pg + buildAreaParams() +
+        '&order_by=observed_on&order=desc')
+      .then(function(r) { return r.json(); }));
+    }
+
+    Promise.all(promises).then(function(results) {
+      var obs = [];
+      results.forEach(function(d) { obs = obs.concat(d.results||[]); });
+
+      var exactas = 0, reciente = null;
+      obs.forEach(function(o) {
+        if (!o.geojson || !o.geojson.coordinates) return;
+        var lng = o.geojson.coordinates[0], lat = o.geojson.coordinates[1];
+        if (isNaN(lat)||isNaN(lng)) return;
+        var color = obsColor(o);
+        if (color === '#4CAF50') exactas++;
+        var fecha = o.observed_on;
+        if (fecha && (!reciente || fecha > reciente)) reciente = fecha;
+
+        if (!S.heatOn) {
+          L.circleMarker([lat,lng], {radius:6,color:color,weight:2,fillColor:color,fillOpacity:.82})
+          .addTo(markersLayer)
+          .bindPopup('<b style="font-style:italic">' + nombre + '</b><br>' +
+            '📅 ' + (fecha||'-') + ' 👤 ' + ((o.user&&o.user.login)||'Anonimo') + '<br>' +
+            '<a href="https://www.inaturalist.org/observations/' + o.id + '" target="_blank">Ver en iNat</a>');
+        } else {
+          S.heatCircles.push(L.circle([lat,lng], {
+            radius:3000, color:'transparent', fillColor:'#e65100', fillOpacity:.07, weight:0
+          }).addTo(markersLayer));
         }
-        return;
-      }
+      });
 
-      const lugar = data[0];
-      seleccionarZona(lugar.display_name, lugar.boundingbox[0], lugar.boundingbox[1], 
-                     lugar.boundingbox[2], lugar.boundingbox[3], lugar.lat, lugar.lon);
+      document.getElementById('distExactas').textContent = exactas;
+      document.getElementById('distReciente').textContent = reciente || '-';
 
-    } catch (error) {
-      const mensajeAyuda = document.getElementById("mensajeAyuda");
-      if (mensajeAyuda) {
-        mensajeAyuda.innerHTML = `Error: ${error.message}`;
-        mensajeAyuda.className = "warning";
-        mensajeAyuda.style.display = "block";
+      if (markersLayer.getLayers().length > 0) {
+        try { map.fitBounds(markersLayer.getBounds().pad(.1)); } catch(e) {}
       }
-    }
+      toast(obs.length + ' obs. de ' + nombre + (total>obs.length ? ' (de '+total+')' : ''));
+    });
+  })
+  .catch(function(err) { toast('Error: ' + err.message); });
+}
+
+function limpiarHeat() {
+  S.heatCircles.forEach(function(c) { c.remove(); });
+  S.heatCircles = [];
+}
+
+function toggleHeatmap() {
+  S.heatOn = !S.heatOn;
+  document.getElementById('btnHeat').classList.toggle('active', S.heatOn);
+  if (S.distActual) mostrarDistribucion(S.distActual.id, S.distActual.nombre);
+}
+
+function limpiarMarcadores() {
+  if (markersLayer) markersLayer.clearLayers();
+  limpiarHeat();
+  document.getElementById('distStats').classList.remove('on');
+  document.querySelectorAll('.sp-card').forEach(function(c) { c.classList.remove('selected'); });
+  S.distActual = null;
+}
+
+// ============================================================
+// CHECKLIST
+// ============================================================
+function abrirChecklist()  { document.getElementById('clPanel').classList.add('open'); }
+function cerrarChecklist() { document.getElementById('clPanel').classList.remove('open'); }
+
+function toggleCL(taxonId) {
+  var idx = S.checklist.findIndex(function(c) { return c.taxon.id === taxonId; });
+  if (idx >= 0) {
+    S.checklist.splice(idx, 1);
+    toast('Especie eliminada');
+  } else {
+    var t = S.taxa[taxonId];
+    if (!t) return;
+    var info = inferirGrupo(t);
+    S.checklist.push({ taxon:t, grupo:info.g.label, grupoIcon:info.g.icon, observed:false });
+    toast('Añadida al checklist');
   }
-
-  // ============================================
-  // FUNCIÓN PARA CARGAR TODAS LAS ESPECIES DEL ÁREA
-  // ============================================
-  
-  async function cargarTodasLasEspecies() {
-    if (!areaSeleccionada) {
-      alert("Primero selecciona un área");
-      return;
-    }
-
-    const mensajeAyuda = document.getElementById("mensajeAyuda");
-    mensajeAyuda.innerHTML = "Cargando TODAS las especies del área...";
-    mensajeAyuda.className = "warning";
-    mensajeAyuda.style.display = "block";
-
-    const soloResearch = document.getElementById("soloResearch").checked;
-    const bounds = areaSeleccionada;
-
-    try {
-      // Primero obtener el total
-      const urlTotal = `https://api.inaturalist.org/v1/observations/species_counts?` +
-                       `verifiable=${soloResearch}` +
-                       `&per_page=1` +
-                       `&swlat=${bounds.getSouth()}` +
-                       `&swlng=${bounds.getWest()}` +
-                       `&nelat=${bounds.getNorth()}` +
-                       `&nelng=${bounds.getEast()}`;
-
-      const responseTotal = await fetch(urlTotal);
-      const dataTotal = await responseTotal.json();
-
-      if (!dataTotal.total_results || dataTotal.total_results === 0) {
-        mensajeAyuda.innerHTML = "No se encontraron especies en esta área";
-        mensajeAyuda.className = "warning";
-        return;
-      }
-
-      const totalEspecies = dataTotal.total_results;
-      const especiesPorPagina = 200;
-      const totalPaginas = Math.ceil(totalEspecies / especiesPorPagina);
-
-      let todasLasEspecies = [];
-
-      for (let pagina = 1; pagina <= totalPaginas; pagina++) {
-        mensajeAyuda.innerHTML = `Cargando especies... Página ${pagina} de ${totalPaginas} (${todasLasEspecies.length} de ${totalEspecies})`;
-
-        const url = `https://api.inaturalist.org/v1/observations/species_counts?` +
-                    `verifiable=${soloResearch}` +
-                    `&per_page=${especiesPorPagina}` +
-                    `&page=${pagina}` +
-                    `&swlat=${bounds.getSouth()}` +
-                    `&swlng=${bounds.getWest()}` +
-                    `&nelat=${bounds.getNorth()}` +
-                    `&nelng=${bounds.getEast()}`;
-
-        const response = await fetch(url);
-        const data = await response.json();
-
-        if (data.results && data.results.length > 0) {
-          todasLasEspecies = [...todasLasEspecies, ...data.results];
-        }
-
-        await new Promise(resolve => setTimeout(resolve, 200));
-      }
-
-      todasLasEspeciesParaInforme = todasLasEspecies;
-
-      mensajeAyuda.innerHTML = `✅ Cargadas ${todasLasEspecies.length} especies. Ya puedes descargar el informe.`;
-      mensajeAyuda.className = "success";
-      
-    } catch (error) {
-      console.error("Error cargando todas las especies:", error);
-      mensajeAyuda.innerHTML = `Error: ${error.message}`;
-      mensajeAyuda.className = "warning";
-    }
+  document.getElementById('clBadge').textContent = S.checklist.length;
+  var card = document.getElementById('card-' + taxonId);
+  if (card) {
+    var inCL = S.checklist.some(function(c) { return c.taxon.id === taxonId; });
+    card.classList.toggle('in-cl', inCL);
+    var btn = card.querySelector('.cl-btn');
+    if (btn) { btn.classList.toggle('added', inCL); btn.textContent = inCL ? '✓' : '+'; }
   }
+  renderChecklist();
+}
 
-  // ============================================
-  // FUNCIÓN PARA PREPARAR DESCARGA (CARGA TODAS Y DESCARGA)
-  // ============================================
-  
-  async function prepararDescargaCompleta() {
-    if (!areaSeleccionada) {
-      alert("Primero selecciona un área");
-      return;
-    }
+function toggleObservado(id) {
+  var item = S.checklist.find(function(c) { return c.taxon.id === id; });
+  if (item) { item.observed = !item.observed; renderChecklist(); }
+}
 
-    await cargarTodasLasEspecies();
-    if (todasLasEspeciesParaInforme.length > 0) {
-      descargarInformeWord();
-    }
-  }
+function vaciarChecklist() {
+  S.checklist = [];
+  document.getElementById('clBadge').textContent = '0';
+  document.querySelectorAll('.sp-card').forEach(function(c) {
+    c.classList.remove('in-cl');
+    var b = c.querySelector('.cl-btn');
+    if (b) { b.classList.remove('added'); b.textContent = '+'; }
+  });
+  renderChecklist();
+  toast('Checklist vaciado');
+}
 
-// ============================================
-// FUNCIÓN PARA DESCARGAR INFORME WORD OPTIMIZADO
-// ============================================
-
-async function descargarInformeWord() {
-  if (todasLasEspeciesParaInforme.length === 0) {
-    alert("No hay especies para descargar");
+function renderChecklist() {
+  var body = document.getElementById('clBody');
+  if (!S.checklist.length) {
+    body.innerHTML = '<div class="loading-msg">Añade especies con el boton +</div>';
+    document.getElementById('clObs').textContent = '0 / 0';
     return;
   }
+  var obs = S.checklist.filter(function(c) { return c.observed; }).length;
+  document.getElementById('clObs').textContent = obs + ' / ' + S.checklist.length;
 
-  const mensajeAyuda = document.getElementById("mensajeAyuda");
-  mensajeAyuda.innerHTML = "Generando informe con imágenes... Esto puede tomar unos segundos";
-  mensajeAyuda.className = "warning";
-  mensajeAyuda.style.display = "block";
-
-  const bounds = areaSeleccionada;
-  const centro = bounds.getCenter();
-  const fecha = new Date().toLocaleDateString('es-ES');
-  const nombreArchivo = `ExploreNat_${fecha.replace(/\//g, '-')}.doc`;
-  
-  // Organizar especies por clase y luego por orden
-  const especiesPorClase = {};
-
-  todasLasEspeciesParaInforme.forEach(item => {
-    const taxon = item.taxon;
-    const clase = taxon.class || taxon.iconic_taxon_name || 'No clasificado';
-    
-    if (!especiesPorClase[clase]) {
-      especiesPorClase[clase] = {};
-    }
-    
-    const orden = taxon.order || 'No clasificado';
-    if (!especiesPorClase[clase][orden]) {
-      especiesPorClase[clase][orden] = [];
-    }
-    
-    especiesPorClase[clase][orden].push(item);
+  var grupos = {};
+  S.checklist.forEach(function(item) {
+    var g = item.grupo || 'Sin grupo';
+    if (!grupos[g]) grupos[g] = [];
+    grupos[g].push(item);
   });
 
-  // Ordenar clases alfabéticamente
-  const clasesOrdenadas = Object.keys(especiesPorClase).sort();
-
-  // Función para obtener imagen en base64 (tamaño reducido)
-  async function obtenerImagenBase64(url) {
-    if (!url) return null;
-    try {
-      // Intentar obtener imagen en tamaño pequeño
-      const urlPequena = url.replace('medium', 'small').replace('original', 'small');
-      const response = await fetch(urlPequena, { mode: 'cors' });
-      const blob = await response.blob();
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onloadend = () => resolve(reader.result);
-        reader.onerror = reject;
-        reader.readAsDataURL(blob);
-      });
-    } catch (error) {
-      console.error("Error cargando imagen:", error);
-      return null;
-    }
-  }
-
-  // Crear contenido HTML simplificado
-  let contenidoHTML = `
-    <html xmlns:v="urn:schemas-microsoft-com:vml" 
-          xmlns:o="urn:schemas-microsoft-com:office:office" 
-          xmlns:w="urn:schemas-microsoft-com:office:word" 
-          xmlns:m="http://schemas.microsoft.com/office/2004/12/omml" 
-          xmlns="http://www.w3.org/TR/REC-html40">
-    <head>
-      <meta charset="UTF-8">
-      <title>Informe de Biodiversidad - ExploreNat</title>
-      <style>
-        body { 
-          font-family: 'Segoe UI', Arial, sans-serif; 
-          margin: 1.5cm; 
-          font-size: 8pt;
-        }
-        h1 { 
-          color: #2c5e2e; 
-          border-bottom: 2px solid #4CAF50; 
-          padding-bottom: 5px; 
-          font-size: 14pt;
-        }
-        h2 {
-          color: #2e7d32;
-          margin-top: 15px;
-          margin-bottom: 8px;
-          font-size: 12pt;
-          background-color: #e8f5e9;
-          padding: 4px;
-          border-left: 4px solid #4CAF50;
-        }
-        h3 {
-          color: #388E3C;
-          margin-top: 10px;
-          margin-bottom: 5px;
-          font-size: 10pt;
-          font-style: italic;
-          margin-left: 10px;
-        }
-        .info-area { 
-          background-color: #e8f5e9; 
-          padding: 6px; 
-          border-radius: 4px; 
-          margin: 8px 0; 
-          border-left: 4px solid #4CAF50;
-          font-size: 8pt;
-        }
-        table { 
-          border-collapse: collapse; 
-          width: 100%; 
-          margin-top: 5px; 
-          margin-bottom: 10px;
-          margin-left: 20px;
-          font-size: 7pt;
-        }
-        td { 
-          border: none; 
-          padding: 2px; 
-          vertical-align: middle;
-        }
-        .especie-imagen {
-          width: 20px;
-          height: 20px;
-          object-fit: cover;
-          border-radius: 2px;
-          border: 1px solid #4CAF50;
-        }
-        .sin-imagen {
-          width: 20px;
-          height: 20px;
-          background-color: #e8f5e9;
-          border-radius: 2px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          color: #4CAF50;
-          font-size: 10px;
-          border: 1px solid #4CAF50;
-        }
-        .nombre-cientifico {
-          font-weight: bold;
-          color: #1b5e20;
-        }
-        .nombre-comun {
-          color: #666;
-          font-style: italic;
-        }
-        .footer { 
-          margin-top: 15px; 
-          font-size: 6pt; 
-          color: #666; 
-          text-align: center; 
-          border-top: 1px solid #ddd;
-          padding-top: 5px;
-        }
-      </style>
-    </head>
-    <body>
-      <h1>🌿 ExploreNat - Informe de Biodiversidad</h1>
-      
-      <div class="info-area">
-        <strong>Fecha:</strong> ${fecha}<br>
-        <strong>Área:</strong> Centro: ${centro.lat.toFixed(4)}°, ${centro.lng.toFixed(4)}° | 
-           Extensión: ${((bounds.getNorth() - bounds.getSouth()) * (bounds.getEast() - bounds.getWest()) * 111 * 111).toFixed(0)} km²<br>
-        <strong>Total de especies:</strong> ${todasLasEspeciesParaInforme.length}
-      </div>
-  `;
-
-  // Procesar cada clase
-  for (const clase of clasesOrdenadas) {
-    const ordenes = especiesPorClase[clase];
-    const totalEnClase = Object.values(ordenes).reduce((sum, arr) => sum + arr.length, 0);
-    
-    contenidoHTML += `<h2>📊 ${clase} (${totalEnClase} especies)</h2>`;
-    
-    // Ordenar órdenes alfabéticamente
-    const ordenesOrdenadas = Object.keys(ordenes).sort();
-
-    for (const orden of ordenesOrdenadas) {
-      const especies = ordenes[orden];
-      
-      contenidoHTML += `<h3>📋 ${orden} (${especies.length} especies)</h3>`;
-      contenidoHTML += `<table>`;
-
-      // Procesar cada especie de este orden
-      for (const item of especies) {
-        const taxon = item.taxon;
-        
-        // Intentar cargar la imagen (tamaño pequeño)
-        let imagenHTML = '<div class="sin-imagen">📷</div>';
-        if (taxon.default_photo && taxon.default_photo.small_url) {
-          try {
-            const base64 = await obtenerImagenBase64(taxon.default_photo.small_url);
-            if (base64) {
-              imagenHTML = `<img class="especie-imagen" src="${base64}" alt="${taxon.name}">`;
-            }
-          } catch (e) {
-            console.error("Error con imagen:", e);
-          }
-        } else if (taxon.default_photo && taxon.default_photo.medium_url) {
-          try {
-            const base64 = await obtenerImagenBase64(taxon.default_photo.medium_url);
-            if (base64) {
-              imagenHTML = `<img class="especie-imagen" src="${base64}" alt="${taxon.name}">`;
-            }
-          } catch (e) {
-            console.error("Error con imagen:", e);
-          }
-        }
-        
-        contenidoHTML += `
-          <tr>
-            <td width="25px">${imagenHTML}</td>
-            <td><span class="nombre-cientifico">${taxon.name}</span></td>
-            <td><span class="nombre-comun">${taxon.preferred_common_name || '—'}</span></td>
-          </tr>
-        `;
-      }
-
-      contenidoHTML += `</table>`;
-    }
-  }
-
-  contenidoHTML += `
-      <div class="footer">
-        <p>Informe generado por ExploreNat - Datos proporcionados por iNaturalist.org</p>
-        <p>Total de especies: ${todasLasEspeciesParaInforme.length} | Fecha: ${fecha}</p>
-      </div>
-    </body>
-    </html>
-  `;
-
-  // Crear blob y descargar
-  const blob = new Blob([contenidoHTML], { type: 'application/msword' });
-  const url = window.URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = nombreArchivo;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  window.URL.revokeObjectURL(url);
-  
-  mensajeAyuda.innerHTML = `✅ Informe Word descargado con ${todasLasEspeciesParaInforme.length} especies y sus imágenes`;
-  mensajeAyuda.className = "success";
-}
-  // ============================================
-  // FUNCIÓN PARA MOSTRAR CITAS (OPTIMIZADA)
-  // ============================================
-  
-  async function mostrarCitasEspecie(taxonId, taxonNombre, elemento) {
-    if (!areaSeleccionada) {
-      alert("Primero dibuja un área en el mapa");
-      return;
-    }
-
-    console.log(`🔍 Mostrando citas para: ${taxonNombre} (ID: ${taxonId})`);
-
-    markersLayer.clearLayers();
-    document.querySelectorAll('.inat-card').forEach(card => {
-      card.classList.remove('selected');
-    });
-
-    if (elemento) {
-      elemento.classList.add('selected');
-    }
-
-    const soloResearch = document.getElementById("soloResearch").checked;
-    const bounds = areaSeleccionada;
-
-    const mensajeAyuda = document.getElementById("mensajeAyuda");
-    if (!mensajeAyuda) {
-      console.error("❌ No se encontró el elemento mensajeAyuda");
-      alert("Error: No se encontró el elemento de mensajes");
-      return;
-    }
-
-    try {
-      const urlTotal = `https://api.inaturalist.org/v1/observations?` +
-                       `taxon_id=${taxonId}` +
-                       `&verifiable=${soloResearch}` +
-                       `&per_page=1` +
-                       `&swlat=${bounds.getSouth()}&swlng=${bounds.getWest()}` +
-                       `&nelat=${bounds.getNorth()}&nelng=${bounds.getEast()}`;
-
-      const responseTotal = await fetch(urlTotal);
-      const dataTotal = await responseTotal.json();
-      
-      if (!dataTotal.total_results || dataTotal.total_results === 0) {
-        mensajeAyuda.innerHTML = `No hay citas de ${taxonNombre} en esta área`;
-        mensajeAyuda.className = "warning";
-        mensajeAyuda.style.display = "block";
-        return;
-      }
-
-      const totalCitas = dataTotal.total_results;
-      
-      taxonActualCitas = {
-        id: taxonId,
-        nombre: taxonNombre,
-        total: totalCitas
-      };
-      
-      const citasPorPagina = 100;
-      const paginasACargar = Math.min(2, Math.ceil(totalCitas / citasPorPagina));
-      
-      mensajeAyuda.innerHTML = `Cargando ${paginasACargar * citasPorPagina} citas de ${taxonNombre} (total: ${totalCitas})...`;
-      mensajeAyuda.className = "warning";
-      mensajeAyuda.style.display = "block";
-      
-      let citasMostradas = [];
-      
-      for (let pagina = 1; pagina <= paginasACargar; pagina++) {
-        const url = `https://api.inaturalist.org/v1/observations?` +
-                    `taxon_id=${taxonId}` +
-                    `&verifiable=${soloResearch}` +
-                    `&per_page=${citasPorPagina}` +
-                    `&page=${pagina}` +
-                    `&swlat=${bounds.getSouth()}&swlng=${bounds.getWest()}` +
-                    `&nelat=${bounds.getNorth()}&nelng=${bounds.getEast()}`;
-
-        const response = await fetch(url);
-        const data = await response.json();
-        
-        if (data.results && data.results.length > 0) {
-          citasMostradas = [...citasMostradas, ...data.results];
-        }
-      }
-
-      citasCargadas = citasMostradas;
-
-      if (citasMostradas.length === 0) {
-        mensajeAyuda.innerHTML = `No se pudieron cargar las citas de ${taxonNombre}`;
-        mensajeAyuda.className = "warning";
-        mensajeAyuda.style.display = "block";
-        return;
-      }
-
-      const estadisticas = mostrarCitasEnMapa(citasMostradas, taxonNombre);
-      
-      let mensajeHTML = `📍 Mostrando ${citasMostradas.length} de ${totalCitas} citas de ${taxonNombre}<br>` +
-                       `🟢 Exactas: ${estadisticas.exactas} | 🟠 Ocultas: ${estadisticas.ocultas} | 🟣 Privadas: ${estadisticas.privadas} | 🔵 M. precisión: ${estadisticas.metodo}`;
-      
-      if (totalCitas > citasMostradas.length) {
-        mensajeHTML += `<div class="botones-accion">
-                         <button class="button-cargar-todas" onclick="cargarTodasLasCitas()">📥 Cargar todas las citas (${totalCitas - citasMostradas.length} más)</button>
-                       </div>`;
-      }
-      
-      mensajeAyuda.innerHTML = mensajeHTML;
-      mensajeAyuda.className = "success";
-      mensajeAyuda.style.display = "block";
-
-    } catch (error) {
-      console.error("❌ Error:", error);
-      mensajeAyuda.innerHTML = `Error al cargar las citas: ${error.message}`;
-      mensajeAyuda.className = "warning";
-      mensajeAyuda.style.display = "block";
-    }
-  }
-
-  // ============================================
-  // FUNCIÓN AUXILIAR PARA MOSTRAR CITAS EN EL MAPA
-  // ============================================
-  
-  function mostrarCitasEnMapa(citas, taxonNombre) {
-    let exactas = 0, ocultas = 0, privadas = 0, metodo = 0;
-    let puntosValidos = 0;
-
-    markersLayer.clearLayers();
-
-    citas.forEach(obs => {
-      if (obs.geojson && obs.geojson.coordinates) {
-        const [lng, lat] = obs.geojson.coordinates;
-        
-        if (isNaN(lat) || isNaN(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
-          return;
-        }
-        
-        const locationType = getLocationType(obs);
-        const color = getMarkerColor(locationType);
-        
-        if (locationType === 'exacta') exactas++;
-        else if (locationType === 'oculta') ocultas++;
-        else if (locationType === 'privada') privadas++;
-        else if (locationType === 'metodo') metodo++;
-        
-        let precisionText = '';
-        if (obs.positional_accuracy) {
-          precisionText = `Precisión: ${obs.positional_accuracy}m`;
-        } else if (obs.public_positional_accuracy) {
-          precisionText = `Precisión: ${obs.public_positional_accuracy}m`;
-        } else if (obs.geoprivacy) {
-          precisionText = `Privacidad: ${obs.geoprivacy}`;
-        } else {
-          precisionText = 'Ubicación exacta';
-        }
-        
-        try {
-          L.circleMarker([lat, lng], {
-            radius: 6,
-            color: color,
-            weight: 2,
-            fillColor: color,
-            fillOpacity: 0.8
-          }).addTo(markersLayer).bindPopup(`
-            <b>${taxonNombre}</b><br>
-            📅 ${obs.observed_on || 'Fecha desconocida'}<br>
-            👤 ${obs.user?.login || 'Anónimo'}<br>
-            🏅 ${obs.quality_grade}<br>
-            📍 Tipo: ${locationType}<br>
-            ${precisionText}<br>
-            <a href="https://www.inaturalist.org/observations/${obs.id}" target="_blank">🔗 Ver en iNaturalist</a>
-          `);
-          
-          puntosValidos++;
-        } catch (markerError) {
-          console.error("Error creando marcador:", markerError);
-        }
-      }
-    });
-
-    if (markersLayer.getLayers().length > 0) {
-      try {
-        map.fitBounds(markersLayer.getBounds().pad(0.1));
-      } catch (boundsError) {
-        console.error("Error ajustando bounds:", boundsError);
-      }
-    }
-
-    return { exactas, ocultas, privadas, metodo, puntosValidos };
-  }
-
-  // ============================================
-  // FUNCIÓN PARA CARGAR TODAS LAS CITAS
-  // ============================================
-  
-  async function cargarTodasLasCitas() {
-    if (!taxonActualCitas) return;
-    
-    const mensajeAyuda = document.getElementById("mensajeAyuda");
-    const soloResearch = document.getElementById("soloResearch").checked;
-    const bounds = areaSeleccionada;
-    
-    try {
-      const totalCitas = taxonActualCitas.total;
-      const citasPorPagina = 100;
-      const totalPaginas = Math.ceil(totalCitas / citasPorPagina);
-      
-      mensajeAyuda.innerHTML = `Cargando todas las citas de ${taxonActualCitas.nombre}...`;
-      mensajeAyuda.className = "warning";
-      mensajeAyuda.style.display = "block";
-      
-      let todasLasCitas = [...citasCargadas];
-      
-      for (let pagina = 3; pagina <= totalPaginas; pagina++) {
-        mensajeAyuda.innerHTML = 
-          `Cargando citas de ${taxonActualCitas.nombre}... Página ${pagina} de ${totalPaginas}`;
-        
-        const url = `https://api.inaturalist.org/v1/observations?` +
-                    `taxon_id=${taxonActualCitas.id}` +
-                    `&verifiable=${soloResearch}` +
-                    `&per_page=${citasPorPagina}` +
-                    `&page=${pagina}` +
-                    `&swlat=${bounds.getSouth()}&swlng=${bounds.getWest()}` +
-                    `&nelat=${bounds.getNorth()}&nelng=${bounds.getEast()}`;
-
-        const response = await fetch(url);
-        const data = await response.json();
-        
-        if (data.results && data.results.length > 0) {
-          todasLasCitas = [...todasLasCitas, ...data.results];
-        }
-        
-        await new Promise(resolve => setTimeout(resolve, 100));
-      }
-
-      const estadisticas = mostrarCitasEnMapa(todasLasCitas, taxonActualCitas.nombre);
-      
-      mensajeAyuda.innerHTML = 
-        `📍 Mostrando TODAS las ${todasLasCitas.length} citas de ${taxonActualCitas.nombre}<br>` +
-        `🟢 Exactas: ${estadisticas.exactas} | 🟠 Ocultas: ${estadisticas.ocultas} | 🟣 Privadas: ${estadisticas.privadas} | 🔵 M. precisión: ${estadisticas.metodo}`;
-      mensajeAyuda.className = "success";
-      mensajeAyuda.style.display = "block";
-
-    } catch (error) {
-      console.error("❌ Error:", error);
-      mensajeAyuda.innerHTML = `Error al cargar todas las citas: ${error.message}`;
-      mensajeAyuda.className = "warning";
-      mensajeAyuda.style.display = "block";
-    }
-  }
-
-  // ============================================
-  // BUSCADOR DE TAXONES
-  // ============================================
-  
-  document.getElementById("buscadorTaxon").addEventListener("input", async function(e) {
-    const query = e.target.value.trim();
-    if (query.length < 3) {
-      document.getElementById("sugerenciasTaxon").innerHTML = '';
-      return;
-    }
-    
-    try {
-      const response = await fetch(
-        `https://api.inaturalist.org/v1/taxa?q=${encodeURIComponent(query)}&per_page=8&all_names=true`,
-        { headers: { 'User-Agent': 'ExploreNat/1.0' } }
-      );
-      const data = await response.json();
-      
-      if (!data.results || data.results.length === 0) return;
-      
-      let html = '<div class="sugerencias-taxon-container">';
-      data.results.forEach(taxon => {
-        const nombreComun = taxon.preferred_common_name || '';
-        const nombreCientifico = taxon.name;
-        const rango = taxon.rank?.toLowerCase() || 'taxón';
-        
-        let icono = '🔬';
-        if (rango === 'species') icono = '🦋';
-        else if (rango === 'genus') icono = '🌿';
-        else if (rango === 'family') icono = '🌳';
-        else if (rango === 'order') icono = '📋';
-        else if (rango === 'class') icono = '📊';
-        
-        html += `<div class="sugerencia-item" onclick="seleccionarTaxon(${taxon.id}, '${taxon.name.replace(/'/g, "\\'")}', '${rango}')">`;
-        html += `<div style="font-size: 18px; min-width: 30px;">${icono}</div>`;
-        html += `<div class="taxon-info">`;
-        html += `<div class="taxon-name">${nombreCientifico}</div>`;
-        html += `<div class="taxon-rank">${rango} ${nombreComun ? '• ' + nombreComun : ''}</div>`;
-        html += `</div>`;
-        html += `</div>`;
-      });
+  var html = '';
+  Object.entries(grupos).forEach(function(entry) {
+    var g = entry[0], items = entry[1];
+    html += '<div class="cl-grp-title">' + (items[0].grupoIcon||'') + ' ' + g + ' (' + items.length + ')</div>';
+    items.forEach(function(item) {
+      var t = item.taxon;
+      var imgSrc = t.default_photo && (t.default_photo.square_url || t.default_photo.medium_url);
+      html += '<div class="cl-item">';
+      html += imgSrc ? '<img src="'+imgSrc+'" alt="'+t.name+'" loading="lazy">' : '<div class="cl-item-ph">'+(item.grupoIcon||'🔬')+'</div>';
+      html += '<div class="cl-item-info">' +
+        '<div class="cl-item-sci">' + t.name + '</div>' +
+        '<div class="cl-item-com">' + (t.preferred_common_name||'-') + '</div></div>';
+      html += '<div class="cl-obs' + (item.observed?' ok':'') + '" onclick="toggleObservado('+t.id+')">' + (item.observed?'✓':'') + '</div>';
+      html += '<span class="cl-rm" onclick="toggleCL('+t.id+')">x</span>';
       html += '</div>';
-      
-      document.getElementById("sugerenciasTaxon").innerHTML = html;
-    } catch (error) {
-      console.error("Error:", error);
-    }
+    });
   });
+  body.innerHTML = html;
+}
 
-  window.seleccionarTaxon = function(taxonId, taxonNombre, rango) {
-    document.getElementById("buscadorTaxon").value = taxonNombre;
-    document.getElementById("sugerenciasTaxon").innerHTML = '';
-    buscarTaxonPorId(taxonId, taxonNombre, rango);
+// ============================================================
+// MINI-MAPAS EN CANVAS
+// ============================================================
+function latLngToPixel(lat, lng, zoom, tileX, tileY, offsetX, offsetY) {
+  var n = Math.pow(2, zoom);
+  var xTile = (lng + 180) / 360 * n;
+  var yTile = (1 - Math.log(Math.tan(lat * Math.PI / 180) + 1 / Math.cos(lat * Math.PI / 180)) / Math.PI) / 2 * n;
+  return {
+    px: offsetX + (xTile - tileX) * 256,
+    py: offsetY + (yTile - tileY) * 256
   };
+}
 
-  async function buscarTaxon() {
-    const nombre = document.getElementById("buscadorTaxon").value.trim();
-    if (!nombre) return alert("Escribe el nombre de un taxón");
-    if (!areaSeleccionada) {
-      alert("Primero selecciona un área en el mapa");
+function latLngToTile(lat, lng, zoom) {
+  var n = Math.pow(2, zoom);
+  return {
+    xTile: (lng + 180) / 360 * n,
+    yTile: (1 - Math.log(Math.tan(lat * Math.PI / 180) + 1 / Math.cos(lat * Math.PI / 180)) / Math.PI) / 2 * n
+  };
+}
+
+function mejorZoom(bounds, W, H) {
+  var s = bounds.getSouth(), n = bounds.getNorth(), w = bounds.getWest(), e = bounds.getEast();
+  for (var z = 14; z >= 3; z--) {
+    var p1 = latLngToTile(n, w, z);
+    var p2 = latLngToTile(s, e, z);
+    if (Math.abs(p2.xTile - p1.xTile)*256 <= W && Math.abs(p2.yTile - p1.yTile)*256 <= H) return z;
+  }
+  return 3;
+}
+
+function cargarTile(ctx, tx, ty, zoom, ox, oy) {
+  return new Promise(function(resolve) {
+    var url = 'https://tile.openstreetmap.org/' + zoom + '/' + Math.floor(tx) + '/' + Math.floor(ty) + '.png';
+    var img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = function() {
+      try { ctx.drawImage(img, ox, oy, 256, 256); } catch(e) {}
+      resolve();
+    };
+    img.onerror = function() { resolve(); };
+    img.src = url;
+  });
+}
+
+function generarMinimapa(bounds, observaciones) {
+  return new Promise(function(resolve) {
+    var W = 200, H = 150;
+    var canvas = document.createElement('canvas');
+    canvas.width = W; canvas.height = H;
+    var ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#e8e4da';
+    ctx.fillRect(0, 0, W, H);
+
+    var s = bounds.getSouth(), n = bounds.getNorth();
+    var w = bounds.getWest(),  e = bounds.getEast();
+    var cLat = (s+n)/2, cLng = (w+e)/2;
+    var zoom = mejorZoom(bounds, W, H);
+    var ct = latLngToTile(cLat, cLng, zoom);
+    var cTileX = Math.floor(ct.xTile), cTileY = Math.floor(ct.yTile);
+    var startX = W/2 - (ct.xTile - cTileX)*256;
+    var startY = H/2 - (ct.yTile - cTileY)*256;
+
+    var promises = [];
+    for (var dy = -1; dy <= 1; dy++) {
+      for (var dx = -1; dx <= 1; dx++) {
+        promises.push(cargarTile(ctx, cTileX+dx, cTileY+dy, zoom, startX+dx*256, startY+dy*256));
+      }
+    }
+
+    Promise.all(promises).then(function() {
+      // Rectangulo del area
+      var p1 = latLngToTile(n, w, zoom);
+      var p2 = latLngToTile(s, e, zoom);
+      ctx.strokeStyle = '#3a5728'; ctx.lineWidth = 1.5;
+      ctx.setLineDash([4,3]);
+      ctx.strokeRect(
+        startX + (p1.xTile-cTileX)*256, startY + (p1.yTile-cTileY)*256,
+        (p2.xTile-p1.xTile)*256, (p2.yTile-p1.yTile)*256
+      );
+      ctx.setLineDash([]);
+
+      // Puntos
+      observaciones.forEach(function(o) {
+        if (!o.geojson || !o.geojson.coordinates) return;
+        var lng = o.geojson.coordinates[0], lat = o.geojson.coordinates[1];
+        if (isNaN(lat)||isNaN(lng)) return;
+        var pt = latLngToTile(lat, lng, zoom);
+        var px = startX + (pt.xTile-cTileX)*256;
+        var py = startY + (pt.yTile-cTileY)*256;
+        if (px < 0 || px > W || py < 0 || py > H) return;
+        var color = (o.geoprivacy==='private'||o.geoprivacy==='obscured') ? '#9C27B0' :
+                    (o.positional_accuracy && o.positional_accuracy>=500) ? '#FF9800' : '#4CAF50';
+        ctx.beginPath(); ctx.arc(px, py, 3.5, 0, Math.PI*2);
+        ctx.fillStyle = color; ctx.fill();
+        ctx.strokeStyle = 'rgba(255,255,255,0.7)'; ctx.lineWidth = 0.8; ctx.stroke();
+      });
+
+      // Marco
+      ctx.strokeStyle = '#7a6e5f'; ctx.lineWidth = 1;
+      ctx.strokeRect(0.5, 0.5, W-1, H-1);
+      ctx.fillStyle = 'rgba(255,255,255,0.65)';
+      ctx.fillRect(0, H-11, W, 11);
+      ctx.fillStyle = '#555'; ctx.font = '6px sans-serif';
+      ctx.fillText('OpenStreetMap - iNaturalist', 3, H-2);
+
+      try { resolve(canvas.toDataURL('image/png')); }
+      catch(e) { resolve(null); }
+    });
+  });
+}
+
+function obtenerObsParaMapa(taxonId, bounds) {
+  var b = bounds;
+  var sr = document.getElementById('soloResearch').checked;
+  return fetch('https://api.inaturalist.org/v1/observations?taxon_id=' + taxonId +
+    '&verifiable=true' + (sr ? '&quality_grade=research' : '') + '&per_page=50' +
+    buildAreaParams())
+  .then(function(r) { return r.json(); })
+  .then(function(d) { return d.results || []; })
+  .catch(function() { return []; });
+}
+
+// ============================================================
+// CARGAR TODAS LAS ESPECIES
+// ============================================================
+function cargarTodasLasEspecies() {
+  if (!S.area) { toast('Primero selecciona un area'); return Promise.resolve(null); }
+  var prog = document.getElementById('exportProgress');
+  var txt  = document.getElementById('exportProgressTxt');
+  prog.classList.add('on');
+
+  var perPag = 200;
+
+  return fetch(buildBase() + buildExtra() + '&per_page=1')
+  .then(function(r) { return r.json(); })
+  .then(function(dt) {
+    var total = dt.total_results || 0;
+    if (!total) { prog.classList.remove('on'); toast('No hay especies'); return null; }
+
+    var totalPags = Math.ceil(total / perPag);
+    var todas = [];
+
+    function cargarSiguiente(p) {
+      if (p > totalPags) { prog.classList.remove('on'); return Promise.resolve(todas); }
+      txt.textContent = 'Cargando ' + todas.length + ' de ' + total + '...';
+      return fetch(buildBase() + buildExtra() + '&per_page=' + perPag + '&page=' + p)
+      .then(function(r) { return r.json(); })
+      .then(function(d) {
+        if (d.results) todas = todas.concat(d.results);
+        return new Promise(function(res) { setTimeout(function() { res(cargarSiguiente(p+1)); }, 120); });
+      });
+    }
+    return cargarSiguiente(1);
+  });
+}
+
+// ============================================================
+// OBTENER FAMILIA
+// ============================================================
+// Enriquece todas las especies con su familia consultando la API de taxa
+// en lotes de 30 IDs a la vez (mucho mas eficiente que una llamada por especie)
+function enriquecerFamilias(todas, onProgress) {
+  var LOTE = 30;
+  var idx = 0;
+
+  function siguiente() {
+    if (idx >= todas.length) return Promise.resolve();
+    var lote = todas.slice(idx, idx + LOTE);
+    idx += LOTE;
+    onProgress(Math.min(idx, todas.length), todas.length);
+
+    // Construir lista de IDs que aun no tienen familia
+    var ids = lote.map(function(item) { return item.taxon.id; }).join(',');
+
+    // /taxa acepta hasta 30 IDs en una sola llamada y devuelve ancestors completos
+    return fetch(
+      'https://api.inaturalist.org/v1/taxa?taxon_id=' + ids +
+      '&all_names=false&per_page=30'
+    )
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      // Construir mapa id -> familia
+      var familiaMap = {};
+      (d.results || []).forEach(function(t) {
+        var ancs = t.ancestors || [];
+        var fam = null;
+        for (var i = 0; i < ancs.length; i++) {
+          if (ancs[i].rank === 'family') { fam = ancs[i].name; break; }
+        }
+        // Si no hay ancestors (puede pasar), intentar con taxon_id del propio taxon
+        // buscando en el campo ancestor_ids + rank del taxon
+        if (!fam && t.rank === 'family') fam = t.name;
+        familiaMap[t.id] = fam;
+      });
+
+      // Asignar familia a cada item del lote
+      lote.forEach(function(item) {
+        item._familia = familiaMap[item.taxon.id] || null;
+      });
+    })
+    .catch(function() {
+      // Si falla el lote, dejar _familia = null (se agrupara como Sin familia)
+      lote.forEach(function(item) { item._familia = item._familia || null; });
+    })
+    .then(function() {
+      // Para los que siguen sin familia, intentar con una llamada individual
+      // usando el campo iconic_taxon que a veces da pistas
+      var sinFamilia = lote.filter(function(item) { return !item._familia; });
+      if (!sinFamilia.length) {
+        return new Promise(function(res) { setTimeout(function() { res(siguiente()); }, 60); });
+      }
+      // Segunda pasada: consultar individualmente los que fallaron
+      var ids2 = sinFamilia.map(function(item) { return item.taxon.id; }).join(',');
+      return fetch(
+        'https://api.inaturalist.org/v1/taxa?taxon_id=' + ids2 +
+        '&all_names=false&per_page=30&order_by=id'
+      )
+      .then(function(r) { return r.json(); })
+      .then(function(d2) {
+        var familiaMap2 = {};
+        (d2.results || []).forEach(function(t) {
+          // Buscar familia en ancestors
+          var ancs = t.ancestors || [];
+          var fam = null;
+          for (var i = 0; i < ancs.length; i++) {
+            if (ancs[i].rank === 'family') { fam = ancs[i].name; break; }
+          }
+          // Alternativa: ancestor_ids no viene con nombres, pero el nombre del taxon
+          // puede ser la familia si rank === family
+          if (!fam && t.rank === 'family') fam = t.name;
+          // Otro intento: buscar en default_taxon_summary si existe
+          familiaMap2[t.id] = fam;
+        });
+        sinFamilia.forEach(function(item) {
+          item._familia = familiaMap2[item.taxon.id] || 'Sin familia';
+        });
+      })
+      .catch(function() {
+        sinFamilia.forEach(function(item) { item._familia = item._familia || 'Sin familia'; });
+      })
+      .then(function() {
+        return new Promise(function(res) { setTimeout(function() { res(siguiente()); }, 60); });
+      });
+    });
+  }
+  return siguiente();
+}
+
+// ============================================================
+// CONSTRUIR HTML WORD
+// ============================================================
+function construirWordHTML(lista, conMapas, mapasPorId, fecha, filtroLabel) {
+  var grupos = {};
+  lista.forEach(function(item) {
+    var info = inferirGrupo(item.taxon);
+    var gLabel = info.g.label;
+    if (!grupos[gLabel]) grupos[gLabel] = { icon: info.g.icon, familias: {} };
+    var familia = item._familia || 'Sin familia';
+    if (!grupos[gLabel].familias[familia]) grupos[gLabel].familias[familia] = [];
+    grupos[gLabel].familias[familia].push(item);
+  });
+
+  var gruposOrdenados = Object.entries(grupos).sort(function(a,b) {
+    var nA = Object.values(a[1].familias).reduce(function(s,arr){return s+arr.length;},0);
+    var nB = Object.values(b[1].familias).reduce(function(s,arr){return s+arr.length;},0);
+    return nB - nA;
+  });
+
+  var body = '';
+  gruposOrdenados.forEach(function(entry) {
+    var grupoNombre = entry[0], data = entry[1];
+    var totalGrupo = Object.values(data.familias).reduce(function(s,arr){return s+arr.length;},0);
+    body += '<h2>' + data.icon + ' ' + grupoNombre + ' (' + totalGrupo + ' especies)</h2>';
+
+    var familiasOrdenadas = Object.entries(data.familias).sort(function(a,b){return a[0].localeCompare(b[0]);});
+    familiasOrdenadas.forEach(function(fEntry) {
+      var familiaName = fEntry[0], items = fEntry[1];
+      items.sort(function(a,b) {
+        var gA = a.taxon.name.split(' ')[0], gB = b.taxon.name.split(' ')[0];
+        return gA.localeCompare(gB) || a.taxon.name.localeCompare(b.taxon.name);
+      });
+
+      body += '<div class="familia-hdr"><span class="familia-name">Familia ' + familiaName + '</span><span class="familia-count">' + items.length + ' sp.</span></div>';
+      body += '<table><thead><tr><th style="width:78px">Foto</th><th>Nombre cientifico</th><th>Nombre comun</th><th style="width:55px;text-align:center">Obs.</th>';
+      if (conMapas) body += '<th style="width:210px">Distribucion</th>';
+      body += '</tr></thead><tbody>';
+
+      items.forEach(function(item) {
+        var t = item.taxon;
+        var imgSrc = t.default_photo && (t.default_photo.square_url || t.default_photo.medium_url);
+        var imgTag = imgSrc ? '<img src="' + imgSrc + '" width="70" height="70" style="width:70px;height:70px;object-fit:cover;border-radius:4px">' : '-';
+        var partes = t.name.split(' ');
+        var genero = partes[0];
+        var epiteto = partes.slice(1).join(' ');
+        var mapaTag = '';
+        if (conMapas) {
+          var dataUrl = mapasPorId[t.id];
+          mapaTag = dataUrl ?
+            '<img src="' + dataUrl + '" width="200" height="150" style="width:200px;height:150px;border:1px solid #ddd;border-radius:3px;display:block">' :
+            '<span style="font-size:8pt;color:#aaa">Sin datos</span>';
+        }
+
+        body += '<tr><td>' + imgTag + '</td>';
+        body += '<td><i><b>' + genero + '</b>' + (epiteto ? ' '+epiteto : '') + '</i></td>';
+        body += '<td style="color:#555">' + (t.preferred_common_name||'-') + '</td>';
+        body += '<td style="text-align:center;color:#888;font-size:8pt">' + item.count + '</td>';
+        if (conMapas) body += '<td style="padding:3pt 4pt;vertical-align:middle">' + mapaTag + '</td>';
+        body += '</tr>';
+      });
+      body += '</tbody></table>';
+    });
+  });
+
+  return '<html xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">' +
+    '<head><meta charset="UTF-8"><style>' +
+    'body{font-family:Cambria,Georgia,serif;margin:1.5cm;font-size:10pt;color:#191510}' +
+    'h1{color:#3a5728;font-size:16pt;border-bottom:2pt solid #587840;padding-bottom:5pt;margin-bottom:10pt}' +
+    'h2{color:#3a5728;font-size:12pt;background:#f0ede4;padding:5pt 8pt;border-left:5pt solid #587840;margin-top:18pt;margin-bottom:4pt}' +
+    '.familia-hdr{background:#e8f2e0;padding:3pt 8pt;border-left:3pt solid #89ab6b;margin-top:10pt;margin-bottom:0}' +
+    '.familia-name{font-size:10pt;font-weight:bold;font-style:italic;color:#3a5728}' +
+    '.familia-count{font-size:8pt;color:#7a6e5f;margin-left:10pt}' +
+    '.info{background:#eef5e6;padding:8pt;border-left:3pt solid #587840;margin:10pt 0;font-size:9pt;color:#444;line-height:1.6}' +
+    'table{border-collapse:collapse;width:100%;margin-top:0;margin-bottom:4pt;font-size:9pt}' +
+    'th{background:#3a5728;color:#f6f0e4;padding:3pt 6pt;text-align:left;font-size:7.5pt;font-weight:normal}' +
+    'td{padding:4pt 6pt;border-bottom:1pt solid #ede5d8;vertical-align:middle}' +
+    'tr:nth-child(even) td{background:#faf7f1}' +
+    '.footer{margin-top:20pt;font-size:7pt;color:#aaa;border-top:1pt solid #e4dccf;padding-top:6pt}' +
+    '</style></head><body>' +
+    '<h1>NatTrip - Listado de especies</h1>' +
+    '<div class="info"><b>Area:</b> ' + S.areaLabel + filtroLabel + '<br>' +
+    '<b>Fecha:</b> ' + fecha + ' - <b>Total:</b> ' + lista.length + ' especies<br>' +
+    '<b>Organizacion:</b> Grupo - Familia - Genero</div>' +
+    body +
+    '<p class="footer">NatTrip - iNaturalist.org - ' + fecha + '</p>' +
+    '</body></html>';
+}
+
+// ============================================================
+// EXPORTAR TODO WORD
+// ============================================================
+function exportarTodoWord(conMapas) {
+  if (!S.area) { toast('Primero selecciona un area'); return; }
+  var prog = document.getElementById('exportProgress');
+  var txt  = document.getElementById('exportProgressTxt');
+
+  cargarTodasLasEspecies().then(function(todas) {
+    if (!todas || !todas.length) return;
+
+    var listaFinal = todas;
+    if (conMapas && todas.length > 50) {
+      var limite = parseInt(window.prompt(
+        'Tienes ' + todas.length + ' especies. Con mapas puede tardar varios minutos.\n' +
+        'Cuantas especies incluir? (las mas observadas)\nDeja vacio para todas.',
+        '80'
+      ));
+      if (!isNaN(limite) && limite > 0) listaFinal = todas.slice(0, limite);
+    }
+
+    prog.classList.add('on');
+    txt.textContent = 'Obteniendo familias...';
+
+    enriquecerFamilias(listaFinal, function(done, total2) {
+      txt.textContent = 'Familias: ' + done + ' / ' + total2;
+    }).then(function() {
+      if (!conMapas) {
+        var fecha = new Date().toLocaleDateString('es-ES');
+        var filtroLabel = S.taxonNombre ? ' - '+S.taxonNombre : (S.pilId ? ' - '+(GRUPOS[S.pilId]||{label:''}).label : '');
+        var html = construirWordHTML(listaFinal, false, {}, fecha, filtroLabel);
+        prog.classList.remove('on');
+        descargarDoc(html, 'NatTrip_' + sanFile(S.areaLabel) + '.doc');
+        toast('Word descargado - ' + listaFinal.length + ' especies');
+        return;
+      }
+
+      // Con mapas: generar de forma secuencial
+      var mapasPorId = {};
+      var i = 0;
+
+      function siguienteEspecie() {
+        if (i >= listaFinal.length) return Promise.resolve();
+        var item = listaFinal[i++];
+        txt.textContent = 'Mapa ' + i + '/' + listaFinal.length + ': ' + item.taxon.name;
+        return obtenerObsParaMapa(item.taxon.id, S.area).then(function(obs) {
+          if (obs.length === 0) return Promise.resolve();
+          return generarMinimapa(S.area, obs).then(function(dataUrl) {
+            if (dataUrl) mapasPorId[item.taxon.id] = dataUrl;
+          });
+        }).then(function() {
+          return new Promise(function(res) { setTimeout(function() { res(siguienteEspecie()); }, 50); });
+        });
+      }
+
+      siguienteEspecie().then(function() {
+        var fecha = new Date().toLocaleDateString('es-ES');
+        var filtroLabel = S.taxonNombre ? ' - '+S.taxonNombre : (S.pilId ? ' - '+(GRUPOS[S.pilId]||{label:''}).label : '');
+        var html = construirWordHTML(listaFinal, true, mapasPorId, fecha, filtroLabel);
+        prog.classList.remove('on');
+        descargarDoc(html, 'NatTrip_mapas_' + sanFile(S.areaLabel) + '.doc');
+        toast('Word+mapas descargado - ' + listaFinal.length + ' especies');
+      });
+    });
+  });
+}
+
+function exportarTodoCSV() {
+  if (!S.area) { toast('Primero selecciona un area'); return; }
+  cargarTodasLasEspecies().then(function(todas) {
+    if (!todas || !todas.length) return;
+    var rows = [['Nombre cientifico','Nombre comun','Grupo','Observaciones','URL iNaturalist','Area','Fecha']];
+    todas.forEach(function(item) {
+      var t = item.taxon;
+      var info = inferirGrupo(t);
+      rows.push([t.name||'', t.preferred_common_name||'', info.g.label, item.count,
+        'https://www.inaturalist.org/taxa/'+t.id, S.areaLabel, new Date().toLocaleDateString('es-ES')]);
+    });
+    var csv = rows.map(function(r) {
+      return r.map(function(v) { return '"'+String(v).replace(/"/g,'""')+'"'; }).join(',');
+    }).join('\r\n');
+    var blob = new Blob(['\uFEFF'+csv], {type:'text/csv;charset=utf-8;'});
+    descargarBlob(blob, 'NatTrip_'+sanFile(S.areaLabel)+'.csv');
+    toast('CSV descargado - ' + todas.length + ' especies');
+  });
+}
+
+// ============================================================
+// EXPORTAR CHECKLIST PDF
+// ============================================================
+function exportarPDF() {
+  if (!S.checklist.length) { toast('Checklist vacio'); return; }
+  toast('Generando PDF...');
+  var jsPDF = window.jspdf.jsPDF;
+  var doc = new jsPDF({unit:'mm', format:'a4'});
+  var W=210, M=15, y=M;
+  var verde=[58,87,40], verdeC=[88,120,64], arena=[246,240,228], piedra=[122,110,95], ink=[25,21,16];
+
+  doc.setFillColor.apply(doc, verde); doc.rect(0,0,W,30,'F');
+  doc.setTextColor(246,240,228); doc.setFont('times','bold'); doc.setFontSize(20);
+  doc.text('NatTrip - Checklist de campo', M, 13);
+  doc.setFont('times','normal'); doc.setFontSize(9);
+  doc.text('Area: '+S.areaLabel, M, 20);
+  doc.text('Fecha: '+new Date().toLocaleDateString('es-ES')+' - '+S.checklist.length+' especies - '+S.checklist.filter(function(c){return c.observed;}).length+' observadas', M, 26);
+  y = 40;
+
+  var grupos = {};
+  S.checklist.forEach(function(item) {
+    var g = item.grupo||'Sin grupo';
+    if (!grupos[g]) grupos[g] = [];
+    grupos[g].push(item);
+  });
+
+  function procesarGrupo(entries, idx) {
+    if (idx >= entries.length) {
+      var nPag = doc.internal.getNumberOfPages();
+      for (var i=1; i<=nPag; i++) {
+        doc.setPage(i); doc.setFillColor.apply(doc, verde); doc.rect(0,290,W,8,'F');
+        doc.setTextColor(246,240,228); doc.setFont('times','normal'); doc.setFontSize(7);
+        doc.text('NatTrip - iNaturalist.org - Pagina '+i+'/'+nPag, M, 296);
+      }
+      doc.save('NatTrip_checklist_'+sanFile(S.areaLabel)+'.pdf');
+      toast('PDF descargado');
       return;
     }
+    var grupo = entries[idx][0], items = entries[idx][1];
+    if (y > 268) { doc.addPage(); y = M; }
+    doc.setFillColor.apply(doc, arena); doc.rect(M,y,W-M*2,8,'F');
+    doc.setFillColor.apply(doc, verdeC); doc.rect(M,y,3,8,'F');
+    doc.setTextColor.apply(doc, verde); doc.setFont('times','bold'); doc.setFontSize(11);
+    doc.text(grupo+' ('+items.length+')', M+6, y+5.5);
+    y += 12;
 
-    try {
-      const taxonRes = await fetch(`https://api.inaturalist.org/v1/taxa?q=${encodeURIComponent(nombre)}&per_page=1`);
-      const taxonData = await taxonRes.json();
-      
-      if (!taxonData.results || taxonData.results.length === 0) {
-        document.getElementById("resultadosBusquedaTaxon").innerHTML = "Taxón no encontrado";
-        return;
-      }
-
-      const taxon = taxonData.results[0];
-      await buscarTaxonPorId(taxon.id, taxon.name, taxon.rank);
-
-    } catch (error) {
-      document.getElementById("resultadosBusquedaTaxon").innerHTML = `Error: ${error.message}`;
-    }
-  }
-
-  async function buscarTaxonPorId(taxonId, taxonNombre, rango) {
-    if (!areaSeleccionada) {
-      alert("Primero selecciona un área en el mapa");
-      return;
-    }
-
-    document.getElementById("todasEspeciesSeccion").style.display = "none";
-    document.getElementById("resultadosTaxonSeccion").style.display = "block";
-    document.getElementById("resultadosTaxonTitulo").innerHTML = `🔍 Resultados para: ${taxonNombre} (${rango})`;
-    document.getElementById("resultadosBusquedaTaxon").innerHTML = '<div class="cargando-mensaje">Buscando especies...</div>';
-    document.getElementById("paginacionTaxon").innerHTML = '';
-
-    const soloResearch = document.getElementById("soloResearch").checked;
-    const bounds = areaSeleccionada;
-
-    try {
-      const urlTotal = `https://api.inaturalist.org/v1/observations/species_counts?` +
-                       `verifiable=${soloResearch}` +
-                       `&taxon_id=${taxonId}` +
-                       `&per_page=1` +
-                       `&swlat=${bounds.getSouth()}` +
-                       `&swlng=${bounds.getWest()}` +
-                       `&nelat=${bounds.getNorth()}` +
-                       `&nelng=${bounds.getEast()}`;
-
-      const responseTotal = await fetch(urlTotal);
-      const dataTotal = await responseTotal.json();
-
-      if (!dataTotal.total_results || dataTotal.total_results === 0) {
-        document.getElementById("resultadosBusquedaTaxon").innerHTML = 
-          `<div class="warning">No se encontraron especies de ${taxonNombre} en esta área</div>`;
-        return;
-      }
-
-      totalEspeciesTaxon = dataTotal.total_results;
-      taxonActual = { id: taxonId, nombre: taxonNombre, rango: rango };
-      
-      await cargarPaginaTaxon(1);
-
-    } catch (error) {
-      document.getElementById("resultadosBusquedaTaxon").innerHTML = `Error: ${error.message}`;
-    }
-  }
-
-  async function cargarPaginaTaxon(pagina) {
-    if (!areaSeleccionada || !taxonActual) return;
-    
-    paginaActualTaxon = pagina;
-    
-    document.getElementById("resultadosBusquedaTaxon").innerHTML = '<div class="cargando-mensaje">Cargando página...</div>';
-    
-    const soloResearch = document.getElementById("soloResearch").checked;
-    const bounds = areaSeleccionada;
-    
-    try {
-      const url = `https://api.inaturalist.org/v1/observations/species_counts?` +
-                  `verifiable=${soloResearch}` +
-                  `&taxon_id=${taxonActual.id}` +
-                  `&per_page=${especiesPorPagina}` +
-                  `&page=${pagina}` +
-                  `&swlat=${bounds.getSouth()}` +
-                  `&swlng=${bounds.getWest()}` +
-                  `&nelat=${bounds.getNorth()}` +
-                  `&nelng=${bounds.getEast()}`;
-
-      const response = await fetch(url);
-      const data = await response.json();
-      
-      if (!data.results || data.results.length === 0) {
-        document.getElementById("resultadosBusquedaTaxon").innerHTML = "No hay especies en esta página";
-        return;
-      }
-
-      await mostrarPaginaTaxon(data.results);
-      actualizarBotonesPaginacionTaxon();
-
-    } catch (error) {
-      document.getElementById("resultadosBusquedaTaxon").innerHTML = `Error: ${error.message}`;
-    }
-  }
-
-  async function mostrarPaginaTaxon(especiesPagina) {
-    let html = `<div class="stats">📊 Total especies: ${totalEspeciesTaxon} (página ${paginaActualTaxon})</div>`;
-
-    for (let i = 0; i < especiesPagina.length; i++) {
-      const item = especiesPagina[i];
-      const taxon = item.taxon;
-      
-      if (!cacheFenologia[taxon.id]) {
-        cacheFenologia[taxon.id] = await obtenerFenologia(taxon.id);
-      }
-      const fenologia = cacheFenologia[taxon.id];
-      
-      html += `<div class="inat-card" onclick="mostrarCitasEspecie(${taxon.id}, '${taxon.name.replace(/'/g, "\\'")}', this)">`;
-      
-      if (taxon.default_photo && taxon.default_photo.medium_url) {
-        html += `<img class="inat-imagen" src="${taxon.default_photo.medium_url}" alt="${taxon.name}">`;
+    function procesarItem(ii) {
+      if (ii >= items.length) { procesarGrupo(entries, idx+1); return; }
+      if (y > 272) { doc.addPage(); y = M; }
+      var item = items[ii], t = item.taxon, H = 15;
+      doc.setFillColor(item.observed?238:255, item.observed?247:255, item.observed?232:255);
+      doc.rect(M,y,W-M*2,H,'F');
+      doc.setDrawColor(228,220,207); doc.setLineWidth(.2); doc.line(M,y+H,W-M,y+H);
+      doc.setDrawColor(122,110,95); doc.setLineWidth(.4); doc.rect(M+1,y+3,5,5);
+      if (item.observed) { doc.setTextColor.apply(doc,verdeC); doc.setFontSize(9); doc.text('v',M+2,y+7.5); }
+      var imgSrc = t.default_photo && (t.default_photo.square_url||t.default_photo.medium_url);
+      if (imgSrc) {
+        var proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(imgSrc);
+        var img = new Image(); img.crossOrigin='anonymous';
+        img.onload = function() {
+          try { var c=document.createElement('canvas'); c.width=img.width; c.height=img.height; c.getContext('2d').drawImage(img,0,0); var b64=c.toDataURL('image/jpeg'); doc.addImage(b64,'JPEG',M+9,y+1.5,12,12); } catch(e) {}
+          doc.setTextColor.apply(doc, ink); doc.setFont('times','italic'); doc.setFontSize(9.5); doc.text(t.name||'',M+24,y+7);
+          doc.setFont('times','normal'); doc.setTextColor.apply(doc, piedra); doc.setFontSize(8); doc.text(t.preferred_common_name||'-',M+24,y+12);
+          y += H; procesarItem(ii+1);
+        };
+        img.onerror = function() {
+          doc.setTextColor.apply(doc, ink); doc.setFont('times','italic'); doc.setFontSize(9.5); doc.text(t.name||'',M+24,y+7);
+          doc.setFont('times','normal'); doc.setTextColor.apply(doc, piedra); doc.setFontSize(8); doc.text(t.preferred_common_name||'-',M+24,y+12);
+          y += H; procesarItem(ii+1);
+        };
+        img.src = proxyUrl;
       } else {
-        html += `<div class="inat-placeholder">📷</div>`;
-      }
-      
-      html += `<div class="inat-info">`;
-      html += `<div class="inat-titulo">${taxon.name} 
-               <a href="https://www.inaturalist.org/taxa/${taxon.id}" target="_blank" class="enlace-inat" onclick="event.stopPropagation()">🔗 iNat</a>
-               </div>`;
-      html += `<div style="font-size: 11px;">${taxon.preferred_common_name || ''}</div>`;
-      html += `<span class="badge">📊 ${item.count} obs</span>`;
-      if (taxon.iconic_taxon_name) {
-        html += `<span class="badge">${taxon.iconic_taxon_name}</span>`;
-      }
-      
-      html += crearBarraFenologia(fenologia);
-      
-      html += `</div></div>`;
-    }
-
-    document.getElementById("resultadosBusquedaTaxon").innerHTML = html;
-  }
-
-  function actualizarBotonesPaginacionTaxon() {
-    const totalPaginas = Math.ceil(totalEspeciesTaxon / especiesPorPagina);
-    if (totalPaginas <= 1) {
-      document.getElementById("paginacionTaxon").innerHTML = '';
-      return;
-    }
-
-    let html = '<div class="pagination">';
-    
-    html += `<button onclick="cambiarPaginaTaxon(${paginaActualTaxon - 1})" ${paginaActualTaxon === 1 ? 'disabled' : ''}>◀ Anterior</button>`;
-    
-    for (let i = 1; i <= totalPaginas; i++) {
-      if (i === 1 || i === totalPaginas || (i >= paginaActualTaxon - 2 && i <= paginaActualTaxon + 2)) {
-        html += `<button onclick="cambiarPaginaTaxon(${i})" class="${i === paginaActualTaxon ? 'active' : ''}">${i}</button>`;
-      } else if (i === paginaActualTaxon - 3 || i === paginaActualTaxon + 3) {
-        html += `<button disabled>...</button>`;
+        doc.setTextColor.apply(doc, ink); doc.setFont('times','italic'); doc.setFontSize(9.5); doc.text(t.name||'',M+24,y+7);
+        doc.setFont('times','normal'); doc.setTextColor.apply(doc, piedra); doc.setFontSize(8); doc.text(t.preferred_common_name||'-',M+24,y+12);
+        y += H; procesarItem(ii+1);
       }
     }
-    
-    html += `<button onclick="cambiarPaginaTaxon(${paginaActualTaxon + 1})" ${paginaActualTaxon === totalPaginas ? 'disabled' : ''}>Siguiente ▶</button>`;
-    html += '</div>';
-    
-    document.getElementById("paginacionTaxon").innerHTML = html;
+    procesarItem(0);
   }
+  procesarGrupo(Object.entries(grupos), 0);
+}
 
-  function cambiarPaginaTaxon(nuevaPagina) {
-    const totalPaginas = Math.ceil(totalEspeciesTaxon / especiesPorPagina);
-    if (nuevaPagina >= 1 && nuevaPagina <= totalPaginas) {
-      cargarPaginaTaxon(nuevaPagina);
-    }
-  }
-
-  // ============================================
-  // EVENTOS COMUNES
-  // ============================================
-  
-  document.getElementById("buscadorTaxon").addEventListener("keypress", e => {
-    if (e.key === "Enter") buscarTaxon();
+// ============================================================
+// EXPORTAR CHECKLIST WORD
+// ============================================================
+function exportarWord() {
+  if (!S.checklist.length) { toast('Checklist vacio'); return; }
+  var grupos = {};
+  S.checklist.forEach(function(item) {
+    var g = item.grupo||'Sin grupo';
+    if (!grupos[g]) grupos[g] = [];
+    grupos[g].push(item);
   });
-
-  document.getElementById("buscadorPais").addEventListener("keypress", e => {
-    if (e.key === "Enter") buscarZona();
+  var body = '';
+  Object.entries(grupos).forEach(function(entry) {
+    var g = entry[0], items = entry[1];
+    body += '<h2>' + (items[0].grupoIcon||'') + ' ' + g + ' (' + items.length + ')</h2>';
+    body += '<table><thead><tr><th>Foto</th><th>Nombre cientifico</th><th>Nombre comun</th><th>Observada</th></tr></thead><tbody>';
+    items.forEach(function(item) {
+      var t = item.taxon;
+      var imgSrc = t.default_photo && (t.default_photo.square_url||t.default_photo.medium_url);
+      var imgTag = imgSrc ? '<img src="'+imgSrc+'" width="40" height="40" style="width:40px;height:40px;object-fit:cover;border-radius:3px">' : '-';
+      body += '<tr' + (item.observed?' style="background:#f0f7ea"':'') + '>';
+      body += '<td>'+imgTag+'</td><td><i>'+t.name+'</i></td>';
+      body += '<td style="color:#666">'+(t.preferred_common_name||'-')+'</td>';
+      body += '<td style="text-align:center;color:'+(item.observed?'#2e7d32':'#999')+'">'+(item.observed?'si':'o')+'</td></tr>';
+    });
+    body += '</tbody></table>';
   });
+  var fecha = new Date().toLocaleDateString('es-ES');
+  var html = '<html xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">' +
+    '<head><meta charset="UTF-8"><style>' +
+    'body{font-family:Cambria,Georgia,serif;margin:1.5cm;font-size:10pt}' +
+    'h1{color:#3a5728;font-size:16pt;border-bottom:2pt solid #587840;padding-bottom:4pt}' +
+    'h2{color:#3a5728;font-size:12pt;background:#f6f0e4;padding:4pt 6pt;border-left:4pt solid #587840;margin-top:14pt}' +
+    '.info{background:#eef5e6;padding:8pt;border-left:3pt solid #587840;margin:8pt 0;font-size:9pt;color:#555}' +
+    'table{border-collapse:collapse;width:100%;margin-top:6pt;font-size:9pt}' +
+    'th{background:#3a5728;color:#f6f0e4;padding:4pt 6pt;text-align:left;font-size:8pt}' +
+    'td{padding:4pt 6pt;border-bottom:1pt solid #e4dccf;vertical-align:middle}' +
+    'tr:nth-child(even){background:#faf7f1}' +
+    '</style></head><body>' +
+    '<h1>NatTrip - Checklist de campo</h1>' +
+    '<div class="info"><b>Area:</b> '+S.areaLabel+'<br><b>Fecha:</b> '+fecha+'<br>' +
+    '<b>Especies:</b> '+S.checklist.length+' - <b>Observadas:</b> '+S.checklist.filter(function(c){return c.observed;}).length+'</div>' +
+    body + '<p style="margin-top:20pt;font-size:7pt;color:#999">NatTrip - iNaturalist.org - '+fecha+'</p>' +
+    '</body></html>';
+  descargarDoc(html, 'NatTrip_checklist_'+sanFile(S.areaLabel)+'.doc');
+  toast('Word checklist descargado');
+}
 
-  document.addEventListener("click", function(e) {
-    if (!e.target.closest('#buscadorTaxon') && !e.target.closest('.sugerencias-taxon-container')) {
-      document.getElementById("sugerenciasTaxon").innerHTML = '';
-    }
-    if (!e.target.closest('#buscadorPais') && !e.target.closest('.sugerencias-pais-container')) {
-      document.getElementById("sugerenciasPais").innerHTML = '';
-    }
+// ============================================================
+// EXPORTAR CHECKLIST CSV
+// ============================================================
+function exportarCSV() {
+  if (!S.checklist.length) { toast('Checklist vacio'); return; }
+  var rows = [['Nombre cientifico','Nombre comun','Grupo','Observada','URL iNaturalist','Area','Fecha']];
+  S.checklist.forEach(function(item) {
+    var t = item.taxon;
+    rows.push([t.name||'', t.preferred_common_name||'', item.grupo||'', item.observed?'Si':'No',
+      'https://www.inaturalist.org/taxa/'+t.id, S.areaLabel, new Date().toLocaleDateString('es-ES')]);
   });
+  var csv = rows.map(function(r) {
+    return r.map(function(v) { return '"'+String(v).replace(/"/g,'""')+'"'; }).join(',');
+  }).join('\r\n');
+  var blob = new Blob(['\uFEFF'+csv], {type:'text/csv;charset=utf-8;'});
+  descargarBlob(blob, 'NatTrip_checklist_'+sanFile(S.areaLabel)+'.csv');
+  toast('CSV checklist descargado');
+}
+
+// ============================================================
+// UTILIDADES
+// ============================================================
+function descargarDoc(html, filename) {
+  var blob = new Blob([html], {type:'application/msword'});
+  descargarBlob(blob, filename);
+}
+
+function descargarBlob(blob, filename) {
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+}
+
+function limpiarTodo() {
+  if (drawnItems)   drawnItems.clearLayers();
+  if (markersLayer) markersLayer.clearLayers();
+  if (zoneLayer)    zoneLayer.clearLayers();
+  limpiarHeat();
+  S.area=null; S.areaLabel=''; S.polygon=null; S.placeId=null; S.taxonId=null; S.taxonNombre=''; S.pilId='';
+  S.total=0; S.page=1; S.loading=false; S.distActual=null;
+  for (var k in S.pheno) delete S.pheno[k];
+  document.getElementById('inputZona').value='';
+  document.getElementById('inputTaxon').value='';
+  document.getElementById('areaBox').innerHTML='<strong>Sin area.</strong> Busca un lugar o dibuja.';
+  document.getElementById('spContainer').innerHTML='<div class="loading-msg">Selecciona un area para comenzar</div>';
+  document.getElementById('paginacion').innerHTML='';
+  document.getElementById('detail').classList.remove('on');
+  document.getElementById('distStats').classList.remove('on');
+  document.querySelectorAll('.pill').forEach(function(p){p.classList.remove('active');});
+  document.querySelector('.pill[data-id=""]').classList.add('active');
+}
+
+function startProgress() {
+  var pw = document.getElementById('progressWrap');
+  pw.style.display = 'block';
+  var w = 0;
+  var iv = setInterval(function() {
+    w = Math.min(w+10, 88);
+    document.getElementById('progressBar').style.width = w+'%';
+    if (!S.loading) {
+      document.getElementById('progressBar').style.width = '100%';
+      setTimeout(function() { pw.style.display='none'; document.getElementById('progressBar').style.width='0%'; }, 400);
+      clearInterval(iv);
+    }
+  }, 140);
+}
+
+function stopProgress() { S.loading = false; }
+
+function toast(msg) {
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('on');
+  setTimeout(function() { t.classList.remove('on'); }, 2800);
+}
+
+function hideAC(id) { document.getElementById(id).style.display = 'none'; }
+
+function esc(s) { return s.replace(/'/g, "\\'").replace(/"/g, '\\"'); }
+
+function sanFile(s) { return s.replace(/[^a-zA-Z0-9]/g,'_').slice(0,40); }
+
+// ============================================================
+// EVENT LISTENERS GLOBALES
+// ============================================================
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('#inputZona')  && !e.target.closest('#acZona'))  hideAC('acZona');
+  if (!e.target.closest('#inputTaxon') && !e.target.closest('#acTaxon')) hideAC('acTaxon');
+});
+
+document.getElementById('soloResearch').addEventListener('change', function() {
+  if (S.area) { for (var k in S.pheno) delete S.pheno[k]; cargarEspecies(); }
+});
 
 </script>
-
 </body>
 </html>
